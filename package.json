@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "fast-xml-parser": "^5.2.1",
+    "jszip": "^3.10.1"
+  }
+}
