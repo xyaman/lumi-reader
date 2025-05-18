@@ -13,13 +13,13 @@ test("metadata", async () => {
 
         const book = await EpubBook.fromFile(file);
 
-        expect(book.identifier).not.toBeFalsy();
-        expect(book.identifier).toBeTypeOf("string");
+        expect(book.metadata.identifier).not.toBeFalsy();
+        expect(book.metadata.identifier).toBeTypeOf("string");
 
-        expect(book.title).not.toBeFalsy();
-        expect(book.title).toBeTypeOf("string");
+        expect(book.metadata.title).not.toBeFalsy();
+        expect(book.metadata.title).toBeTypeOf("string");
 
-        expect(book.language).not.toBeFalsy();
-        expect(book.language).toBeTypeOf("string");
+        expect(book.metadata.language).not.toBeFalsy();
+        expect(book.metadata.language).toBeTypeOf("string");
     }
 });

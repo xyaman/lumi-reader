@@ -1,0 +1,38 @@
+import { useNavigate, useParams } from "@solidjs/router"
+import { EpubBook } from "./lib/epub"
+import { createEffect } from "solid-js"
+
+export default function BookReader() {
+    const params = useParams()
+    const navigate = useNavigate()
+    let contentRef: HTMLDivElement | undefined
+
+    if (!params.id) {
+        navigate("/", { replace: true })
+    }
+
+    const id = parseInt(params.id)
+    EpubBook.getById(id)
+        .then((record) => {
+            if (!record) {
+                console.log("book with id:", id, "not found")
+                navigate("/", { replace: true })
+                return
+            }
+
+            const book = EpubBook.fromRecord(record)
+            if (book && contentRef) book.renderContent(contentRef)
+        })
+        .catch((e) => {
+            console.log("Error when fetching book:", e)
+            navigate("/", { replace: true })
+        })
+
+    return (
+        <div class="bg-gray-300">
+            <h1>Reader</h1>
+            <p>Book id: {params.id}</p>
+            <div ref={(el) => (contentRef = el)}></div>
+        </div>
+    )
+}

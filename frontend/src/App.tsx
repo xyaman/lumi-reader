@@ -1,21 +1,13 @@
-import { EpubBook } from "./lib/epub";
+import { Route, Router } from "@solidjs/router"
+import BookLibrary from "./BookLibrary"
+import BookReader from "./BookReader"
 
 function App() {
-
-    const onBook = (e: Event)  => {
-        const book = (e.target as HTMLInputElement).files?.item(0);
-        if (book) {
-            EpubBook.fromFile(book).then( b => console.log(b));
-        }
-    };
-
-
     return (
-        <>
-            <p>Hello World!</p>
-            <label for="file-input" class="icon has-text-light">Select file</label>
-            <input onInput={onBook} id="file-input" style="display:none;" type="file" accept=".epub" />
-        </>
+        <Router>
+            <Route path="/" component={BookLibrary} />
+            <Route path="/reader/:id?" component={BookReader} />
+        </Router>
     )
 }
 

@@ -1,22 +1,37 @@
 {
-  "name": "lumi-reader",
-  "private": true,
-  "version": "0.0.1",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "preview": "vite preview",
-    "test": "vitest"
-  },
-  "dependencies": {
-    "solid-js": "^1.9.5"
-  },
-  "devDependencies": {
-    "jsdom": "^26.1.0",
-    "typescript": "~5.7.2",
-    "vite": "^6.3.1",
-    "vite-plugin-solid": "^2.11.6",
-    "vitest": "^3.1.2"
-  }
+    "name": "lumi-reader",
+    "private": true,
+    "version": "0.0.1",
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "tsc -b && vite build",
+        "preview": "vite preview",
+        "test": "vitest",
+        "lint": "bunx eslint . --ext .ts,.tsx",
+        "format": "bunx prettier . --write"
+    },
+    "dependencies": {
+        "@solidjs/router": "^0.15.3",
+        "@tailwindcss/vite": "^4.1.6",
+        "fast-xml-parser": "^5.2.2",
+        "htmlparser2": "^10.0.0",
+        "idb": "^8.0.2",
+        "jszip": "^3.10.1",
+        "solid-js": "^1.9.5",
+        "tailwindcss": "^4.1.6"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.26.0",
+        "eslint": "^9.26.0",
+        "eslint-plugin-solid": "^0.14.5",
+        "globals": "^16.0.0",
+        "jsdom": "^26.1.0",
+        "prettier": "^3.5.3",
+        "typescript": "~5.7.2",
+        "typescript-eslint": "^8.31.1",
+        "vite": "^6.3.1",
+        "vite-plugin-solid": "^2.11.6",
+        "vitest": "^3.1.2"
+    }
 }
