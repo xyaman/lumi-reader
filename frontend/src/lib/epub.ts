@@ -196,29 +196,47 @@ export class EpubBook {
         return book
     }
 
+    /**
+     * @param element - The element where the epub will be rendered
+     * @returns The images blob urls, the caller needs to free/revoke the urls
+     */
     public async renderContent(element: HTMLElement) {
+        const starttime = Date.now()
+
         const zip = new JSZip()
         await zip.loadAsync(this.epubFile)
 
-        const [contents, _] = await Promise.all([
+        const [contents, imgs] = await Promise.all([
             Promise.all(
                 this.xhtml.map((xhtml) => zip.file(this.getFilePath(xhtml))?.async("text")!),
             ),
-            Promise.all(
-                this.imgs.map((xhtml) => zip.file(this.getFilePath(xhtml))?.async("text")!),
-            ),
+            Promise.all(this.imgs.map((img) => zip.file(this.getFilePath(img))?.async("blob")!)),
         ])
 
-        let body = ""
+        const blobs: Record<string, string> = {}
+        for (let i = 0; i < this.imgs.length; i++) {
+            // TODO: find a better way
+            const imgFilename = getBaseName(this.imgs[i])!
+            const url = URL.createObjectURL(imgs[i])
+            blobs[imgFilename] = url
+        }
 
+        let body = ""
         for (const xhtml of contents) {
-            const [content, charCount] = extractBodyContent(xhtml)
+            const [content, charCount] = extractBodyContent(xhtml, blobs)
             body += content
             this.charCount += charCount
         }
-
         element.innerHTML += body
+
+        console.log(`Epub rendered in ${Date.now() - starttime}ms`)
+        return Object.values(blobs)
     }
+}
+
+function getBaseName(path: string) {
+    const match = path.match(/(\d+)\.(jpeg|jpg|png|gif)$/)
+    return match ? match[1] : path
 }
 
 /**
@@ -233,6 +251,7 @@ function extractMetadata(pkgDocumentXml: any) {
         title: "",
         language: "",
         creator: [],
+        date: undefined,
     }
 
     // according to the specs, there can be more than one id
@@ -389,67 +408,70 @@ function getJapaneseCharacterCount(text: string): number {
     return [...clean].length
 }
 
-function extractBodyContent(xhtml: string): [string, number] {
+function extractBodyContent(xhtml: string, imgUrls: Record<string, string>): [string, number] {
     let insideBody = false
-    let insideParagraph = false
-    let insideRt = false
-    let content = ""
+    let insideP = 0
+    let insideRt = 0
     let charCount = 0
+    const content: string[] = []
 
-    const parser = new Parser(
-        {
-            onopentag(name) {
-                if (name === "body") {
-                    insideBody = true
-                    return
-                }
+    const parser = new Parser({
+        onopentag(name, attribs) {
+            if (name === "body") {
+                insideBody = true
+                return
+            }
 
-                if (name === "p") {
-                    insideParagraph = true
-                }
+            if (!insideBody) return
 
-                if (name === "rt") {
-                    insideRt = true
-                }
+            if (name === "p") insideP++
+            if (name === "rt") insideRt++
 
-                if (insideBody) {
-                    content += `<${name}>`
-                }
-            },
-            onclosetag(name) {
-                if (name === "body") {
-                    insideBody = false
-                    parser.end()
-                    return
-                }
+            if (name === "img") {
+                const src = getBaseName(attribs.src)
+                if (src && imgUrls[src]) attribs.src = imgUrls[src]
+            }
 
-                if (name === "p") {
-                    insideParagraph = false
-                }
+            if (name === "image") {
+                const href = getBaseName(attribs["xlink:href"])
+                if (href && imgUrls[href]) attribs["xlink:href"] = imgUrls[href]
+            }
 
-                if (name === "rt") {
-                    insideRt = false
-                }
+            const attrs = Object.entries(attribs)
+                .map(([k, v]) => `${k}="${v}"`)
+                .join(" ")
 
-                if (insideBody) {
-                    content += `</${name}>`
-                }
-            },
-            ontext(data) {
-                if (insideBody) {
-                    content += data
-
-                    if (insideParagraph && !insideRt) {
-                        charCount += getJapaneseCharacterCount(data)
-                    }
-                }
-            },
+            content.push(attrs ? `<${name} ${attrs}>` : `<${name}>`)
         },
-        { decodeEntities: true },
-    )
+
+        onclosetag(name) {
+            if (name === "body") {
+                insideBody = false
+                return
+            }
+
+            if (!insideBody) return
+
+            if (name === "p") insideP = Math.max(insideP - 1, 0)
+            if (name === "rt") insideRt = Math.max(insideRt - 1, 0)
+
+            content.push(`</${name}>`)
+        },
+
+        ontext(text) {
+            if (!insideBody) return
+
+            content.push(text)
+
+            // Count only if inside <p> and NOT inside <rt>
+            if (insideP > 0 && insideRt === 0) {
+                charCount += getJapaneseCharacterCount(text)
+            }
+        },
+    })
 
     parser.write(xhtml)
     parser.end()
 
-    return [content, charCount]
+    return [content.join(""), charCount]
 }

@@ -13,7 +13,7 @@ export default function BookLibrary() {
         books.forEach((book) => {
             if (book.cover) {
                 const url = URL.createObjectURL(book.cover)
-                coversMap[book.id!] = url // Use the book's ID as the key
+                coversMap[book.id] = url // Use the book's ID as the key
             }
         })
 

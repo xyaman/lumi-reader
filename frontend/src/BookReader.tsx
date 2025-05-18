@@ -1,11 +1,13 @@
 import { useNavigate, useParams } from "@solidjs/router"
 import { EpubBook } from "./lib/epub"
-import { createEffect } from "solid-js"
+import { createSignal, onCleanup } from "solid-js"
 
 export default function BookReader() {
     const params = useParams()
     const navigate = useNavigate()
     let contentRef: HTMLDivElement | undefined
+
+    let [imgUrls, setImgUrls] = createSignal<string[]>([])
 
     if (!params.id) {
         navigate("/", { replace: true })
@@ -21,12 +23,21 @@ export default function BookReader() {
             }
 
             const book = EpubBook.fromRecord(record)
-            if (book && contentRef) book.renderContent(contentRef)
+            if (book && contentRef) {
+                book.renderContent(contentRef).then((urls) => setImgUrls(urls))
+            }
         })
         .catch((e) => {
             console.log("Error when fetching book:", e)
             navigate("/", { replace: true })
         })
+
+    onCleanup(() => {
+        console.log(imgUrls())
+        for (const url of imgUrls()) {
+            URL.revokeObjectURL(url)
+        }
+    })
 
     return (
         <div class="bg-gray-300">
