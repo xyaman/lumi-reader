@@ -25,6 +25,7 @@ export default function BookReader() {
             const book = EpubBook.fromRecord(record)
             if (book && contentRef) {
                 book.renderContent(contentRef).then((urls) => setImgUrls(urls))
+                book.insertCss()
             }
         })
         .catch((e) => {
@@ -37,6 +38,8 @@ export default function BookReader() {
         for (const url of imgUrls()) {
             URL.revokeObjectURL(url)
         }
+
+        document.head.querySelectorAll("#temp-css").forEach((style) => style.remove())
     })
 
     return (

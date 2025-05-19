@@ -232,10 +232,34 @@ export class EpubBook {
         console.log(`Epub rendered in ${Date.now() - starttime}ms`)
         return Object.values(blobs)
     }
+
+    /**
+     * The callers needs to remove the css from the header after unmount.
+     * The style imported has the id = "temp-css"
+     * */
+    public async insertCss() {
+        const zip = new JSZip()
+        await zip.loadAsync(this.epubFile)
+
+        const cssContent = await Promise.all(
+            this.css.map((css) => zip.file(this.getFilePath(css))?.async("text")!),
+        )
+
+        // TODO: remove @imports or replace before?
+        for (const css of cssContent) {
+            const style = document.createElement("style")
+            style.textContent = css
+            style.id = "temp-css"
+
+            document.head.append(style)
+        }
+
+        document.body.style.fontSize = "18px"
+    }
 }
 
 function getBaseName(path: string) {
-    const match = path.match(/(\d+)\.(jpeg|jpg|png|gif)$/)
+    const match = path.match(/(?:.*\/)?([^\/]+\.(?:png|jpe?g|svg))$/i)
     return match ? match[1] : path
 }
 
@@ -320,7 +344,6 @@ function extractManifest(pkgDocumentXml: any, opfFilename: string) {
         } else if (type === "image/jpeg" || type === "image/png" || type === "image/svg+xml") {
             if ((item["@_id"] as string).includes("cover")) {
                 cover = href
-                continue
             }
 
             imgs.push(href)
