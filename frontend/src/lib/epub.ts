@@ -227,7 +227,7 @@ export class EpubBook {
             body += content
             this.charCount += charCount
         }
-        element.innerHTML += body
+        element.innerHTML = body
 
         console.log(`Epub rendered in ${Date.now() - starttime}ms`)
         return Object.values(blobs)

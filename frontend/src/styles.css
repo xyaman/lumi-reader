@@ -1,1 +1,26 @@
 @import "tailwindcss";
+
+html,
+body {
+  height: 100%;
+}
+
+#reader {
+  /* background-color: hsl(221, 14%, 9%); */
+  /* color: rgba(255, 255, 255, 0.87); */
+  font-size: 20px;
+  line-height: 1.85;
+  padding: 3rem 1.5rem;
+}
+
+/* TODO: find a less expensive way? */
+*:has(> img),
+*:has(> svg) {
+  text-align: center !important;
+}
+
+#reader svg,
+#reader img {
+  max-width: 50% !important;
+  display: initial !important;
+}

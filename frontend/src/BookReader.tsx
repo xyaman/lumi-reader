@@ -7,7 +7,7 @@ export default function BookReader() {
     const navigate = useNavigate()
     let contentRef: HTMLDivElement | undefined
 
-    let [imgUrls, setImgUrls] = createSignal<string[]>([])
+    const [imgUrls, setImgUrls] = createSignal<string[]>([])
 
     if (!params.id) {
         navigate("/", { replace: true })
@@ -34,7 +34,6 @@ export default function BookReader() {
         })
 
     onCleanup(() => {
-        console.log(imgUrls())
         for (const url of imgUrls()) {
             URL.revokeObjectURL(url)
         }
@@ -46,7 +45,7 @@ export default function BookReader() {
         <div class="bg-gray-300">
             <h1>Reader</h1>
             <p>Book id: {params.id}</p>
-            <div ref={(el) => (contentRef = el)}></div>
+            <div id="reader" ref={(el) => (contentRef = el)}></div>
         </div>
     )
 }
