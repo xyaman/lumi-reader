@@ -3,7 +3,7 @@ import { XMLParser } from "fast-xml-parser"
 import { Parser } from "htmlparser2"
 import { IDBPDatabase, openDB } from "idb"
 
-import { assert } from "./utils"
+import { assert, filterCssByClassOnly } from "./utils"
 
 /**
  * Represents a epub book, this class can't be saved directly into indexedDB,
@@ -182,6 +182,7 @@ export class EpubBook {
         const manifest = extractManifest(pkgDocumentXml, opfFilename)
         book.xhtml = manifest.xhtml
         book.imgs = manifest.imgs
+        book.imgs = []
         book.css = manifest.css
         book.basePath = manifest.basePath
 
@@ -222,9 +223,11 @@ export class EpubBook {
         }
 
         let body = ""
+        let id = 0
         for (const xhtml of contents) {
-            const [content, charCount] = extractBodyContent(xhtml, blobs)
+            const [content, charCount, currId] = extractBodyContent(xhtml, blobs, id)
             body += content
+            id = currId
             this.charCount += charCount
         }
         element.innerHTML = body
@@ -248,7 +251,7 @@ export class EpubBook {
         // TODO: remove @imports or replace before?
         for (const css of cssContent) {
             const style = document.createElement("style")
-            style.textContent = css
+            style.textContent = await filterCssByClassOnly(css)
             style.id = "temp-css"
 
             document.head.append(style)
@@ -431,7 +434,12 @@ function getJapaneseCharacterCount(text: string): number {
     return [...clean].length
 }
 
-function extractBodyContent(xhtml: string, imgUrls: Record<string, string>): [string, number] {
+function extractBodyContent(
+    xhtml: string,
+    imgUrls: Record<string, string>,
+    initialId: number,
+): [string, number, number] {
+    let id = initialId
     let insideBody = false
     let insideP = 0
     let insideRt = 0
@@ -447,7 +455,11 @@ function extractBodyContent(xhtml: string, imgUrls: Record<string, string>): [st
 
             if (!insideBody) return
 
-            if (name === "p") insideP++
+            if (name === "p") {
+                insideP++
+                attribs.index = id.toString()
+                id++
+            }
             if (name === "rt") insideRt++
 
             if (name === "img") {
@@ -496,5 +508,5 @@ function extractBodyContent(xhtml: string, imgUrls: Record<string, string>): [st
     parser.write(xhtml)
     parser.end()
 
-    return [content.join(""), charCount]
+    return [content.join(""), charCount, id]
 }

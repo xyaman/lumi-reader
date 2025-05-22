@@ -3,14 +3,30 @@
 html,
 body {
   height: 100%;
+  width: 100%;
 }
 
-#reader {
-  /* background-color: hsl(221, 14%, 9%); */
-  /* color: rgba(255, 255, 255, 0.87); */
-  font-size: 20px;
-  line-height: 1.85;
-  padding: 3rem 1.5rem;
+/* #reader-container { */
+/*   margin-left: 3rem; */
+/*   margin-right: 3rem; */
+/*   padding-top: 3rem; */
+/*   padding-bottom: 3rem; */
+/*   height: 100vh; */
+/*   overflow: hidden; */
+/*   scroll-snap-type: x mandatory; */
+/*   position: relative; */
+/* } */
+
+
+/* #reader-content { */
+/*   height: 100%; */
+/*   column-width: 100vw; */
+/*   font-size: 20px; */
+/*   line-height: 1.85; */
+/* } */
+
+#reader-content > * {
+  scroll-snap-align: start;
 }
 
 /* TODO: find a less expensive way? */
@@ -19,8 +35,9 @@ body {
   text-align: center !important;
 }
 
-#reader svg,
-#reader img {
-  max-width: 50% !important;
+#reader-content svg,
+#reader-content img {
+  /* max-width: 50% !important; */
+  max-height: 80vh !important;
   display: initial !important;
 }

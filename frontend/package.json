@@ -18,11 +18,13 @@
         "htmlparser2": "^10.0.0",
         "idb": "^8.0.2",
         "jszip": "^3.10.1",
+        "postcss": "^8.5.3",
         "solid-js": "^1.9.5",
         "tailwindcss": "^4.1.6"
     },
     "devDependencies": {
         "@eslint/js": "^9.26.0",
+        "@types/postcss-js": "^4.0.4",
         "eslint": "^9.26.0",
         "eslint-plugin-solid": "^0.14.5",
         "globals": "^16.0.0",
