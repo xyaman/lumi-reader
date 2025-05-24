@@ -49,9 +49,12 @@ export default function BookLibrary() {
                             Upload
                             <input onInput={onBook} type="file" accept=".epub" class="hidden" />
                         </label>
-                        <button class="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800 text-white shadow-sm hover:opacity-80 transition">
+                        <a
+                            href="/settings"
+                            class="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800 text-white shadow-sm hover:opacity-80 transition"
+                        >
                             Settings
-                        </button>
+                        </a>
                         <button class="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800 text-white shadow-sm hover:opacity-80 transition">
                             Profile
                         </button>

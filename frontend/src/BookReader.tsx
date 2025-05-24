@@ -5,114 +5,95 @@ import { createSignal, onCleanup } from "solid-js"
 export default function BookReader() {
     const params = useParams()
     const navigate = useNavigate()
-    let contentRef: HTMLDivElement | undefined
+    let contentRef: HTMLDivElement
+    let containerRef: HTMLDivElement
+
+    const isPaginated = localStorage.getItem("reader:paginated") !== "false"
+    const isVertical = localStorage.getItem("reader:vertical") === "true"
 
     const [imgUrls, setImgUrls] = createSignal<string[]>([])
-    const [paginated, setPaginated] = createSignal(true)
 
-    if (!params.id) {
-        navigate("/", { replace: true })
+    const id = Number(params.id)
+    if (!id) navigate("/", { replace: true })
+
+    function flipPage(multiplier: 1 | -1) {
+        const container = containerRef
+
+        const offset = isVertical ? container.clientHeight : container.clientWidth
+        const current = isVertical ? container.scrollTop : container.scrollLeft
+        const max = isVertical ? container.scrollHeight : container.scrollWidth
+
+        let next = Math.ceil(current + offset * multiplier)
+        next = Math.max(0, Math.min(next, max))
+
+        isVertical
+            ? container.scrollTo({ top: next, behavior: "instant" })
+            : container.scrollTo({ left: next, behavior: "instant" })
     }
 
-    let currentPage = 0
-    function goToPage(page: number) {
-        const container = document.getElementById("reader-container")!
-
-        currentPage = Math.max(
-            0,
-            Math.min(page, Math.floor(container.scrollWidth / container.clientWidth)),
-        )
-        container.scrollTo({ left: currentPage * container.clientWidth, behavior: "auto" })
-    }
-
-    function setupPagination() {
+    function setupPagination(container: HTMLElement) {
         let startX = 0
 
-        document.getElementById("reader-container")!.addEventListener("touchstart", (e) => {
+        const onTouchStart = (e: TouchEvent) => {
             startX = e.touches[0].clientX
-        })
+        }
 
-        document.getElementById("reader-container")!.addEventListener("touchend", (e) => {
-            const endX = e.changedTouches[0].clientX
-            const delta = endX - startX
+        const onTouchEnd = (e: TouchEvent) => {
+            const delta = e.changedTouches[0].clientX - startX
+            if (Math.abs(delta) > 50) flipPage(delta < 0 ? 1 : -1)
+        }
 
-            if (Math.abs(delta) > 50) {
-                if (delta < 0) {
-                    goToPage(currentPage + 1)
-                } else {
-                    goToPage(currentPage - 1)
-                }
-            }
-        })
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "ArrowDown" || e.key === "PageDown") flipPage(1)
+            else if (e.key === "ArrowUp" || e.key === "PageUp") flipPage(-1)
+        }
 
-        document.addEventListener("keydown", (e) => {
-            if (e.key === "ArrowDown" || e.key === "PageDown") {
-                goToPage(currentPage + 1)
-            } else if (e.key === "ArrowUp" || e.key === "PageUp") {
-                goToPage(currentPage - 1)
-            }
-        })
-
-        window.addEventListener("resize", () => goToPage(currentPage))
+        container.addEventListener("touchstart", onTouchStart)
+        container.addEventListener("touchend", onTouchEnd)
+        document.addEventListener("keydown", onKeyDown)
+        window.addEventListener("resize", () => flipPage(-1))
     }
 
-    const id = parseInt(params.id)
     EpubBook.getById(id)
         .then((record) => {
-            if (!record) {
-                console.log("book with id:", id, "not found")
-                navigate("/", { replace: true })
-                return
-            }
+            if (!record) return navigate("/", { replace: true })
 
             const book = EpubBook.fromRecord(record)
             if (book && contentRef) {
-                book.renderContent(contentRef).then((urls) => setImgUrls(urls))
+                book.renderContent(contentRef).then(setImgUrls)
                 book.insertCss()
-
-                setTimeout(setupPagination, 1000)
+                setupPagination(containerRef)
             }
         })
         .catch((e) => {
-            console.log("Error when fetching book:", e)
+            console.error("Error when fetching book:", e)
             navigate("/", { replace: true })
         })
 
     onCleanup(() => {
-        for (const url of imgUrls()) {
-            URL.revokeObjectURL(url)
-        }
-
-        document.head.querySelectorAll("#temp-css").forEach((style) => style.remove())
+        imgUrls().forEach((url) => URL.revokeObjectURL(url))
+        document.head.querySelectorAll("#temp-css").forEach((el) => el.remove())
     })
 
-    const containerClass = () =>
-        paginated()
-            ? "relative mx-12 pt-12 pb-12 h-screen overflow-hidden snap-x snap-mandatory"
-            : "relative h-screen overflow-auto"
+    const containerClass = () => {
+        if (!isPaginated) return "px-8 h-screen"
+        return isVertical
+            ? "relative w-[95vw] overflow-hidden snap-y snap-mandatory"
+            : "relative mx-8 py-12 h-screen overflow-x-hidden snap-x snap-mandatory"
+    }
 
-    const contentClass = () =>
-        paginated()
-            ? "h-full [column-width:100vw] text-[20px] leading-[1.85]"
-            : "text-[20px] leading-[1.85]"
+    const contentClass = () => {
+        if (!isPaginated) return isVertical ? "text-[20px] writing-mode-vertical" : "text-[20px]"
+        return isVertical
+            ? "h-full w-full [column-width:100vw] [column-fill:auto] [column-gap:0px] text-[20px] writing-mode-vertical"
+            : "h-full [column-width:100vw] [column-fill:auto] [column-gap:0px]"
+    }
 
     return (
-        <div class="bg-gray-300 min-h-screen">
-            <div id="reader-container" class={containerClass()}>
-                <div
-                    id="reader-content"
-                    ref={(el) => (contentRef = el)}
-                    class={contentClass()}
-                ></div>
+        <div>
+            <div id="reader-container" class={containerClass()} ref={(el) => (containerRef = el)}>
+                <div id="reader-content" ref={(el) => (contentRef = el)} class={contentClass()} />
             </div>
-            <button
-                class="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 px-4 py-2 bg-blue-500 text-white rounded"
-                onClick={() => {
-                    setPaginated((p) => !p)
-                }}
-            >
-                {paginated() ? "Switch to Scrolling" : "Switch to Paginated"}
-            </button>
         </div>
     )
 }

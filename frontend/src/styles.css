@@ -2,28 +2,14 @@
 
 html,
 body {
+  margin: 0;
   height: 100%;
   width: 100%;
 }
 
-/* #reader-container { */
-/*   margin-left: 3rem; */
-/*   margin-right: 3rem; */
-/*   padding-top: 3rem; */
-/*   padding-bottom: 3rem; */
-/*   height: 100vh; */
-/*   overflow: hidden; */
-/*   scroll-snap-type: x mandatory; */
-/*   position: relative; */
-/* } */
-
-
-/* #reader-content { */
-/*   height: 100%; */
-/*   column-width: 100vw; */
-/*   font-size: 20px; */
-/*   line-height: 1.85; */
-/* } */
+.writing-mode-vertical {
+    writing-mode: vertical-rl;
+}
 
 #reader-content > * {
   scroll-snap-align: start;
@@ -37,7 +23,7 @@ body {
 
 #reader-content svg,
 #reader-content img {
-  /* max-width: 50% !important; */
+  max-width: 50% !important;
   max-height: 80vh !important;
   display: initial !important;
 }

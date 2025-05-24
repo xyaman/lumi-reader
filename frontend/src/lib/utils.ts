@@ -1,22 +1,45 @@
-import postcss, { Root, Rule } from "postcss"
-
 export function assert(condition: unknown, message = "Assertion failed"): asserts condition {
     if (!condition) {
         throw new Error(message)
     }
 }
 
-export async function filterCssByClassOnly(cssText: string): Promise<string> {
-    const result = await postcss([
-        (root: Root) => {
-            root.walkRules((rule: Rule) => {
-                if (!rule.selector.includes(".")) {
-                    rule.remove()
-                }
-            })
-        },
-        // @ts-ignore
-    ]).process(cssText, { from: undefined })
+export function parseCss(cssText: string) {
+    const rules = []
+    let cursor = 0
+    const len = cssText.length
 
-    return result.css
+    while (cursor < len) {
+        // find next valid char (ignore whitespaces and line jumps)
+        while (cursor < len && /\s/.test(cssText[cursor])) cursor++
+
+        // start of selector
+        const selectorStart = cursor
+        while (cursor < len && cssText[cursor] != "{") cursor++
+        const selector = cssText.slice(selectorStart, cursor).trim()
+
+        if (!selector) break
+
+        // skip {
+        cursor++
+        let level = 1
+        const blockStart = cursor
+        while (cursor < len && level > 0) {
+            if (cssText[cursor] === "{") {
+                level++
+            } else if (cssText[cursor] === "}") {
+                level--
+            }
+
+            cursor++
+        }
+
+        if (selector[0] === ".") {
+            // ignore empty classes
+            if (cssText.slice(blockStart, cursor).trim() === "}") continue
+            rules.push(cssText.slice(selectorStart, cursor))
+        }
+    }
+
+    return rules
 }

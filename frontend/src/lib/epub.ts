@@ -3,7 +3,7 @@ import { XMLParser } from "fast-xml-parser"
 import { Parser } from "htmlparser2"
 import { IDBPDatabase, openDB } from "idb"
 
-import { assert, filterCssByClassOnly } from "./utils"
+import { assert, filterCssByClassOnly, parseCss } from "./utils"
 
 /**
  * Represents a epub book, this class can't be saved directly into indexedDB,
@@ -182,7 +182,6 @@ export class EpubBook {
         const manifest = extractManifest(pkgDocumentXml, opfFilename)
         book.xhtml = manifest.xhtml
         book.imgs = manifest.imgs
-        book.imgs = []
         book.css = manifest.css
         book.basePath = manifest.basePath
 
@@ -251,7 +250,7 @@ export class EpubBook {
         // TODO: remove @imports or replace before?
         for (const css of cssContent) {
             const style = document.createElement("style")
-            style.textContent = await filterCssByClassOnly(css)
+            style.textContent = parseCss(css).join("\n")
             style.id = "temp-css"
 
             document.head.append(style)
