@@ -3,7 +3,7 @@ import { XMLParser } from "fast-xml-parser"
 import { Parser } from "htmlparser2"
 import { IDBPDatabase, openDB } from "idb"
 
-import { assert, filterCssByClassOnly, parseCss } from "./utils"
+import { assert, parseCss } from "./utils"
 
 /**
  * Represents a epub book, this class can't be saved directly into indexedDB,
@@ -26,6 +26,7 @@ export class EpubBook {
     xhtml: string[] = []
     imgs: string[] = []
     css: string[] = []
+    nav?: Array<{ href?: string; text: string }>
     cover!: Blob
 
     // Database-related properties
@@ -43,6 +44,7 @@ export class EpubBook {
             epubFile: this.epubFile,
             lastModified: this.lastModified ?? Date.now(),
             cover: this.cover,
+            nav: this.nav,
             xhtml: this.xhtml,
             css: this.css,
             imgs: this.imgs,
@@ -63,6 +65,7 @@ export class EpubBook {
         book.metadata = record.metadata
         book.lastModified = record.lastModified
         book.cover = record.cover
+        book.nav = record.nav
         book.xhtml = record.xhtml
         book.css = record.css
         book.imgs = record.imgs
@@ -187,6 +190,8 @@ export class EpubBook {
 
         // TODO: undefined
         book.cover = await zip.file(book.getFilePath(manifest.cover!))?.async("blob")!
+        const navContent = await zip.file(book.getFilePath(manifest.nav!))?.async("text")!
+        book.nav = await parseNavigator(navContent)
 
         // read book spine
 
@@ -223,8 +228,9 @@ export class EpubBook {
 
         let body = ""
         let id = 0
-        for (const xhtml of contents) {
-            const [content, charCount, currId] = extractBodyContent(xhtml, blobs, id)
+        for (const [i, xhtml] of contents.entries()) {
+            const filename = this.xhtml[i].split("/").pop() ?? this.xhtml[i]
+            const [content, charCount, currId] = extractBodyContent(filename, xhtml, blobs, id)
             body += content
             id = currId
             this.charCount += charCount
@@ -232,6 +238,7 @@ export class EpubBook {
         element.innerHTML = body
 
         console.log(`Epub rendered in ${Date.now() - starttime}ms`)
+
         return Object.values(blobs)
     }
 
@@ -240,6 +247,8 @@ export class EpubBook {
      * The style imported has the id = "temp-css"
      * */
     public async insertCss() {
+        const starttime = Date.now()
+
         const zip = new JSZip()
         await zip.loadAsync(this.epubFile)
 
@@ -247,16 +256,18 @@ export class EpubBook {
             this.css.map((css) => zip.file(this.getFilePath(css))?.async("text")!),
         )
 
-        // TODO: remove @imports or replace before?
+        let styleContent = ""
         for (const css of cssContent) {
-            const style = document.createElement("style")
-            style.textContent = parseCss(css).join("\n")
-            style.id = "temp-css"
-
-            document.head.append(style)
+            styleContent += parseCss(css).join("\n")
         }
 
-        document.body.style.fontSize = "18px"
+        const style = document.createElement("style")
+        style.id = "temp-css"
+        style.textContent = styleContent
+        document.head.append(style)
+
+        // document.body.style.fontSize = "18px"
+        console.log(`Css injected in ${Date.now() - starttime}ms`)
     }
 }
 
@@ -331,6 +342,7 @@ function extractManifest(pkgDocumentXml: any, opfFilename: string) {
     const imgs: string[] = []
     const css: string[] = []
     let cover: string | undefined = undefined
+    let nav: string | undefined = undefined
 
     for (let i = 0; i < items.length; i++) {
         const item = items[i]
@@ -342,6 +354,10 @@ function extractManifest(pkgDocumentXml: any, opfFilename: string) {
         if (!type || !href) continue
 
         if (type === "application/xhtml+xml") {
+            if (item["@_properties"] === "nav") {
+                nav = href
+                continue
+            }
             xhtml.push(href)
         } else if (type === "image/jpeg" || type === "image/png" || type === "image/svg+xml") {
             if ((item["@_id"] as string).includes("cover")) {
@@ -360,7 +376,7 @@ function extractManifest(pkgDocumentXml: any, opfFilename: string) {
         base = opfFilename.slice(0, idx)
     }
 
-    return { xhtml, imgs, css, basePath: base, cover }
+    return { xhtml, imgs, css, basePath: base, cover, nav }
 }
 
 /**
@@ -433,7 +449,64 @@ function getJapaneseCharacterCount(text: string): number {
     return [...clean].length
 }
 
+// https://www.w3.org/TR/epub-33/#sec-nav-def-model
+async function parseNavigator(navContent: string) {
+    const starttime = Date.now()
+    const nav = navContent
+
+    let insideNav = false
+    let insideLi = false
+    const items: Array<{ text: string; href?: string }> = []
+
+    const parser = new Parser({
+        onopentag(name, attribs) {
+            if (name === "nav" && attribs.hasOwnProperty("epub:type")) {
+                insideNav = true
+                return
+            }
+            if (!insideNav) return
+
+            if (name === "li") {
+                insideLi = true
+                return
+            }
+
+            if (insideLi && name === "a") {
+                console.log(name)
+                items.push({ href: attribs.href, text: "none" })
+            }
+
+            if (insideLi && name === "span") {
+                items.push({ text: "none" })
+                return
+            }
+        },
+
+        onclosetag(name) {
+            if (name === "nav") {
+                insideNav = false
+                return
+            }
+
+            if (!insideNav) return
+            if (name === "li") insideLi = false
+        },
+
+        ontext(text) {
+            if (!insideLi || text.trim() === "") return
+            items[items.length - 1].text = text
+        },
+    })
+
+    parser.write(nav)
+    parser.end()
+    console.log(`Navigator parsed in ${Date.now() - starttime}ms`)
+
+    return items
+}
+
 function extractBodyContent(
+    filename: string,
     xhtml: string,
     imgUrls: Record<string, string>,
     initialId: number,
@@ -504,8 +577,10 @@ function extractBodyContent(
         },
     })
 
+    content.push(`<div id="${filename}">`)
     parser.write(xhtml)
     parser.end()
+    content.push("</div>")
 
     return [content.join(""), charCount, id]
 }
