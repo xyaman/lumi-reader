@@ -32,6 +32,8 @@ export default function BookReader() {
         isVertical
             ? container.scrollTo({ top: next, behavior: "instant" })
             : container.scrollTo({ left: next, behavior: "instant" })
+
+        handleScroll()
     }
 
     function navigationGoTo(href?: string) {
@@ -78,6 +80,30 @@ export default function BookReader() {
         window.addEventListener("resize", () => flipPage(-1))
     }
 
+    function handleScroll() {
+        let lastReadIndex = 0
+        let currChars = 0
+
+        const book = currBook()
+        if (!book) return
+
+        const p = document.querySelectorAll("p")
+
+        for (let i = 0; i < p.length; i++) {
+            const rect = p[i].getBoundingClientRect()
+
+            // Element no longer visible
+            if (!isPaginated && rect.bottom > 0) break
+
+            if (isPaginated && rect.x > 0) break
+
+            lastReadIndex = Number(p[i].getAttribute("index")) ?? lastReadIndex
+            currChars = Number(p[i].getAttribute("characumm")) ?? currChars
+        }
+
+        console.log(lastReadIndex, currChars)
+    }
+
     EpubBook.getById(id)
         .then((record) => {
             if (!record) return navigate("/", { replace: true })
@@ -112,6 +138,19 @@ export default function BookReader() {
         return isVertical
             ? "h-full w-full [column-width:100vw] [column-fill:auto] [column-gap:0px] text-[20px] writing-mode-vertical"
             : "h-full [column-width:100vw] [column-fill:auto] [column-gap:0px]"
+    }
+
+    if (!isPaginated) {
+        let scrollTimer: number | null = null
+        const handleScrollTimer = () => {
+            if (scrollTimer !== null) {
+                clearTimeout(scrollTimer)
+            }
+
+            scrollTimer = setTimeout(handleScroll, 300)
+        }
+
+        document.addEventListener("scroll", handleScrollTimer)
     }
 
     return (

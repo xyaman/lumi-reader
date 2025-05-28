@@ -75,8 +75,6 @@ export class EpubBook implements IEpubBookRecord {
     metadata!: IEpubMetadata
     manifest!: IEpubManifest
 
-    private imgUrls: Record<string, string> = {}
-
     /**
      * Helper method to serialize an EpubBook instance for database storage.
      */
@@ -397,9 +395,10 @@ async function extractManifest(zip: JSZip, pkgDocumentXml: any, basePath?: strin
             getFilePath(basePath, xhtmlHref[i]),
             c,
             currId,
+            manifest.totalChars,
         )
         currId = id
-        manifest.totalChars += charsCount
+        manifest.totalChars = charsCount
         manifest.xhtml.push({ lastIndex: id, content })
     }
 
@@ -547,13 +546,14 @@ function parseBodyContent(
     filename: string,
     xhtml: string,
     initialId: number,
+    initialChars: number,
 ): [string, number, number] {
     let id = initialId
     let insideBody = false
     let insideP = 0
     let insideRt = 0
     const content: string[] = []
-    let charsCount = 0
+    let charsCount = initialChars
 
     const parser = new Parser({
         onopentag(name, attribs) {
@@ -567,6 +567,7 @@ function parseBodyContent(
             if (name === "p") {
                 insideP++
                 attribs.index = id.toString()
+                attribs.charAcumm = charsCount.toString()
                 id++
             }
             if (name === "rt") insideRt++
