@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "@solidjs/router"
-import { EpubBook, getBaseName } from "./lib/epub"
+import { EpubBook } from "./lib/epub"
 import { createSignal, For, onCleanup, Show } from "solid-js"
 
 export default function BookReader() {
@@ -78,7 +78,7 @@ export default function BookReader() {
 
             const book = EpubBook.fromRecord(record)
             if (book && contentRef) {
-                book.renderContent(contentRef).then(setImgUrls)
+                book.renderContent(contentRef, { xhtml: "all" }).then(setImgUrls)
                 book.insertCss()
                 setupPagination(containerRef)
                 setCurrBook(book)

@@ -5,53 +5,89 @@ import { IDBPDatabase, openDB } from "idb"
 
 import { assert, parseCss } from "./utils"
 
+interface IEpubMetadata {
+    identifier: string
+    title: string
+    language: string
+    creator: string[]
+    date?: string
+}
+
+interface IEpubManifest {
+    /**
+     * Book total chars estimation
+     */
+    totalChars: number
+
+    /**
+     * Table of contents.
+     */
+    nav: { href?: string; text: string }[]
+
+    /**
+     * Xhtml (xml) contents (does not include navigation)
+     */
+    xhtml: { lastIndex: number; content: string }[]
+
+    /**
+     * Imgs of the book.
+     * The first index corresponds to the cover
+     */
+    imgs: { filename: string; blob: Blob }[]
+
+    /**
+     * Sanitized css book style. Should be inserted into a style tag to use it.
+     */
+    css: string
+}
+
+interface IEpubBookRecord {
+    /**
+     * (DB) Local id, epub identifier is in `metadata.identifier`
+     */
+    id: number
+
+    /**
+     * (DB) Timestamp for tracking changes (server and client)
+     */
+    lastModified?: number
+
+    /**
+     * Books metadata, does not follow exactly epub reference.
+     */
+    metadata: IEpubMetadata
+
+    manifest: IEpubManifest
+}
+
 /**
  * Represents a epub book, this class can't be saved directly into indexedDB,
  * check `EpubBookDB`.
  */
-export class EpubBook {
-    // Core properties
-    epubFile: File
-    metadata!: {
-        identifier: string
-        title: string
-        language: string
-        creator: string[]
-        date?: string
-    }
-
-    // Book content
-    charCount: number = 0
-    basePath: string = ""
-    xhtml: string[] = []
-    imgs: string[] = []
-    css: string[] = []
-    nav?: Array<{ href?: string; text: string }>
-    cover!: Blob
+export class EpubBook implements IEpubBookRecord {
+    private static dbPromise: Promise<IDBPDatabase> | null = null
 
     // Database-related properties
-    id!: number // Should only be optional before initialization
-    lastModified?: number // Optional: Timestamp for tracking changes
+    id!: number
+    lastModified?: number
 
-    private static dbPromise: Promise<IDBPDatabase> | null = null
+    // IEpubBookRecord
+    metadata!: IEpubMetadata
+    manifest!: IEpubManifest
+
+    private imgUrls: Record<string, string> = {}
 
     /**
      * Helper method to serialize an EpubBook instance for database storage.
      */
     toRecord(): Record<string, any> {
-        const record: Record<string, any> = {
-            metadata: this.metadata,
-            epubFile: this.epubFile,
+        const record: Partial<IEpubBookRecord> = {
             lastModified: this.lastModified ?? Date.now(),
-            cover: this.cover,
-            nav: this.nav,
-            xhtml: this.xhtml,
-            css: this.css,
-            imgs: this.imgs,
-            charCount: this.charCount,
-            basePath: this.basePath,
-            ...(this.id != null && { id: this.id }), // Include `id` only if it is not null/undefined
+            metadata: this.metadata,
+            manifest: this.manifest,
         }
+
+        if (this.id) record.id = this.id
 
         return record
     }
@@ -60,22 +96,12 @@ export class EpubBook {
      * Helper method to deserialize a database record into an EpubBook instance.
      */
     static fromRecord(record: Record<string, any>): EpubBook {
-        const book = new EpubBook(record.epubFile)
+        const book = new EpubBook()
         book.id = record.id
-        book.metadata = record.metadata
         book.lastModified = record.lastModified
-        book.cover = record.cover
-        book.nav = record.nav
-        book.xhtml = record.xhtml
-        book.css = record.css
-        book.imgs = record.imgs
-        book.charCount = record.charCount
-        book.basePath = record.basePath
+        book.metadata = record.metadata
+        book.manifest = record.manifest
         return book
-    }
-
-    private constructor(f: File) {
-        this.epubFile = f
     }
 
     private static getDB(): Promise<IDBPDatabase> {
@@ -142,22 +168,12 @@ export class EpubBook {
      */
     async delete(): Promise<void> {}
 
-    private getFilePath(fn: string): string {
-        return this.basePath ? `${this.basePath}/${fn}` : fn
-    }
-
-    /** Creates a EpubBook from a file
-     * @param file - an .epub file
-     * @throws
-     * @returns Promise<EpubBook>
-     */
     static async fromFile(file: File): Promise<EpubBook> {
         const starttime = Date.now()
-        const book = new EpubBook(file)
-
         const zip = new JSZip()
         await zip.loadAsync(file)
 
+        const book = new EpubBook()
         const parser = new XMLParser({ ignoreAttributes: false })
 
         // https://www.w3.org/TR/epub-33/#sec-container-metainf
@@ -179,21 +195,13 @@ export class EpubBook {
         }
         const pkgDocumentXml = parser.parse(pkgDocument)
 
+        let basePath = ""
+        const idx = opfFilename.lastIndexOf("/")
+        if (idx > -1) {
+            basePath = opfFilename.slice(0, idx)
+        }
         book.metadata = extractMetadata(pkgDocumentXml)
-
-        // read book manifest
-        const manifest = extractManifest(pkgDocumentXml, opfFilename)
-        book.xhtml = manifest.xhtml
-        book.imgs = manifest.imgs
-        book.css = manifest.css
-        book.basePath = manifest.basePath
-
-        // TODO: undefined
-        book.cover = await zip.file(book.getFilePath(manifest.cover!))?.async("blob")!
-        const navContent = await zip.file(book.getFilePath(manifest.nav!))?.async("text")!
-        book.nav = await parseNavigator(navContent)
-
-        // read book spine
+        book.manifest = await extractManifest(zip, pkgDocumentXml, basePath)
 
         console.log(`Epub loaded in ${Date.now() - starttime}ms`)
 
@@ -205,40 +213,46 @@ export class EpubBook {
      * @param element - The element where the epub will be rendered
      * @returns The images blob urls, the caller needs to free/revoke the urls
      */
-    public async renderContent(element: HTMLElement) {
+    public async renderContent(element: HTMLElement, options: { xhtml: number | "all" }) {
         const starttime = Date.now()
 
-        const zip = new JSZip()
-        await zip.loadAsync(this.epubFile)
-
-        const [contents, imgs] = await Promise.all([
-            Promise.all(
-                this.xhtml.map((xhtml) => zip.file(this.getFilePath(xhtml))?.async("text")!),
-            ),
-            Promise.all(this.imgs.map((img) => zip.file(this.getFilePath(img))?.async("blob")!)),
-        ])
+        if (options.xhtml == "all") {
+            let body = ""
+            for (const xhtml of this.manifest.xhtml) {
+                body += xhtml.content
+            }
+            element.innerHTML = body
+        }
 
         const blobs: Record<string, string> = {}
-        for (let i = 0; i < this.imgs.length; i++) {
-            // TODO: find a better way
-            const imgFilename = getBaseName(this.imgs[i])!
-            const url = URL.createObjectURL(imgs[i])
+        for (let i = 0; i < this.manifest.imgs.length; i++) {
+            const imgFilename = getBaseName(this.manifest.imgs[i].filename)!
+            const url = URL.createObjectURL(this.manifest.imgs[i].blob)
             blobs[imgFilename] = url
         }
 
-        let body = ""
-        let id = 0
-        for (const [i, xhtml] of contents.entries()) {
-            const filename = this.xhtml[i].split("/").pop() ?? this.xhtml[i]
-            const [content, charCount, currId] = extractBodyContent(filename, xhtml, blobs, id)
-            body += content
-            id = currId
-            this.charCount += charCount
+        // Update all <img>, <svg image>, and <image> tags with correct URLs
+        const updateImageSrc = (el: Element, attr: string) => {
+            const val = el.getAttribute(attr)
+            if (!val) return
+            const base = getBaseName(val)
+            if (base && blobs[base]) el.setAttribute(attr, blobs[base])
         }
-        element.innerHTML = body
+
+        // <img src="">
+        element.querySelectorAll("img[src]").forEach((el) => updateImageSrc(el, "src"))
+        // <image xlink:href="">
+        element
+            .querySelectorAll("image[xlink\\:href]")
+            .forEach((el) => updateImageSrc(el, "xlink:href"))
+        // <image href="">
+        element.querySelectorAll("image[href]").forEach((el) => updateImageSrc(el, "href"))
+        // <svg image> (for completeness, though usually <image> is used)
+        element
+            .querySelectorAll("svg image[xlink\\:href]")
+            .forEach((el) => updateImageSrc(el, "xlink:href"))
 
         console.log(`Epub rendered in ${Date.now() - starttime}ms`)
-
         return Object.values(blobs)
     }
 
@@ -249,24 +263,11 @@ export class EpubBook {
     public async insertCss() {
         const starttime = Date.now()
 
-        const zip = new JSZip()
-        await zip.loadAsync(this.epubFile)
-
-        const cssContent = await Promise.all(
-            this.css.map((css) => zip.file(this.getFilePath(css))?.async("text")!),
-        )
-
-        let styleContent = ""
-        for (const css of cssContent) {
-            styleContent += parseCss(css).join("\n")
-        }
-
         const style = document.createElement("style")
         style.id = "temp-css"
-        style.textContent = styleContent
+        style.textContent = this.manifest.css
         document.head.append(style)
 
-        // document.body.style.fontSize = "18px"
         console.log(`Css injected in ${Date.now() - starttime}ms`)
     }
 }
@@ -328,21 +329,24 @@ function extractMetadata(pkgDocumentXml: any) {
     return metadata
 }
 
-/**
- * @param pkgDocumentXml -
- * @returns
- */
-function extractManifest(pkgDocumentXml: any, opfFilename: string) {
+async function extractManifest(zip: JSZip, pkgDocumentXml: any, basePath?: string) {
     const items = pkgDocumentXml.package?.manifest?.item
     if (!items || !Array.isArray(items)) {
         throw new Error("Package Document Item(s) not found. Not a valid epub file.")
     }
 
-    const xhtml: string[] = []
-    const imgs: string[] = []
-    const css: string[] = []
-    let cover: string | undefined = undefined
-    let nav: string | undefined = undefined
+    const manifest: IEpubManifest = {
+        totalChars: 0,
+        nav: [],
+        xhtml: [],
+        imgs: [],
+        css: "",
+    }
+
+    let navHref = ""
+    const xhtmlHref: string[] = []
+    const imgsHref: string[] = []
+    const cssHref: string[] = []
 
     for (let i = 0; i < items.length; i++) {
         const item = items[i]
@@ -355,28 +359,56 @@ function extractManifest(pkgDocumentXml: any, opfFilename: string) {
 
         if (type === "application/xhtml+xml") {
             if (item["@_properties"] === "nav") {
-                nav = href
+                navHref = href
                 continue
             }
-            xhtml.push(href)
+            xhtmlHref.push(href)
         } else if (type === "image/jpeg" || type === "image/png" || type === "image/svg+xml") {
             if ((item["@_id"] as string).includes("cover")) {
-                cover = href
+                imgsHref.splice(0, 0, href)
+                continue
             }
-
-            imgs.push(href)
+            imgsHref.push(href)
         } else if (type === "text/css") {
-            css.push(href)
+            cssHref.push(href)
         }
     }
 
-    let base = ""
-    const idx = opfFilename.lastIndexOf("/")
-    if (idx > -1) {
-        base = opfFilename.slice(0, idx)
+    const [navContent, xhtmlContent, cssContent, imgs] = await Promise.all([
+        zip.file(getFilePath(basePath, navHref))?.async("text")!,
+        Promise.all(
+            xhtmlHref.map((xhtml) => zip.file(getFilePath(basePath, xhtml))?.async("text")!),
+        ),
+        Promise.all(cssHref.map((css) => zip.file(getFilePath(basePath, css))?.async("text")!)),
+        Promise.all(imgsHref.map((img) => zip.file(getFilePath(basePath, img))?.async("blob")!)),
+    ])
+
+    // paragraphs + character counts
+    let currId = 0
+    for (const [i, c] of xhtmlContent.entries()) {
+        const [content, id, charsCount] = parseBodyContent(
+            getFilePath(basePath, xhtmlHref[i]),
+            c,
+            currId,
+        )
+        currId = id
+        manifest.totalChars += charsCount
+        manifest.xhtml.push({ lastIndex: id, content })
     }
 
-    return { xhtml, imgs, css, basePath: base, cover, nav }
+    // TOC (Navigator)
+    manifest.nav = parseNavigator(navContent)
+
+    // Css
+    for (const css of cssContent) {
+        manifest.css += parseCss(css).join("\n")
+    }
+
+    for (let i = 0; i < imgs.length; i++) {
+        manifest.imgs.push({ filename: imgsHref[i], blob: imgs[i] })
+    }
+
+    return manifest
 }
 
 /**
@@ -450,7 +482,7 @@ function getJapaneseCharacterCount(text: string): number {
 }
 
 // https://www.w3.org/TR/epub-33/#sec-nav-def-model
-async function parseNavigator(navContent: string) {
+function parseNavigator(navContent: string) {
     const starttime = Date.now()
     const nav = navContent
 
@@ -472,7 +504,6 @@ async function parseNavigator(navContent: string) {
             }
 
             if (insideLi && name === "a") {
-                console.log(name)
                 items.push({ href: attribs.href, text: "none" })
             }
 
@@ -505,18 +536,17 @@ async function parseNavigator(navContent: string) {
     return items
 }
 
-function extractBodyContent(
+function parseBodyContent(
     filename: string,
     xhtml: string,
-    imgUrls: Record<string, string>,
     initialId: number,
 ): [string, number, number] {
     let id = initialId
     let insideBody = false
     let insideP = 0
     let insideRt = 0
-    let charCount = 0
     const content: string[] = []
+    let charsCount = 0
 
     const parser = new Parser({
         onopentag(name, attribs) {
@@ -533,16 +563,6 @@ function extractBodyContent(
                 id++
             }
             if (name === "rt") insideRt++
-
-            if (name === "img") {
-                const src = getBaseName(attribs.src)
-                if (src && imgUrls[src]) attribs.src = imgUrls[src]
-            }
-
-            if (name === "image") {
-                const href = getBaseName(attribs["xlink:href"])
-                if (href && imgUrls[href]) attribs["xlink:href"] = imgUrls[href]
-            }
 
             const attrs = Object.entries(attribs)
                 .map(([k, v]) => `${k}="${v}"`)
@@ -567,20 +587,23 @@ function extractBodyContent(
 
         ontext(text) {
             if (!insideBody) return
-
             content.push(text)
 
             // Count only if inside <p> and NOT inside <rt>
             if (insideP > 0 && insideRt === 0) {
-                charCount += getJapaneseCharacterCount(text)
+                charsCount += getJapaneseCharacterCount(text)
             }
         },
     })
 
-    content.push(`<div id="${filename}">`)
+    content.push(`<div id="${filename}.xhtml">`)
     parser.write(xhtml)
     parser.end()
     content.push("</div>")
 
-    return [content.join(""), charCount, id]
+    return [content.join(""), id, charsCount]
+}
+
+function getFilePath(basePath: string = "", fn: string): string {
+    return basePath ? `${basePath}/${fn}` : fn
 }

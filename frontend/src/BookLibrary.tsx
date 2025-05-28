@@ -11,10 +11,8 @@ export default function BookLibrary() {
         // Generate covers for all books
         const coversMap: Record<number, string> = {}
         books.forEach((book) => {
-            if (book.cover) {
-                const url = URL.createObjectURL(book.cover)
-                coversMap[book.id] = url // Use the book's ID as the key
-            }
+            const url = URL.createObjectURL(book.manifest.imgs[0].blob)
+            coversMap[book.id] = url // Use the book's ID as the key
         })
 
         setCovers(coversMap)
@@ -25,7 +23,7 @@ export default function BookLibrary() {
         if (file) {
             EpubBook.fromFile(file).then((b) => {
                 const id = b.id!
-                const url = URL.createObjectURL(b.cover)
+                const url = URL.createObjectURL(b.manifest.imgs[0].blob)
                 setCovers((prev) => ({ ...prev, [id]: url }))
                 setBooks((prev) => [...prev, b])
             })
