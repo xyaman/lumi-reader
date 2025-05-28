@@ -43,6 +43,12 @@ export default function BookReader() {
             const cursor = hrefBaseName.lastIndexOf("#")
             console.log(hrefBaseName.slice(cursor + 1))
             document.getElementById(hrefBaseName.slice(cursor + 1))?.scrollIntoView()
+        } else {
+            // get current page, see if we need to fetch another, etc
+            // renderContent({xhtml: #id })
+            const cursor = hrefBaseName.lastIndexOf("#")
+            console.log(hrefBaseName.slice(cursor + 1))
+            document.getElementById(hrefBaseName.slice(cursor + 1))?.scrollIntoView()
         }
 
         setShowNav(false)
@@ -128,7 +134,7 @@ export default function BookReader() {
             <Show when={sidebarOpen()}>
                 <div class="fixed top-0 left-0 h-full w-64 bg-gray-700 text-white p-4 z-20">
                     <h2 class="text-xl font-bold">Navigation</h2>
-                    <For each={currBook()?.nav}>
+                    <For each={currBook()?.manifest.nav}>
                         {(item) => (
                             <p
                                 class="cursor-pointer py-2"

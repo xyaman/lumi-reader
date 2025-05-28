@@ -159,6 +159,13 @@ export class EpubBook implements IEpubBookRecord {
         const record = this.toRecord()
         const newId = (await db.put("epubBooks", record)) as number
 
+        // https://web.dev/articles/persistent-storage
+        // @ts-ignore (some browser *may* not support this function)
+        if (navigator.storage && navigator.storage.persist) {
+            const isPersisted = await navigator.storage.persisted()
+            console.log(`Persisted storage granted: ${isPersisted}`)
+        }
+
         if (!this.id) this.id = newId
         return newId
     }
@@ -273,7 +280,7 @@ export class EpubBook implements IEpubBookRecord {
 }
 
 function getBaseName(path: string) {
-    const match = path.match(/(?:.*\/)?([^\/]+\.(?:png|jpe?g|svg))$/i)
+    const match = path.match(/(?:.*\/)?([^\/]+\.(?:png|jpe?g|svg|xhtml))$/i)
     return match ? match[1] : path
 }
 
@@ -596,7 +603,7 @@ function parseBodyContent(
         },
     })
 
-    content.push(`<div id="${filename}.xhtml">`)
+    content.push(`<div id="${getBaseName(filename)}">`)
     parser.write(xhtml)
     parser.end()
     content.push("</div>")
