@@ -15,11 +15,6 @@ interface IEpubMetadata {
 
 interface IEpubManifest {
     /**
-     * Book total chars estimation
-     */
-    totalChars: number
-
-    /**
      * Table of contents.
      */
     nav: { href?: string; text: string }[]
@@ -53,6 +48,11 @@ interface IEpubBookRecord {
     lastModified?: number
 
     /**
+     * Book total chars estimation
+     */
+    totalChars: number
+
+    /**
      * Books metadata, does not follow exactly epub reference.
      */
     metadata: IEpubMetadata
@@ -70,6 +70,7 @@ export class EpubBook implements IEpubBookRecord {
     // Database-related properties
     id!: number
     lastModified?: number
+    totalChars: number = 0
 
     // IEpubBookRecord
     metadata!: IEpubMetadata
@@ -83,6 +84,7 @@ export class EpubBook implements IEpubBookRecord {
             lastModified: this.lastModified ?? Date.now(),
             metadata: this.metadata,
             manifest: this.manifest,
+            totalChars: this.totalChars,
         }
 
         if (this.id) record.id = this.id
@@ -93,12 +95,13 @@ export class EpubBook implements IEpubBookRecord {
     /**
      * Helper method to deserialize a database record into an EpubBook instance.
      */
-    static fromRecord(record: Record<string, any>): EpubBook {
+    static fromRecord(record: IEpubBookRecord): EpubBook {
         const book = new EpubBook()
         book.id = record.id
         book.lastModified = record.lastModified
         book.metadata = record.metadata
         book.manifest = record.manifest
+        book.totalChars = record.totalChars
         return book
     }
 
@@ -340,8 +343,8 @@ async function extractManifest(zip: JSZip, pkgDocumentXml: any, basePath?: strin
         throw new Error("Package Document Item(s) not found. Not a valid epub file.")
     }
 
+    let totalChars = 0
     const manifest: IEpubManifest = {
-        totalChars: 0,
         nav: [],
         xhtml: [],
         imgs: [],
@@ -395,10 +398,10 @@ async function extractManifest(zip: JSZip, pkgDocumentXml: any, basePath?: strin
             getFilePath(basePath, xhtmlHref[i]),
             c,
             currId,
-            manifest.totalChars,
+            totalChars,
         )
         currId = id
-        manifest.totalChars = charsCount
+        totalChars = charsCount
         manifest.xhtml.push({ lastIndex: id, content })
     }
 
