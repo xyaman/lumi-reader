@@ -1,70 +1,69 @@
 import { useNavigate, useParams } from "@solidjs/router"
 import { EpubBook } from "./lib/epub"
-import { createSignal, For, onCleanup, Show } from "solid-js"
+import { createSignal, For, onCleanup, onMount, Show } from "solid-js"
 import { BookMarkIcon } from "./icons"
 import { render } from "solid-js/web"
 
 export default function BookReader() {
     const params = useParams()
     const navigate = useNavigate()
-    let contentRef: HTMLDivElement
-    let containerRef: HTMLDivElement
+    const id = Number(params.id)
 
-    const isPaginated = localStorage.getItem("reader:paginated") !== "false"
-    const isVertical = localStorage.getItem("reader:vertical") === "true"
+    if (!id) navigate("/", { replace: true })
 
+    // Signals
+    const [currBook, setCurrBook] = createSignal<EpubBook | null>(null)
     const [imgUrls, setImgUrls] = createSignal<string[]>([])
     const [sidebarOpen, setSidebarOpen] = createSignal(false)
     const [showNav, setShowNav] = createSignal(false)
-    const [currBook, setCurrBook] = createSignal<EpubBook | null>(null)
 
-    const id = Number(params.id)
-    if (!id) navigate("/", { replace: true })
+    // Refs
+    let containerRef: HTMLDivElement
+    let contentRef: HTMLDivElement
 
-    function flipPage(multiplier: 1 | -1) {
-        const container = containerRef
+    const isPaginated = localStorage.getItem("reader:paginated") === "true"
+    const isVertical = localStorage.getItem("reader:vertical") === "true"
 
-        const offset = isVertical ? container.clientHeight : container.clientWidth
-        const current = isVertical ? container.scrollTop : container.scrollLeft
-        const max = isVertical ? container.scrollHeight : container.scrollWidth
+    const containerClass = () =>
+        !isPaginated
+            ? "px-8 h-screen"
+            : isVertical
+              ? "relative w-[95vw] overflow-hidden snap-y snap-mandatory"
+              : "relative mx-8 py-12 h-screen overflow-x-hidden snap-x snap-mandatory"
 
-        let next = Math.ceil(current + offset * multiplier)
-        next = Math.max(0, Math.min(next, max))
+    const contentClass = () =>
+        !isPaginated
+            ? isVertical
+                ? "text-[20px] writing-mode-vertical"
+                : "text-[20px]"
+            : isVertical
+              ? "h-full w-full [column-width:100vw] [column-fill:auto] [column-gap:0px] text-[20px] writing-mode-vertical"
+              : "h-full [column-width:100vw] [column-fill:auto] [column-gap:0px]"
 
-        isVertical
-            ? container.scrollTo({ top: next, behavior: "instant" })
-            : container.scrollTo({ left: next, behavior: "instant" })
-
+    const flipPage = (multiplier: 1 | -1) => {
+        const offset = isVertical ? containerRef.clientHeight : containerRef.clientWidth
+        const current = isVertical ? containerRef.scrollTop : containerRef.scrollLeft
+        const max = isVertical ? containerRef.scrollHeight : containerRef.scrollWidth
+        const next = Math.max(0, Math.min(Math.ceil(current + offset * multiplier), max))
+        const scrollToOpts = isVertical ? { top: next } : { left: next }
+        containerRef.scrollTo({ ...scrollToOpts, behavior: "instant" })
         handleScroll()
     }
 
-    function navigationGoTo(href?: string) {
+    // TODO: make the difference between paginated and continous
+    // Paginated mode should not load all xhtml at once
+    const navigationGoTo = (href?: string) => {
         if (!href) return
-
-        const hrefBaseName = href.split("/").pop()!
-
-        if (!isPaginated) {
-            const cursor = hrefBaseName.lastIndexOf("#")
-            console.log(hrefBaseName.slice(cursor + 1))
-            document.getElementById(hrefBaseName.slice(cursor + 1))?.scrollIntoView()
-        } else {
-            // get current page, see if we need to fetch another, etc
-            // renderContent({xhtml: #id })
-            const cursor = hrefBaseName.lastIndexOf("#")
-            console.log(hrefBaseName.slice(cursor + 1))
-            document.getElementById(hrefBaseName.slice(cursor + 1))?.scrollIntoView()
-        }
-
+        const anchorId = href.split("#").pop()
+        document.getElementById(anchorId!)?.scrollIntoView()
         setShowNav(false)
         setSidebarOpen(false)
     }
 
-    function setupPagination(container: HTMLElement) {
+    function setupPagination() {
         let startX = 0
 
-        const onTouchStart = (e: TouchEvent) => {
-            startX = e.touches[0].clientX
-        }
+        const onTouchStart = (e: TouchEvent) => (startX = e.touches[0].clientX)
 
         const onTouchEnd = (e: TouchEvent) => {
             const delta = e.changedTouches[0].clientX - startX
@@ -76,8 +75,8 @@ export default function BookReader() {
             else if (e.key === "ArrowUp" || e.key === "PageUp") flipPage(-1)
         }
 
-        container.addEventListener("touchstart", onTouchStart)
-        container.addEventListener("touchend", onTouchEnd)
+        containerRef.addEventListener("touchstart", onTouchStart)
+        containerRef.addEventListener("touchend", onTouchEnd)
         document.addEventListener("keydown", onKeyDown)
         window.addEventListener("resize", () => flipPage(-1))
     }
@@ -93,6 +92,8 @@ export default function BookReader() {
 
         render(() => <BookMarkIcon id={id} />, iconContainer)
 
+        // TODO: this is saving the same bookmarks at rendering again
+        // CHANGE THE LOGIC!
         if (id != "main-bookmark") {
             currBook()?.bookmarks.add(id)
             currBook()?.save()
@@ -103,118 +104,96 @@ export default function BookReader() {
         document.getElementById(id)?.remove()
     }
 
-    function handleScroll() {
-        if (!currBook() || !containerRef.isConnected) return
+    const handleScroll = () => {
+        const book = currBook()
+        if (!book || !containerRef.isConnected) return
 
-        let lastReadIndex = 0
+        let lastIndex = 0
         let currChars = 0
-        const p = document.querySelectorAll("p")
+        const pTags = document.querySelectorAll("p")
 
-        let i
-        for (i = 0; i < p.length; i++) {
-            const rect = p[i].getBoundingClientRect()
+        for (let i = 0; i < pTags.length; i++) {
+            const rect = pTags[i].getBoundingClientRect()
+            const visible =
+                (!isPaginated && !isVertical && rect.bottom > 0) ||
+                (!isPaginated && isVertical && rect.top > 0) ||
+                (isPaginated && !isVertical && rect.x > 0) ||
+                (isPaginated && isVertical && rect.y > 0)
 
-            // Element no longer visible
-            if (!isPaginated && !isVertical && rect.bottom > 0) break
-            if (!isPaginated && isVertical && rect.top > 0) break
-            if (isPaginated && !isVertical && rect.x > 0) break
-            if (isPaginated && isVertical && rect.y > 0) break
-
-            lastReadIndex = Number(p[i].getAttribute("index")) ?? lastReadIndex
-            currChars = Number(p[i].getAttribute("characumm")) ?? currChars
+            if (visible) break
+            lastIndex = Number(pTags[i].getAttribute("index")) ?? lastIndex
+            currChars = Number(pTags[i].getAttribute("characumm")) ?? currChars
         }
 
-        const book = currBook()!
-        book.currParagraphId = lastReadIndex
-        book.save().then(() => console.log("book saved"))
+        book.currParagraphId = lastIndex
+        book.save().catch(console.error)
 
-        const target = i + 1 < p.length ? p[i + 1] : p[i]
-        if (!isVertical) {
-            removeBookmark("main-bookmark")
-            showBookmarkAt(target, "main-bookmark")
-        }
-
-        console.log(lastReadIndex, currChars)
+        removeBookmark("main-bookmark")
+        const target = pTags[lastIndex + 1] || pTags[lastIndex]
+        if (!isVertical && target) showBookmarkAt(target, "main-bookmark")
     }
 
-    EpubBook.getById(id)
-        .then((record) => {
-            if (!record) return navigate("/", { replace: true })
-
-            const book = EpubBook.fromRecord(record)
-            if (book && contentRef) {
-                book.renderContent(contentRef, { xhtml: "all" })
-                    .then(setImgUrls)
-                    .then(() => {
-                        if (book.currParagraphId > 0) {
-                            document
-                                .querySelector(`p[index='${book.currParagraphId}']`)
-                                ?.scrollIntoView()
-                        }
-
-                        document.querySelectorAll("p").forEach((p) => {
-                            const index = p.getAttribute("index")
-                            if (!index) return
-
-                            const highlight = () => {
-                                if (p.style.backgroundColor === "") {
-                                    p.style.backgroundColor = "#e0e0e0"
-                                    showBookmarkAt(p, index)
-                                } else {
-                                    p.style.backgroundColor = ""
-                                    removeBookmark(index)
-                                }
-                            }
-                            p.addEventListener("click", highlight)
-
-                            if (book.bookmarks.has(index)) {
-                                highlight()
-                            }
-                        })
-                    })
-                book.insertCss()
-                setupPagination(containerRef)
-                setCurrBook(book)
-            }
-        })
-        .catch((e) => {
-            console.error("Error when fetching book:", e)
-            navigate("/", { replace: true })
-        })
-
-    onCleanup(() => {
-        imgUrls().forEach((url) => URL.revokeObjectURL(url))
-        document.head.querySelectorAll("#temp-css").forEach((el) => el.remove())
-    })
-
-    const containerClass = () => {
-        if (!isPaginated) return "px-8 h-screen"
-        return isVertical
-            ? "relative w-[95vw] overflow-hidden snap-y snap-mandatory"
-            : "relative mx-8 py-12 h-screen overflow-x-hidden snap-x snap-mandatory"
-    }
-
-    const contentClass = () => {
-        if (!isPaginated) return isVertical ? "text-[20px] writing-mode-vertical" : "text-[20px]"
-        return isVertical
-            ? "h-full w-full [column-width:100vw] [column-fill:auto] [column-gap:0px] text-[20px] writing-mode-vertical"
-            : "h-full [column-width:100vw] [column-fill:auto] [column-gap:0px]"
-    }
-
-    if (!isPaginated) {
+    const initScrollTracking = () => {
         let scrollTimer: number | null = null
-        const handleScrollTimer = () => {
-            if (scrollTimer !== null) {
-                clearTimeout(scrollTimer)
-            }
 
+        const debouncedScroll = () => {
+            if (scrollTimer !== null) clearTimeout(scrollTimer)
             scrollTimer = setTimeout(handleScroll, 300)
         }
 
-        document.addEventListener("scroll", handleScrollTimer)
-
-        onCleanup(() => document.removeEventListener("scroll", handleScrollTimer))
+        document.addEventListener("scroll", debouncedScroll)
+        return debouncedScroll
     }
+
+    const initializeBook = async () => {
+        try {
+            const record = await EpubBook.getById(id)
+            if (!record) return navigate("/", { replace: true })
+
+            const book = EpubBook.fromRecord(record)
+            const images = await book.renderContent(contentRef, { xhtml: "all" })
+            book.insertCss()
+            setCurrBook(book)
+            setImgUrls(images)
+
+            const target = book.currParagraphId
+                ? document.querySelector(`p[index='${book.currParagraphId}']`)
+                : null
+            target?.scrollIntoView()
+
+            document.querySelectorAll("p").forEach((p) => {
+                const index = p.getAttribute("index")
+                if (!index) return
+
+                const highlight = () => {
+                    const active = p.style.backgroundColor !== ""
+                    p.style.backgroundColor = active ? "" : "#e0e0e0"
+                    active ? removeBookmark(index) : showBookmarkAt(p, index)
+                }
+
+                p.addEventListener("click", highlight)
+                if (book.bookmarks.has(index)) highlight()
+            })
+
+            setupPagination()
+        } catch (e) {
+            console.error("Failed to load book", e)
+            navigate("/", { replace: true })
+        }
+    }
+
+    onMount(() => {
+        initializeBook()
+        if (!isPaginated) {
+            const debouncedScroll = initScrollTracking()
+            onCleanup(() => document.removeEventListener("scroll", debouncedScroll))
+        }
+
+        onCleanup(() => {
+            imgUrls().forEach((url) => URL.revokeObjectURL(url))
+            document.head.querySelectorAll("#temp-css").forEach((el) => el.remove())
+        })
+    })
 
     return (
         <div>
