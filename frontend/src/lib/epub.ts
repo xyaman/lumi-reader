@@ -47,6 +47,8 @@ interface IEpubBookRecord {
      */
     lastModified?: number
 
+    currParagraphId: number
+
     /**
      * Book total chars estimation
      */
@@ -70,6 +72,7 @@ export class EpubBook implements IEpubBookRecord {
     // Database-related properties
     id!: number
     lastModified?: number
+    currParagraphId!: number
     totalChars: number = 0
 
     // IEpubBookRecord
@@ -81,9 +84,10 @@ export class EpubBook implements IEpubBookRecord {
      */
     toRecord(): Record<string, any> {
         const record: Partial<IEpubBookRecord> = {
-            lastModified: this.lastModified ?? Date.now(),
+            lastModified: Date.now(),
             metadata: this.metadata,
             manifest: this.manifest,
+            currParagraphId: this.currParagraphId,
             totalChars: this.totalChars,
         }
 
@@ -101,6 +105,7 @@ export class EpubBook implements IEpubBookRecord {
         book.lastModified = record.lastModified
         book.metadata = record.metadata
         book.manifest = record.manifest
+        book.currParagraphId = record.currParagraphId ?? 0
         book.totalChars = record.totalChars
         return book
     }
@@ -209,7 +214,9 @@ export class EpubBook implements IEpubBookRecord {
             basePath = opfFilename.slice(0, idx)
         }
         book.metadata = extractMetadata(pkgDocumentXml)
-        book.manifest = await extractManifest(zip, pkgDocumentXml, basePath)
+        const [manifest, totalChars] = await extractManifest(zip, pkgDocumentXml, basePath)
+        book.manifest = manifest
+        book.totalChars = totalChars
 
         console.log(`Epub loaded in ${Date.now() - starttime}ms`)
 
@@ -337,7 +344,11 @@ function extractMetadata(pkgDocumentXml: any) {
     return metadata
 }
 
-async function extractManifest(zip: JSZip, pkgDocumentXml: any, basePath?: string) {
+async function extractManifest(
+    zip: JSZip,
+    pkgDocumentXml: any,
+    basePath?: string,
+): Promise<[IEpubManifest, number]> {
     const items = pkgDocumentXml.package?.manifest?.item
     if (!items || !Array.isArray(items)) {
         throw new Error("Package Document Item(s) not found. Not a valid epub file.")
@@ -417,7 +428,7 @@ async function extractManifest(zip: JSZip, pkgDocumentXml: any, basePath?: strin
         manifest.imgs.push({ filename: imgsHref[i], blob: imgs[i] })
     }
 
-    return manifest
+    return [manifest, totalChars]
 }
 
 /**

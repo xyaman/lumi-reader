@@ -81,25 +81,29 @@ export default function BookReader() {
     }
 
     function handleScroll() {
+        if (!currBook() || !containerRef.isConnected) return
+
         let lastReadIndex = 0
         let currChars = 0
-
-        const book = currBook()
-        if (!book) return
-
         const p = document.querySelectorAll("p")
 
-        for (let i = 0; i < p.length; i++) {
+        let i
+        for (i = 0; i < p.length; i++) {
             const rect = p[i].getBoundingClientRect()
 
             // Element no longer visible
-            if (!isPaginated && rect.bottom > 0) break
-
-            if (isPaginated && rect.x > 0) break
+            if (!isPaginated && !isVertical && rect.bottom > 0) break
+            if (!isPaginated && isVertical && rect.top > 0) break
+            if (isPaginated && !isVertical && rect.x > 0) break
+            if (isPaginated && isVertical && rect.y > 0) break
 
             lastReadIndex = Number(p[i].getAttribute("index")) ?? lastReadIndex
             currChars = Number(p[i].getAttribute("characumm")) ?? currChars
         }
+
+        const book = currBook()!
+        book.currParagraphId = lastReadIndex
+        book.save().then(() => console.log("book saved"))
 
         console.log(lastReadIndex, currChars)
     }
