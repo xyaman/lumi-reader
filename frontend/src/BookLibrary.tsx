@@ -70,11 +70,11 @@ export default function BookLibrary() {
                                         class="aspect-[3/4] w-full object-cover hover:shadow-lg"
                                     />
                                 </a>
-                                <div class="pt-2">
-                                    <p class="text-sm text-black line-clamp-2">
-                                        {book.metadata.title}
-                                    </p>
-                                </div>
+                                <progress
+                                    class="z-10 bottom-0 right-0 block float-right w-full"
+                                    value={book.currChars}
+                                    max={book.totalChars}
+                                />
                             </div>
                         )}
                     </For>
