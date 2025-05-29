@@ -46,8 +46,8 @@ interface IEpubBookRecord {
      * (DB) Timestamp for tracking changes (server and client)
      */
     lastModified?: number
-
     currParagraphId: number
+    bookmarks: Set<string>
 
     /**
      * Book total chars estimation
@@ -74,6 +74,7 @@ export class EpubBook implements IEpubBookRecord {
     lastModified?: number
     currParagraphId!: number
     totalChars: number = 0
+    bookmarks = new Set<string>()
 
     // IEpubBookRecord
     metadata!: IEpubMetadata
@@ -89,6 +90,7 @@ export class EpubBook implements IEpubBookRecord {
             manifest: this.manifest,
             currParagraphId: this.currParagraphId,
             totalChars: this.totalChars,
+            bookmarks: this.bookmarks,
         }
 
         if (this.id) record.id = this.id
@@ -107,6 +109,7 @@ export class EpubBook implements IEpubBookRecord {
         book.manifest = record.manifest
         book.currParagraphId = record.currParagraphId ?? 0
         book.totalChars = record.totalChars
+        book.bookmarks = record.bookmarks
         return book
     }
 

@@ -1,6 +1,8 @@
 import { useNavigate, useParams } from "@solidjs/router"
 import { EpubBook } from "./lib/epub"
 import { createSignal, For, onCleanup, Show } from "solid-js"
+import { BookMarkIcon } from "./icons"
+import { render } from "solid-js/web"
 
 export default function BookReader() {
     const params = useParams()
@@ -80,6 +82,27 @@ export default function BookReader() {
         window.addEventListener("resize", () => flipPage(-1))
     }
 
+    function showBookmarkAt(target: HTMLElement, id: string) {
+        const iconContainer = document.createElement("span")
+        iconContainer.id = id
+        iconContainer.style.marginLeft = "8px"
+        iconContainer.style.verticalAlign = "middle"
+        iconContainer.style.display = "inline-block"
+
+        target.appendChild(iconContainer)
+
+        render(() => <BookMarkIcon id={id} />, iconContainer)
+
+        if (id != "main-bookmark") {
+            currBook()?.bookmarks.add(id)
+            currBook()?.save()
+        }
+    }
+
+    function removeBookmark(id: string) {
+        document.getElementById(id)?.remove()
+    }
+
     function handleScroll() {
         if (!currBook() || !containerRef.isConnected) return
 
@@ -105,6 +128,12 @@ export default function BookReader() {
         book.currParagraphId = lastReadIndex
         book.save().then(() => console.log("book saved"))
 
+        const target = i + 1 < p.length ? p[i + 1] : p[i]
+        if (!isVertical) {
+            removeBookmark("main-bookmark")
+            showBookmarkAt(target, "main-bookmark")
+        }
+
         console.log(lastReadIndex, currChars)
     }
 
@@ -114,7 +143,35 @@ export default function BookReader() {
 
             const book = EpubBook.fromRecord(record)
             if (book && contentRef) {
-                book.renderContent(contentRef, { xhtml: "all" }).then(setImgUrls)
+                book.renderContent(contentRef, { xhtml: "all" })
+                    .then(setImgUrls)
+                    .then(() => {
+                        if (book.currParagraphId > 0) {
+                            document
+                                .querySelector(`p[index='${book.currParagraphId}']`)
+                                ?.scrollIntoView()
+                        }
+
+                        document.querySelectorAll("p").forEach((p) => {
+                            const index = p.getAttribute("index")
+                            if (!index) return
+
+                            const highlight = () => {
+                                if (p.style.backgroundColor === "") {
+                                    p.style.backgroundColor = "#e0e0e0"
+                                    showBookmarkAt(p, index)
+                                } else {
+                                    p.style.backgroundColor = ""
+                                    removeBookmark(index)
+                                }
+                            }
+                            p.addEventListener("click", highlight)
+
+                            if (book.bookmarks.has(index)) {
+                                highlight()
+                            }
+                        })
+                    })
                 book.insertCss()
                 setupPagination(containerRef)
                 setCurrBook(book)
@@ -155,6 +212,8 @@ export default function BookReader() {
         }
 
         document.addEventListener("scroll", handleScrollTimer)
+
+        onCleanup(() => document.removeEventListener("scroll", handleScrollTimer))
     }
 
     return (
