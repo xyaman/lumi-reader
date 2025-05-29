@@ -53,6 +53,7 @@ interface IEpubBookRecord {
      * Book total chars estimation
      */
     totalChars: number
+    currChars: number
 
     /**
      * Books metadata, does not follow exactly epub reference.
@@ -73,7 +74,8 @@ export class EpubBook implements IEpubBookRecord {
     id!: number
     lastModified?: number
     currParagraphId!: number
-    totalChars: number = 0
+    totalChars = 0
+    currChars = 0
     bookmarks = new Set<string>()
 
     // IEpubBookRecord
@@ -90,6 +92,7 @@ export class EpubBook implements IEpubBookRecord {
             manifest: this.manifest,
             currParagraphId: this.currParagraphId,
             totalChars: this.totalChars,
+            currChars: this.currChars,
             bookmarks: this.bookmarks,
         }
 
@@ -109,6 +112,7 @@ export class EpubBook implements IEpubBookRecord {
         book.manifest = record.manifest
         book.currParagraphId = record.currParagraphId ?? 0
         book.totalChars = record.totalChars
+        book.currChars = record.currChars
         book.bookmarks = record.bookmarks
         return book
     }

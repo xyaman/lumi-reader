@@ -119,6 +119,7 @@ export default function BookReader() {
         }
 
         book.currParagraphId = lastIndex
+        book.currChars = currChars
         book.save().catch(console.error)
 
         removeBookmark("main-bookmark")
