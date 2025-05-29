@@ -91,13 +91,6 @@ export default function BookReader() {
         target.appendChild(iconContainer)
 
         render(() => <BookMarkIcon id={id} />, iconContainer)
-
-        // TODO: this is saving the same bookmarks at rendering again
-        // CHANGE THE LOGIC!
-        if (id != "main-bookmark") {
-            currBook()?.bookmarks.add(id)
-            currBook()?.save()
-        }
     }
 
     function removeBookmark(id: string) {
@@ -165,14 +158,20 @@ export default function BookReader() {
                 const index = p.getAttribute("index")
                 if (!index) return
 
-                const highlight = () => {
+                const highlight = (updateDb: boolean = true) => {
                     const active = p.style.backgroundColor !== ""
                     p.style.backgroundColor = active ? "" : "#e0e0e0"
+
                     active ? removeBookmark(index) : showBookmarkAt(p, index)
+
+                    if (updateDb) {
+                        active ? book.bookmarks.delete(index) : book.bookmarks.add(index)
+                        book.save()
+                    }
                 }
 
-                p.addEventListener("click", highlight)
-                if (book.bookmarks.has(index)) highlight()
+                p.addEventListener("click", () => highlight())
+                if (book.bookmarks.has(index)) highlight(false)
             })
 
             setupPagination()
