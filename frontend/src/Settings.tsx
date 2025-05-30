@@ -4,19 +4,23 @@ import { createSignal, onMount } from "solid-js"
 export default function Settings() {
     const [paginated, setPaginated] = createSignal(true)
     const [vertical, setVertical] = createSignal(false)
+    const [darkTheme, setDarkTheme] = createSignal(false)
     const navigate = useNavigate()
 
     onMount(() => {
         const storedPaginated = localStorage.getItem("reader:paginated")
         const storedVertical = localStorage.getItem("reader:vertical")
+        const darkTheme = localStorage.getItem("reader:dark-theme")
 
         if (storedPaginated !== null) setPaginated(storedPaginated === "true")
         if (storedVertical !== null) setVertical(storedVertical === "true")
+        if (darkTheme !== null) setDarkTheme(darkTheme === "true")
     })
 
     const saveSettings = () => {
         localStorage.setItem("reader:paginated", String(paginated()))
         localStorage.setItem("reader:vertical", String(vertical()))
+        localStorage.setItem("reader:dark-theme", String(darkTheme()))
         alert("settings saved")
         navigate("/")
     }
@@ -42,6 +46,16 @@ export default function Settings() {
                         onInput={(e) => setVertical(e.currentTarget.checked)}
                     />
                     Vertical Text Mode
+                </label>
+            </div>
+            <div>
+                <label class="flex items-center gap-2">
+                    <input
+                        type="checkbox"
+                        checked={darkTheme()}
+                        onInput={(e) => setDarkTheme(e.currentTarget.checked)}
+                    />
+                    Dark Mode
                 </label>
             </div>
             <button class="px-4 py-2 bg-blue-600 text-white rounded" onClick={saveSettings}>

@@ -23,6 +23,7 @@ export default function BookReader() {
 
     const isPaginated = localStorage.getItem("reader:paginated") === "true"
     const isVertical = localStorage.getItem("reader:vertical") === "true"
+    const isDarkTheme = localStorage.getItem("reader:dark-theme") === "true"
 
     const containerClass = () =>
         !isPaginated
@@ -185,6 +186,10 @@ export default function BookReader() {
         if (!isPaginated) {
             const debouncedScroll = initScrollTracking()
             onCleanup(() => document.removeEventListener("scroll", debouncedScroll))
+        }
+
+        if (isDarkTheme) {
+            document.body.className = "bg-gray-600 text-gray-200"
         }
 
         onCleanup(() => {
