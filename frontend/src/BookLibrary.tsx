@@ -7,14 +7,11 @@ export default function BookLibrary() {
 
     EpubBook.getAll().then((books) => {
         setBooks(books)
-        console.log(books)
-        // Generate covers for all books
         const coversMap: Record<number, string> = {}
         books.forEach((book) => {
             const url = URL.createObjectURL(book.manifest.imgs[0].blob)
-            coversMap[book.id] = url // Use the book's ID as the key
+            coversMap[book.id] = url
         })
-
         setCovers(coversMap)
     })
 
@@ -38,48 +35,55 @@ export default function BookLibrary() {
     })
 
     return (
-        <>
-            <div class="h-dvh p-6 bg-gray-300">
-                <header class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
-                    <h1 class="text-3xl font-bold tracking-tight text-black">Reader</h1>
-                    <div class="flex flex-wrap gap-3 items-center">
-                        <label class="cursor-pointer px-4 py-2 rounded-lg bg-gray-800 text-white shadow-sm hover:opacity-80 transition">
-                            Upload
-                            <input onInput={onBook} type="file" accept=".epub" class="hidden" />
-                        </label>
-                        <a
-                            href="/settings"
-                            class="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800 text-white shadow-sm hover:opacity-80 transition"
-                        >
-                            Settings
-                        </a>
-                        <button class="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800 text-white shadow-sm hover:opacity-80 transition">
-                            Profile
-                        </button>
-                    </div>
-                </header>
+        <div class="h-dvh flex flex-col bg-gray-100">
+            {/* Navbar */}
+            <nav class="bg-white shadow-md border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+                <h1 class="text-2xl font-bold text-gray-800">lumireader</h1>
+                <div class="flex gap-3">
+                    <label class="relative inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer transition">
+                        <span>Upload</span>
+                        <input
+                            type="file"
+                            accept=".epub"
+                            onInput={onBook}
+                            class="absolute inset-0 opacity-0 cursor-pointer"
+                        />
+                    </label>
+                    <a
+                        href="/settings"
+                        class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
+                    >
+                        Settings
+                    </a>
+                    <button class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition">
+                        Profile
+                    </button>
+                </div>
+            </nav>
 
-                <main class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-6">
+            {/* Main content */}
+            <main class="flex-1 overflow-y-auto p-6">
+                <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-6">
                     <For each={books()}>
                         {(book) => (
-                            <div class="overflow-hidden transition-shadow cursor-pointer transform">
+                            <div class="overflow-hidden rounded-md shadow hover:shadow-lg transition cursor-pointer bg-white">
                                 <a href={`reader/${book.id}`}>
                                     <img
                                         src={covers()[book.id!]}
                                         alt={book.metadata.title}
-                                        class="aspect-[3/4] w-full object-cover hover:shadow-lg"
+                                        class="aspect-[3/4] w-full object-cover"
                                     />
                                 </a>
                                 <progress
-                                    class="z-10 bottom-0 right-0 block float-right w-full"
+                                    class="block w-full h-2 bg-gray-200"
                                     value={book.currChars}
                                     max={book.totalChars}
                                 />
                             </div>
                         )}
                     </For>
-                </main>
-            </div>
-        </>
+                </div>
+            </main>
+        </div>
     )
 }

@@ -5,23 +5,21 @@
       "name": "lumi-reader",
       "dependencies": {
         "@solidjs/router": "^0.15.3",
-        "@tailwindcss/vite": "^4.1.6",
         "fast-xml-parser": "^5.2.2",
         "htmlparser2": "^10.0.0",
         "idb": "^8.0.2",
         "jszip": "^3.10.1",
-        "postcss": "^8.5.3",
         "solid-js": "^1.9.5",
-        "tailwindcss": "^4.1.6",
       },
       "devDependencies": {
         "@eslint/js": "^9.26.0",
-        "@types/postcss-js": "^4.0.4",
+        "@tailwindcss/vite": "^4.1.6",
         "eslint": "^9.26.0",
         "eslint-plugin-solid": "^0.14.5",
         "globals": "^16.0.0",
         "jsdom": "^26.1.0",
         "prettier": "^3.5.3",
+        "tailwindcss": "^4.1.6",
         "typescript": "~5.7.2",
         "typescript-eslint": "^8.31.1",
         "vite": "^6.3.1",
@@ -256,8 +254,6 @@
     "@types/estree": ["@types/estree@1.0.7", "", {}, "sha512-w28IoSUCJpidD/TGviZwwMJckNESJZXFu7NBZ5YJ4mEUnNraUn9Pm8HSZm/jDF1pDWYKspWE7oVphigUPRakIQ=="],
 
     "@types/json-schema": ["@types/json-schema@7.0.15", "", {}, "sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA=="],
-
-    "@types/postcss-js": ["@types/postcss-js@4.0.4", "", { "dependencies": { "postcss": "^8.3.3" } }, "sha512-j5+GMZVIPCJpRTwI/mO64mCzv7X+zAEq3JP0EV2lo/BrLWHAohEubUJimIAY23rH27+wKce0fXUYjAdBoqlaYw=="],
 
     "@typescript-eslint/eslint-plugin": ["@typescript-eslint/eslint-plugin@8.32.1", "", { "dependencies": { "@eslint-community/regexpp": "^4.10.0", "@typescript-eslint/scope-manager": "8.32.1", "@typescript-eslint/type-utils": "8.32.1", "@typescript-eslint/utils": "8.32.1", "@typescript-eslint/visitor-keys": "8.32.1", "graphemer": "^1.4.0", "ignore": "^7.0.0", "natural-compare": "^1.4.0", "ts-api-utils": "^2.1.0" }, "peerDependencies": { "@typescript-eslint/parser": "^8.0.0 || ^8.0.0-alpha.0", "eslint": "^8.57.0 || ^9.0.0", "typescript": ">=4.8.4 <5.9.0" } }, "sha512-6u6Plg9nP/J1GRpe/vcjjabo6Uc5YQPAMxsgQyGC/I0RuukiG1wIe3+Vtg3IrSCVJDmqK3j8adrtzXSENRtFgg=="],
 

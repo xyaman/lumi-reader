@@ -35,6 +35,7 @@ export function parseCss(cssText: string) {
         }
 
         if (selector[0] === ".") {
+        if (selector[0] === "." && !selector.includes(".bg-")) {
             // ignore empty classes
             if (cssText.slice(blockStart, cursor).trim() === "}") continue
             rules.push(cssText.slice(selectorStart, cursor))

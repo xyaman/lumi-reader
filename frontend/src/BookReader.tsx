@@ -160,7 +160,7 @@ export default function BookReader() {
 
                 const highlight = (updateDb: boolean = true) => {
                     const active = p.style.backgroundColor !== ""
-                    p.style.backgroundColor = active ? "" : "#e0e0e0"
+                    // p.style.backgroundColor = active ? "" : "#e0e0e0"
 
                     active ? removeBookmark(index) : showBookmarkAt(p, index)
 
@@ -199,36 +199,66 @@ export default function BookReader() {
     })
 
     return (
-        <div>
+        <div class="bg-white dark:bg-zinc-700 text-black dark:text-white">
             <button
-                onClick={() => setShowNav(true)}
+                onClick={() => {
+                    setShowNav(true)
+                    setSidebarOpen(false)
+                }}
                 class="fixed top-0 left-0 right-0 h-8 z-10 bg-transparent"
             ></button>
 
             <Show when={showNav()}>
-                <nav class="fixed top-0 left-0 w-full h-12 bg-gray-700 text-white p-2 z-20">
-                    <div class="flex justify-between items-center mb-6">
-                        <button onClick={() => setSidebarOpen(true)} class="text-xl font-semibold">
-                            Navigation
-                        </button>
-                    </div>
+                <nav class="fixed top-0 left-0 w-full h-14 bg-white dark:bg-gray-900 backdrop-blur-md shadow-md text-gray-900 dark:text-white px-4 z-30 flex items-center justify-between transition-all duration-300">
+                    <button
+                        onClick={() => {
+                            setSidebarOpen(true)
+                            setShowNav(false)
+                        }}
+                        class="flex items-center space-x-2 text-base font-semibold hover:underline"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke-width="1.5"
+                            stroke="currentColor"
+                            class="w-5 h-5"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M3.75 6.75h16.5m-16.5 5.25h16.5m-16.5 5.25h16.5"
+                            />
+                        </svg>
+                    </button>
                 </nav>
             </Show>
 
             <Show when={sidebarOpen()}>
-                <div class="fixed top-0 left-0 h-full w-64 bg-gray-700 text-white p-4 z-20">
-                    <h2 class="text-xl font-bold">Navigation</h2>
-                    <For each={currBook()?.manifest.nav}>
-                        {(item) => (
-                            <p
-                                class="cursor-pointer py-2"
-                                onClick={() => navigationGoTo(item.href)}
-                            >
-                                {item.text}
-                            </p>
-                        )}
-                    </For>
-                </div>
+                <aside class="fixed top-0 left-0 h-full w-72 bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-lg p-5 z-40 transition-transform duration-300">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold">Table of Contents</h2>
+                        <button
+                            class="text-gray-500 hover:text-gray-800 dark:hover:text-white"
+                            onClick={() => setSidebarOpen(false)}
+                        >
+                            ✕
+                        </button>
+                    </div>
+                    <nav class="space-y-2">
+                        <For each={currBook()?.manifest.nav}>
+                            {(item) => (
+                                <p
+                                    class="cursor-pointer text-sm px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                                    onClick={() => navigationGoTo(item.href)}
+                                >
+                                    {item.text}
+                                </p>
+                            )}
+                        </For>
+                    </nav>
+                </aside>
             </Show>
 
             <div
@@ -240,7 +270,11 @@ export default function BookReader() {
                     setShowNav(false)
                 }}
             >
-                <div id="reader-content" ref={(el) => (contentRef = el)} class={contentClass()} />
+                <div
+                    id="reader-content"
+                    ref={(el) => (contentRef = el)}
+                    class={contentClass()}
+                ></div>
             </div>
         </div>
     )
