@@ -60,7 +60,7 @@ export default function BookReader() {
         setSidebarOpen(false)
     }
 
-    function setupPagination() {
+    const setupPagination = () => {
         let startX = 0
 
         const onTouchStart = (e: TouchEvent) => (startX = e.touches[0].clientX)
@@ -81,7 +81,7 @@ export default function BookReader() {
         window.addEventListener("resize", () => flipPage(-1))
     }
 
-    function showBookmarkAt(target: HTMLElement, id: string) {
+    const showBookmarkAt = (target: HTMLElement, id: string) => {
         const iconContainer = document.createElement("span")
         iconContainer.id = id
         iconContainer.style.marginLeft = "8px"
@@ -93,9 +93,7 @@ export default function BookReader() {
         render(() => <BookMarkIcon id={id} />, iconContainer)
     }
 
-    function removeBookmark(id: string) {
-        document.getElementById(id)?.remove()
-    }
+    const removeBookmark = (id: string) => document.getElementById(id)?.remove()
 
     const handleScroll = () => {
         const book = currBook()

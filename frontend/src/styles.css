@@ -11,9 +11,9 @@ body {
     writing-mode: vertical-rl;
 }
 
-#reader-content > * {
-  scroll-snap-align: start;
-}
+/* #reader-content > * { */
+/*   scroll-snap-align: start; */
+/* } */
 
 /* TODO: find a less expensive way? */
 *:has(> img),
