@@ -103,6 +103,7 @@ export default function BookReader() {
         let lastIndex = 0
         let currChars = 0
         const pTags = document.querySelectorAll("p")
+        const pTags = document.querySelectorAll("p[index]")
 
         for (let i = 0; i < pTags.length; i++) {
             const rect = pTags[i].getBoundingClientRect()
