@@ -4,6 +4,7 @@ import { createSignal, For, onCleanup, onMount, Show } from "solid-js"
 import { BookMarkIcon } from "./icons"
 import { render } from "solid-js/web"
 import Navbar from "./components/Navbar"
+import Sidebar from "./components/Sidebar"
 
 export default function BookReader() {
     const params = useParams()
@@ -235,34 +236,24 @@ export default function BookReader() {
                 </Navbar>
             </Show>
 
-            <aside
-                class={`fixed top-0 left-0 h-full w-72 bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-lg p-5 z-40 transform transition-transform duration-300 ${
-                    sidebarOpen() ? "translate-x-0" : "-translate-x-full"
-                }`}
+            <Sidebar
+                open={sidebarOpen()}
+                side="left"
+                title="Table of Contents"
+                overlay={true}
+                onClose={() => setSidebarOpen(false)}
             >
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-semibold">Table of Contents</h2>
-                    <button
-                        class="text-gray-500 hover:text-gray-800 dark:hover:text-white"
-                        onClick={() => setSidebarOpen(false)}
-                    >
-                        ✕
-                    </button>
-                </div>
-                <nav class="space-y-2">
-                    <For each={currBook()?.manifest.nav}>
-                        {(item) => (
-                            <p
-                                class="cursor-pointer text-sm px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
-                                onClick={() => navigationGoTo(item.href)}
-                            >
-                                {item.text}
-                            </p>
-                        )}
-                    </For>
-                </nav>
-            </aside>
-
+                <For each={currBook()?.manifest.nav}>
+                    {(item) => (
+                        <p
+                            class="cursor-pointer text-sm px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                            onClick={() => navigationGoTo(item.href)}
+                        >
+                            {item.text}
+                        </p>
+                    )}
+                </For>
+            </Sidebar>
             <div
                 id="reader-container"
                 class={containerClass()}
