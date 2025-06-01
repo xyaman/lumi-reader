@@ -40,6 +40,7 @@ export default function BookReader() {
     // Refs
     let containerRef: HTMLDivElement
     let contentRef: HTMLDivElement
+    let charCounterRef: HTMLSpanElement
 
     const isPaginated = localStorage.getItem("reader:paginated") === "true"
     const isVertical = localStorage.getItem("reader:vertical") === "true"
@@ -139,6 +140,7 @@ export default function BookReader() {
         book.currParagraphId = lastIndex
         book.currChars = currChars
         book.save().catch(console.error)
+        charCounterRef!.innerHTML = `${book.currChars}/${book.totalChars}`
 
         // removeBookmark("main-bookmark")
         // const target = pTags[lastIndex + 1] || pTags[lastIndex]
@@ -171,6 +173,8 @@ export default function BookReader() {
                 const images = book.renderContent(contentRef, { xhtml: "all" })
                 book.insertCss()
                 setImgUrls(images)
+
+                charCounterRef!.innerHTML = `${book.currChars}/${book.totalChars}`
 
                 const target = document.querySelector(`p[index='${book.currParagraphId}']`)
                 target?.scrollIntoView()
@@ -379,6 +383,11 @@ export default function BookReader() {
                         style="font-size: var(--reader-font-size); line-height: var(--reader-line-height);"
                     ></div>
                 </div>
+                <span
+                    id="character-counter"
+                    ref={(el) => (charCounterRef = el)}
+                    class="z-10 right-[0.5rem] bottom-[0.5rem] fixed text-[0.75rem]"
+                ></span>
             </Show>
         </div>
     )
