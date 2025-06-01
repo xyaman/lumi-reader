@@ -3,6 +3,7 @@ import { EpubBook } from "./lib/epub"
 import { createSignal, For, onCleanup, onMount, Show } from "solid-js"
 import { BookMarkIcon } from "./icons"
 import { render } from "solid-js/web"
+import Navbar from "./components/Navbar"
 
 export default function BookReader() {
     const params = useParams()
@@ -23,11 +24,10 @@ export default function BookReader() {
 
     const isPaginated = localStorage.getItem("reader:paginated") === "true"
     const isVertical = localStorage.getItem("reader:vertical") === "true"
-    const isDarkTheme = localStorage.getItem("reader:dark-theme") === "true"
 
     const containerClass = () =>
         !isPaginated
-            ? "px-8 h-screen"
+            ? "px-8 h-full w-full"
             : isVertical
               ? "relative w-[95vw] overflow-hidden snap-y snap-mandatory"
               : "relative mx-8 py-12 h-screen overflow-x-hidden snap-x snap-mandatory"
@@ -36,7 +36,7 @@ export default function BookReader() {
         !isPaginated
             ? isVertical
                 ? "text-[20px] writing-mode-vertical"
-                : "text-[20px]"
+                : "text-[20px] h-full"
             : isVertical
               ? "h-full w-full [column-width:100vw] [column-fill:auto] [column-gap:0px] text-[20px] writing-mode-vertical"
               : "h-full [column-width:100vw] [column-fill:auto] [column-gap:0px]"
@@ -102,7 +102,6 @@ export default function BookReader() {
 
         let lastIndex = 0
         let currChars = 0
-        const pTags = document.querySelectorAll("p")
         const pTags = document.querySelectorAll("p[index]")
 
         for (let i = 0; i < pTags.length; i++) {
@@ -122,9 +121,9 @@ export default function BookReader() {
         book.currChars = currChars
         book.save().catch(console.error)
 
-        removeBookmark("main-bookmark")
-        const target = pTags[lastIndex + 1] || pTags[lastIndex]
-        if (!isVertical && target) showBookmarkAt(target, "main-bookmark")
+        // removeBookmark("main-bookmark")
+        // const target = pTags[lastIndex + 1] || pTags[lastIndex]
+        // if (!isVertical && target) showBookmarkAt(target, "main-bookmark")
     }
 
     const initScrollTracking = () => {
@@ -145,14 +144,12 @@ export default function BookReader() {
             if (!record) return navigate("/", { replace: true })
 
             const book = EpubBook.fromRecord(record)
-            const images = await book.renderContent(contentRef, { xhtml: "all" })
+            const images = book.renderContent(contentRef, { xhtml: "all" })
             book.insertCss()
             setCurrBook(book)
             setImgUrls(images)
 
-            const target = book.currParagraphId
-                ? document.querySelector(`p[index='${book.currParagraphId}']`)
-                : null
+            const target = document.querySelector(`p[index='${book.currParagraphId}']`)
             target?.scrollIntoView()
 
             document.querySelectorAll("p").forEach((p) => {
@@ -161,7 +158,7 @@ export default function BookReader() {
 
                 const highlight = (updateDb: boolean = true) => {
                     const active = p.style.backgroundColor !== ""
-                    // p.style.backgroundColor = active ? "" : "#e0e0e0"
+                    p.style.backgroundColor = active ? "" : "black"
 
                     active ? removeBookmark(index) : showBookmarkAt(p, index)
 
@@ -174,6 +171,10 @@ export default function BookReader() {
                 p.addEventListener("click", () => highlight())
                 if (book.bookmarks.has(index)) highlight(false)
             })
+
+            if (isVertical) {
+                containerRef.scrollLeft = 0
+            }
 
             setupPagination()
         } catch (e) {
@@ -189,10 +190,6 @@ export default function BookReader() {
             onCleanup(() => document.removeEventListener("scroll", debouncedScroll))
         }
 
-        if (isDarkTheme) {
-            document.body.className = "bg-gray-600 text-gray-200"
-        }
-
         onCleanup(() => {
             imgUrls().forEach((url) => URL.revokeObjectURL(url))
             document.head.querySelectorAll("#temp-css").forEach((el) => el.remove())
@@ -200,7 +197,7 @@ export default function BookReader() {
     })
 
     return (
-        <div class="bg-white dark:bg-zinc-700 text-black dark:text-white">
+        <div class="bg-white dark:bg-zinc-800 text-black dark:text-white">
             <button
                 onClick={() => {
                     setShowNav(true)
@@ -210,57 +207,61 @@ export default function BookReader() {
             ></button>
 
             <Show when={showNav()}>
-                <nav class="fixed top-0 left-0 w-full h-14 bg-white dark:bg-gray-900 backdrop-blur-md shadow-md text-gray-900 dark:text-white px-4 z-30 flex items-center justify-between transition-all duration-300">
-                    <button
-                        onClick={() => {
-                            setSidebarOpen(true)
-                            setShowNav(false)
-                        }}
-                        class="flex items-center space-x-2 text-base font-semibold hover:underline"
-                    >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke-width="1.5"
-                            stroke="currentColor"
-                            class="w-5 h-5"
+                <Navbar>
+                    <Navbar.Left>
+                        <button
+                            onClick={() => {
+                                setSidebarOpen(true)
+                                setShowNav(false)
+                            }}
+                            class="flex items-center space-x-2 text-base font-semibold hover:underline"
                         >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M3.75 6.75h16.5m-16.5 5.25h16.5m-16.5 5.25h16.5"
-                            />
-                        </svg>
-                    </button>
-                </nav>
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke-width="1.5"
+                                stroke="currentColor"
+                                class="w-5 h-5"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M3.75 6.75h16.5m-16.5 5.25h16.5m-16.5 5.25h16.5"
+                                />
+                            </svg>
+                        </button>
+                    </Navbar.Left>
+                </Navbar>
             </Show>
 
-            <Show when={sidebarOpen()}>
-                <aside class="fixed top-0 left-0 h-full w-72 bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-lg p-5 z-40 transition-transform duration-300">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-lg font-semibold">Table of Contents</h2>
-                        <button
-                            class="text-gray-500 hover:text-gray-800 dark:hover:text-white"
-                            onClick={() => setSidebarOpen(false)}
-                        >
-                            ✕
-                        </button>
-                    </div>
-                    <nav class="space-y-2">
-                        <For each={currBook()?.manifest.nav}>
-                            {(item) => (
-                                <p
-                                    class="cursor-pointer text-sm px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
-                                    onClick={() => navigationGoTo(item.href)}
-                                >
-                                    {item.text}
-                                </p>
-                            )}
-                        </For>
-                    </nav>
-                </aside>
-            </Show>
+            <aside
+                class={`fixed top-0 left-0 h-full w-72 bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-lg p-5 z-40 transform transition-transform duration-300 ${
+                    sidebarOpen() ? "translate-x-0" : "-translate-x-full"
+                }`}
+            >
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold">Table of Contents</h2>
+                    <button
+                        class="text-gray-500 hover:text-gray-800 dark:hover:text-white"
+                        onClick={() => setSidebarOpen(false)}
+                    >
+                        ✕
+                    </button>
+                </div>
+                <nav class="space-y-2">
+                    <For each={currBook()?.manifest.nav}>
+                        {(item) => (
+                            <p
+                                class="cursor-pointer text-sm px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                                onClick={() => navigationGoTo(item.href)}
+                            >
+                                {item.text}
+                            </p>
+                        )}
+                    </For>
+                </nav>
+            </aside>
 
             <div
                 id="reader-container"

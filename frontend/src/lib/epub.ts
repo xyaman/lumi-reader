@@ -235,7 +235,7 @@ export class EpubBook implements IEpubBookRecord {
      * @param element - The element where the epub will be rendered
      * @returns The images blob urls, the caller needs to free/revoke the urls
      */
-    public async renderContent(element: HTMLElement, options: { xhtml: number | "all" }) {
+    public renderContent(element: HTMLElement, options: { xhtml: number | "all" }) {
         const starttime = Date.now()
 
         if (options.xhtml == "all") {

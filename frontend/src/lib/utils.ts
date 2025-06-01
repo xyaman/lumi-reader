@@ -34,8 +34,9 @@ export function parseCss(cssText: string) {
             cursor++
         }
 
-        if (selector[0] === ".") {
+        // bg-* no avoid problems with tailwind
         if (selector[0] === "." && !selector.includes(".bg-")) {
+            console.log(selector)
             // ignore empty classes
             if (cssText.slice(blockStart, cursor).trim() === "}") continue
             rules.push(cssText.slice(selectorStart, cursor))
