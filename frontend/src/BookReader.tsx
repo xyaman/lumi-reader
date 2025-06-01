@@ -16,8 +16,19 @@ export default function BookReader() {
     // Signals
     const [currBook, setCurrBook] = createSignal<EpubBook | null>(null)
     const [imgUrls, setImgUrls] = createSignal<string[]>([])
-    const [sidebarOpen, setSidebarOpen] = createSignal(false)
-    const [showNav, setShowNav] = createSignal(false)
+
+    // UI State
+    const [navOpen, setNavOpen] = createSignal(false)
+    const [tocOpen, setTocOpen] = createSignal(false)
+    const [settingsOpen, setSettingsOpen] = createSignal(false)
+
+    // Reader Style
+    const defaultReaderStyle = {
+        fontSize: Number(localStorage.getItem("reader:fontSize")) || 16,
+        lineHeight: Number(localStorage.getItem("reader:lineHeight")) || 1.5,
+    }
+    const [readerStyle, setReaderStyle] = createSignal({ ...defaultReaderStyle })
+    const [draftStyle, setDraftStyle] = createSignal({ ...readerStyle() })
 
     // Refs
     let containerRef: HTMLDivElement
@@ -58,8 +69,8 @@ export default function BookReader() {
         if (!href) return
         const anchorId = href.split("#").pop()
         document.getElementById(anchorId!)?.scrollIntoView()
-        setShowNav(false)
-        setSidebarOpen(false)
+        setNavOpen(false)
+        setTocOpen(false)
     }
 
     const setupPagination = () => {
@@ -201,19 +212,19 @@ export default function BookReader() {
         <div class="bg-white dark:bg-zinc-800 text-black dark:text-white">
             <button
                 onClick={() => {
-                    setShowNav(true)
-                    setSidebarOpen(false)
+                    setNavOpen(true)
+                    setTocOpen(false)
                 }}
                 class="fixed top-0 left-0 right-0 h-8 z-10 bg-transparent"
             ></button>
 
-            <Show when={showNav()}>
+            <Show when={navOpen()}>
                 <Navbar>
                     <Navbar.Left>
                         <button
                             onClick={() => {
-                                setSidebarOpen(true)
-                                setShowNav(false)
+                                setTocOpen(true)
+                                setNavOpen(false)
                             }}
                             class="flex items-center space-x-2 text-base font-semibold hover:underline"
                         >
@@ -233,15 +244,43 @@ export default function BookReader() {
                             </svg>
                         </button>
                     </Navbar.Left>
+                    <Navbar.Right>
+                        <button
+                            onClick={() => {
+                                setTocOpen(false)
+                                setSettingsOpen(true)
+                            }}
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke-width="1.5"
+                                stroke="currentColor"
+                                class="size-6"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"
+                                />
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                                />
+                            </svg>
+                        </button>
+                    </Navbar.Right>
                 </Navbar>
             </Show>
 
             <Sidebar
-                open={sidebarOpen()}
+                open={tocOpen()}
                 side="left"
                 title="Table of Contents"
                 overlay={true}
-                onClose={() => setSidebarOpen(false)}
+                onClose={() => setTocOpen(false)}
             >
                 <For each={currBook()?.manifest.nav}>
                     {(item) => (
@@ -254,19 +293,77 @@ export default function BookReader() {
                     )}
                 </For>
             </Sidebar>
+            <Sidebar
+                side="right"
+                overlay={true}
+                title="Settings"
+                open={settingsOpen()}
+                onClose={() => setSettingsOpen(false)}
+            >
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Font Size (px)
+                        </label>
+                        <input
+                            value={draftStyle().fontSize}
+                            onInput={(e) =>
+                                setDraftStyle({
+                                    ...draftStyle(),
+                                    fontSize: Number(e.currentTarget.value),
+                                })
+                            }
+                        />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Line Height (unitless)
+                        </label>
+                        <input
+                            value={draftStyle().lineHeight}
+                            onInput={(e) =>
+                                setDraftStyle({
+                                    ...draftStyle(),
+                                    lineHeight: Number(e.currentTarget.value),
+                                })
+                            }
+                        />
+                    </div>
+
+                    <button
+                        onClick={() => {
+                            setReaderStyle(draftStyle())
+                            localStorage.setItem("reader:fontSize", String(draftStyle().fontSize))
+                            localStorage.setItem(
+                                "reader:lineHeight",
+                                String(draftStyle().lineHeight),
+                            )
+                            setSettingsOpen(false)
+                        }}
+                        class="px-4 py-2 bg-gray-100 dark:bg-zinc-700 text-gray-900 dark:text-white rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-600"
+                    >
+                        Save
+                    </button>
+                </div>
+            </Sidebar>
             <div
                 id="reader-container"
                 class={containerClass()}
                 ref={(el) => (containerRef = el)}
                 onClick={() => {
-                    setSidebarOpen(false)
-                    setShowNav(false)
+                    setTocOpen(false)
+                    setNavOpen(false)
                 }}
             >
                 <div
                     id="reader-content"
                     ref={(el) => (contentRef = el)}
-                    class={contentClass()}
+                    class={`${contentClass()} reader-text`}
+                    style={{
+                        "--font-size": `${readerStyle().fontSize}px`,
+                        "--line-height": readerStyle().lineHeight,
+                    }}
                 ></div>
             </div>
         </div>

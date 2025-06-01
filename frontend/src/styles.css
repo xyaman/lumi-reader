@@ -1,5 +1,17 @@
 @import "tailwindcss";
 
+@theme {
+  --font-size: 16px;
+  --line-height: 1.5;
+}
+
+.reader-text {
+  font-size: var(--font-size);
+  line-height: var(--line-height);
+}
+
+
+
 html,
 body {
   margin: 0;
