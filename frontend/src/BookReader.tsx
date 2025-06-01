@@ -6,7 +6,7 @@ import { render } from "solid-js/web"
 import Navbar from "./components/Navbar"
 import Sidebar from "./components/Sidebar"
 
-function updateReaderStyle(fontSize: number, lineHeight: number) {
+function updateReaderStyle(fontSize: number, lineHeight: number | string) {
     document.documentElement.style.setProperty("--reader-font-size", `${fontSize}px`)
     document.documentElement.style.setProperty("--reader-line-height", `${lineHeight}`)
     localStorage.setItem("reader:fontSize", String(fontSize))
@@ -38,6 +38,7 @@ export default function BookReader() {
     const [draftStyle, setDraftStyle] = createSignal({ ...defaultReaderStyle })
 
     // Refs
+    let mainRef: HTMLDivElement
     let containerRef: HTMLDivElement
     let contentRef: HTMLDivElement
     let charCounterRef: HTMLSpanElement
@@ -92,8 +93,13 @@ export default function BookReader() {
         }
 
         const onKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "ArrowDown" || e.key === "PageDown") flipPage(1)
-            else if (e.key === "ArrowUp" || e.key === "PageUp") flipPage(-1)
+            if (isVertical) {
+                if (e.key === "ArrowLeft") flipPage(1)
+                else if (e.key === "ArrowRight") flipPage(-1)
+            } else {
+                if (e.key === "ArrowRight") flipPage(1)
+                else if (e.key === "ArrowLeft") flipPage(-1)
+            }
         }
 
         containerRef.addEventListener("touchstart", onTouchStart)
@@ -197,7 +203,7 @@ export default function BookReader() {
                     if (book.bookmarks.has(index)) highlight(false)
                 })
 
-                if (isVertical) {
+                if (isVertical && !isPaginated && book.currParagraphId === 0) {
                     containerRef.scrollLeft = 0
                 }
 
@@ -210,10 +216,24 @@ export default function BookReader() {
     }
 
     onMount(() => {
-        initializeBook()
+        const onWheel = (e: WheelEvent) => {
+            // e.preventDefault()
+            mainRef.scrollLeft += e.deltaY
+        }
+
+        initializeBook().then(() => {
+            if (!isPaginated && isVertical) {
+                // Prevent default vertical scroll
+                mainRef.addEventListener("wheel", onWheel, { passive: false })
+            }
+        })
+
         if (!isPaginated) {
             const debouncedScroll = initScrollTracking()
-            onCleanup(() => document.removeEventListener("scroll", debouncedScroll))
+            onCleanup(() => {
+                document.removeEventListener("scroll", debouncedScroll)
+                mainRef.removeEventListener("wheel", onWheel)
+            })
         }
 
         onCleanup(() => {
@@ -231,6 +251,7 @@ export default function BookReader() {
 
     return (
         <div
+            ref={(el) => (mainRef = el)}
             class={`bg-white dark:bg-zinc-800 text-black dark:text-white ${isVertical && "h-screen overflow-y-hidden"}`}
         >
             <button
