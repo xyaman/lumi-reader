@@ -7,7 +7,9 @@ import Navbar from "./components/Navbar"
 import Sidebar from "./components/Sidebar"
 
 function updateReaderStyle(fontSize: number, lineHeight: number | string) {
-    document.documentElement.style.setProperty("--reader-font-size", `${fontSize}px`)
+    const fixedFontSize = Math.max(1, fontSize)
+
+    document.documentElement.style.setProperty("--reader-font-size", `${fixedFontSize}px`)
     document.documentElement.style.setProperty("--reader-line-height", `${lineHeight}`)
     localStorage.setItem("reader:fontSize", String(fontSize))
     localStorage.setItem("reader:lineHeight", String(lineHeight))
