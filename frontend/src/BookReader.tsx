@@ -1,10 +1,17 @@
 import { useNavigate, useParams } from "@solidjs/router"
 import { EpubBook } from "./lib/epub"
-import { createSignal, For, onCleanup, onMount, Show } from "solid-js"
+import { createEffect, createSignal, For, onCleanup, onMount, Show } from "solid-js"
 import { BookMarkIcon } from "./icons"
 import { render } from "solid-js/web"
 import Navbar from "./components/Navbar"
 import Sidebar from "./components/Sidebar"
+
+function updateReaderStyle(fontSize: number, lineHeight: number) {
+    document.documentElement.style.setProperty("--reader-font-size", `${fontSize}px`)
+    document.documentElement.style.setProperty("--reader-line-height", `${lineHeight}`)
+    localStorage.setItem("reader:fontSize", String(fontSize))
+    localStorage.setItem("reader:lineHeight", String(lineHeight))
+}
 
 export default function BookReader() {
     const params = useParams()
@@ -14,6 +21,7 @@ export default function BookReader() {
     if (!id) navigate("/", { replace: true })
 
     // Signals
+    const [isReady, setIsReady] = createSignal(false)
     const [currBook, setCurrBook] = createSignal<EpubBook | null>(null)
     const [imgUrls, setImgUrls] = createSignal<string[]>([])
 
@@ -24,11 +32,10 @@ export default function BookReader() {
 
     // Reader Style
     const defaultReaderStyle = {
-        fontSize: Number(localStorage.getItem("reader:fontSize")) || 16,
-        lineHeight: Number(localStorage.getItem("reader:lineHeight")) || 1.5,
+        fontSize: Number(localStorage.getItem("reader:fontSize")),
+        lineHeight: Number(localStorage.getItem("reader:lineHeight")),
     }
-    const [readerStyle, setReaderStyle] = createSignal({ ...defaultReaderStyle })
-    const [draftStyle, setDraftStyle] = createSignal({ ...readerStyle() })
+    const [draftStyle, setDraftStyle] = createSignal({ ...defaultReaderStyle })
 
     // Refs
     let containerRef: HTMLDivElement
@@ -39,7 +46,7 @@ export default function BookReader() {
 
     const containerClass = () =>
         !isPaginated
-            ? "px-8 h-full w-full"
+            ? "px-8"
             : isVertical
               ? "relative w-[95vw] overflow-hidden snap-y snap-mandatory"
               : "relative mx-8 py-12 h-screen overflow-x-hidden snap-x snap-mandatory"
@@ -47,8 +54,8 @@ export default function BookReader() {
     const contentClass = () =>
         !isPaginated
             ? isVertical
-                ? "text-[20px] writing-mode-vertical"
-                : "text-[20px] h-full"
+                ? "writing-mode-vertical max-h-[98vh]"
+                : "h-full"
             : isVertical
               ? "h-full w-full [column-width:100vw] [column-fill:auto] [column-gap:0px] text-[20px] writing-mode-vertical"
               : "h-full [column-width:100vw] [column-fill:auto] [column-gap:0px]"
@@ -156,39 +163,42 @@ export default function BookReader() {
             if (!record) return navigate("/", { replace: true })
 
             const book = EpubBook.fromRecord(record)
-            const images = book.renderContent(contentRef, { xhtml: "all" })
-            book.insertCss()
             setCurrBook(book)
-            setImgUrls(images)
+            setIsReady(true) // triggers DOM to render contentRef
 
-            const target = document.querySelector(`p[index='${book.currParagraphId}']`)
-            target?.scrollIntoView()
+            // defer until DOM is fully ready
+            queueMicrotask(() => {
+                const images = book.renderContent(contentRef, { xhtml: "all" })
+                book.insertCss()
+                setImgUrls(images)
 
-            document.querySelectorAll("p").forEach((p) => {
-                const index = p.getAttribute("index")
-                if (!index) return
+                const target = document.querySelector(`p[index='${book.currParagraphId}']`)
+                target?.scrollIntoView()
 
-                const highlight = (updateDb: boolean = true) => {
-                    const active = p.style.backgroundColor !== ""
-                    p.style.backgroundColor = active ? "" : "black"
+                document.querySelectorAll("p").forEach((p) => {
+                    const index = p.getAttribute("index")
+                    if (!index) return
 
-                    active ? removeBookmark(index) : showBookmarkAt(p, index)
-
-                    if (updateDb) {
-                        active ? book.bookmarks.delete(index) : book.bookmarks.add(index)
-                        book.save()
+                    const highlight = (updateDb = true) => {
+                        const active = p.style.backgroundColor !== ""
+                        p.style.backgroundColor = active ? "" : "black"
+                        active ? removeBookmark(index) : showBookmarkAt(p, index)
+                        if (updateDb) {
+                            active ? book.bookmarks.delete(index) : book.bookmarks.add(index)
+                            book.save()
+                        }
                     }
+
+                    p.addEventListener("click", () => highlight())
+                    if (book.bookmarks.has(index)) highlight(false)
+                })
+
+                if (isVertical) {
+                    containerRef.scrollLeft = 0
                 }
 
-                p.addEventListener("click", () => highlight())
-                if (book.bookmarks.has(index)) highlight(false)
+                setupPagination()
             })
-
-            if (isVertical) {
-                containerRef.scrollLeft = 0
-            }
-
-            setupPagination()
         } catch (e) {
             console.error("Failed to load book", e)
             navigate("/", { replace: true })
@@ -208,8 +218,17 @@ export default function BookReader() {
         })
     })
 
+    // Effect: Update style (and save in local storage) every time it changes
+    createEffect(() => {
+        if (settingsOpen()) return
+        const { fontSize, lineHeight } = draftStyle()
+        updateReaderStyle(fontSize, lineHeight)
+    })
+
     return (
-        <div class="bg-white dark:bg-zinc-800 text-black dark:text-white">
+        <div
+            class={`bg-white dark:bg-zinc-800 text-black dark:text-white ${isVertical && "h-screen overflow-y-hidden"}`}
+        >
             <button
                 onClick={() => {
                     setNavOpen(true)
@@ -217,7 +236,6 @@ export default function BookReader() {
                 }}
                 class="fixed top-0 left-0 right-0 h-8 z-10 bg-transparent"
             ></button>
-
             <Show when={navOpen()}>
                 <Navbar>
                     <Navbar.Left>
@@ -333,12 +351,6 @@ export default function BookReader() {
 
                     <button
                         onClick={() => {
-                            setReaderStyle(draftStyle())
-                            localStorage.setItem("reader:fontSize", String(draftStyle().fontSize))
-                            localStorage.setItem(
-                                "reader:lineHeight",
-                                String(draftStyle().lineHeight),
-                            )
                             setSettingsOpen(false)
                         }}
                         class="px-4 py-2 bg-gray-100 dark:bg-zinc-700 text-gray-900 dark:text-white rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-600"
@@ -347,25 +359,27 @@ export default function BookReader() {
                     </button>
                 </div>
             </Sidebar>
-            <div
-                id="reader-container"
-                class={containerClass()}
-                ref={(el) => (containerRef = el)}
-                onClick={() => {
-                    setTocOpen(false)
-                    setNavOpen(false)
-                }}
+            <Show
+                when={isReady()}
+                fallback={<div class="h-screen w-screen p-8 text-center">Loading book…</div>}
             >
                 <div
-                    id="reader-content"
-                    ref={(el) => (contentRef = el)}
-                    class={`${contentClass()} reader-text`}
-                    style={{
-                        "--font-size": `${readerStyle().fontSize}px`,
-                        "--line-height": readerStyle().lineHeight,
+                    id="reader-container"
+                    class={containerClass()}
+                    ref={(el) => (containerRef = el)}
+                    onClick={() => {
+                        setTocOpen(false)
+                        setNavOpen(false)
                     }}
-                ></div>
-            </div>
+                >
+                    <div
+                        id="reader-content"
+                        ref={(el) => (contentRef = el)}
+                        class={contentClass()}
+                        style="font-size: var(--reader-font-size); line-height: var(--reader-line-height);"
+                    ></div>
+                </div>
+            </Show>
         </div>
     )
 }
