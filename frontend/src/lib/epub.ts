@@ -264,15 +264,7 @@ export class EpubBook implements IEpubBookRecord {
         // <img src="">
         element.querySelectorAll("img[src]").forEach((el) => updateImageSrc(el, "src"))
         // <image xlink:href="">
-        element
-            .querySelectorAll("image[xlink\\:href]")
-            .forEach((el) => updateImageSrc(el, "xlink:href"))
-        // <image href="">
-        element.querySelectorAll("image[href]").forEach((el) => updateImageSrc(el, "href"))
-        // <svg image> (for completeness, though usually <image> is used)
-        element
-            .querySelectorAll("svg image[xlink\\:href]")
-            .forEach((el) => updateImageSrc(el, "xlink:href"))
+        element.querySelectorAll("image").forEach((el) => updateImageSrc(el, "xlink:href"))
 
         console.log(`Epub rendered in ${Date.now() - starttime}ms`)
         return Object.values(blobs)
