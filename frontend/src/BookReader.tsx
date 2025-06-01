@@ -33,7 +33,7 @@ export default function BookReader() {
     // Reader Style
     const defaultReaderStyle = {
         fontSize: Number(localStorage.getItem("reader:fontSize")),
-        lineHeight: Number(localStorage.getItem("reader:lineHeight")),
+        lineHeight: localStorage.getItem("reader:lineHeight") ?? "1.5",
     }
     const [draftStyle, setDraftStyle] = createSignal({ ...defaultReaderStyle })
 
@@ -343,7 +343,7 @@ export default function BookReader() {
                             onInput={(e) =>
                                 setDraftStyle({
                                     ...draftStyle(),
-                                    lineHeight: Number(e.currentTarget.value),
+                                    lineHeight: e.currentTarget.value,
                                 })
                             }
                         />
