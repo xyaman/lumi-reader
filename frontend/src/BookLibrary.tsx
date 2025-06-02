@@ -46,7 +46,7 @@ export default function BookLibrary() {
                 <h1 class="text-2xl font-bold">lumireader</h1>
                 <div class="flex gap-3">
                     <label class="relative inline-flex items-center px-4 py-2 bg-gray-100 dark:bg-zinc-700 text-gray-900 dark:text-white rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-600 transition">
-                        <span>Upload</span>
+                        <span>Upload epub</span>
                         <input
                             type="file"
                             accept=".epub"
@@ -54,12 +54,6 @@ export default function BookLibrary() {
                             class="absolute inset-0 opacity-0 cursor-pointer"
                         />
                     </label>
-                    <a
-                        href="/settings"
-                        class="px-4 py-2 bg-gray-100 dark:bg-zinc-700 text-gray-900 dark:text-white rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-600 transition"
-                    >
-                        Settings
-                    </a>
                 </div>
             </nav>
 

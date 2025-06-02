@@ -8,7 +8,6 @@ function App() {
         <Router>
             <Route path="/" component={BookLibrary} />
             <Route path="/reader/:id?" component={BookReader} />
-            <Route path="/settings" component={Settings} />
         </Router>
     )
 }
