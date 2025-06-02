@@ -136,7 +136,7 @@ export default function BookReader() {
             const rect = pTags[i].getBoundingClientRect()
             const visible =
                 (!isPaginated && !isVertical && rect.bottom > 0) ||
-                (!isPaginated && isVertical && rect.top > 0) ||
+                (!isPaginated && isVertical && rect.x < 0) ||
                 (isPaginated && !isVertical && rect.x > 0) ||
                 (isPaginated && isVertical && rect.y > 0)
 
@@ -221,6 +221,7 @@ export default function BookReader() {
         const onWheel = (e: WheelEvent) => {
             // e.preventDefault()
             mainRef.scrollLeft += e.deltaY
+            handleScroll()
         }
 
         initializeBook().then(() => {
@@ -230,7 +231,7 @@ export default function BookReader() {
             }
         })
 
-        if (!isPaginated) {
+        if (!isPaginated && !isVertical) {
             const debouncedScroll = initScrollTracking()
             onCleanup(() => {
                 document.removeEventListener("scroll", debouncedScroll)
