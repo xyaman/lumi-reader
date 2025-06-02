@@ -33,17 +33,16 @@ export default function BookReader() {
     const [settingsOpen, setSettingsOpen] = createSignal(false)
 
     // Reader Style
-    const defaultReaderStyle = {
+    const [draftStyle, setDraftStyle] = createSignal({
         fontSize: Number(localStorage.getItem("reader:fontSize")),
         lineHeight: localStorage.getItem("reader:lineHeight") ?? "1.5",
-    }
-    const [draftStyle, setDraftStyle] = createSignal({ ...defaultReaderStyle })
+    })
 
     // Refs
-    let mainRef: HTMLDivElement
-    let containerRef: HTMLDivElement
-    let contentRef: HTMLDivElement
-    let charCounterRef: HTMLSpanElement
+    let mainRef!: HTMLDivElement
+    let containerRef!: HTMLDivElement
+    let contentRef!: HTMLDivElement
+    let charCounterRef!: HTMLSpanElement
 
     const isPaginated = localStorage.getItem("reader:paginated") === "true"
     const isVertical = localStorage.getItem("reader:vertical") === "true"
@@ -78,8 +77,8 @@ export default function BookReader() {
     // Paginated mode should not load all xhtml at once
     const navigationGoTo = (href?: string) => {
         if (!href) return
-        const anchorId = href.split("#").pop()
-        document.getElementById(anchorId!)?.scrollIntoView()
+        const anchorId = href.includes("#") ? href.split("#").pop() : null
+        if (anchorId) document.getElementById(anchorId)?.scrollIntoView()
         setNavOpen(false)
         setTocOpen(false)
     }
@@ -148,7 +147,7 @@ export default function BookReader() {
         book.currParagraphId = lastIndex
         book.currChars = currChars
         book.save().catch(console.error)
-        charCounterRef!.innerHTML = `${book.currChars}/${book.totalChars}`
+        charCounterRef.innerHTML = `${book.currChars}/${book.totalChars}`
 
         // removeBookmark("main-bookmark")
         // const target = pTags[lastIndex + 1] || pTags[lastIndex]
@@ -182,7 +181,7 @@ export default function BookReader() {
                 book.insertCss()
                 setImgUrls(images)
 
-                charCounterRef!.innerHTML = `${book.currChars}/${book.totalChars}`
+                charCounterRef.innerHTML = `${book.currChars}/${book.totalChars}`
 
                 const target = document.querySelector(`p[index='${book.currParagraphId}']`)
                 target?.scrollIntoView()
@@ -254,7 +253,7 @@ export default function BookReader() {
 
     return (
         <div
-            ref={(el) => (mainRef = el)}
+            ref={mainRef}
             class={`bg-white dark:bg-zinc-800 text-black dark:text-white ${isVertical && "h-screen overflow-y-hidden"}`}
         >
             <button
@@ -354,10 +353,10 @@ export default function BookReader() {
                         <input
                             value={draftStyle().fontSize}
                             onInput={(e) =>
-                                setDraftStyle({
-                                    ...draftStyle(),
+                                setDraftStyle((prev) => ({
+                                    ...prev,
                                     fontSize: Number(e.currentTarget.value),
-                                })
+                                }))
                             }
                         />
                     </div>
@@ -369,10 +368,10 @@ export default function BookReader() {
                         <input
                             value={draftStyle().lineHeight}
                             onInput={(e) =>
-                                setDraftStyle({
-                                    ...draftStyle(),
+                                setDraftStyle((prev) => ({
+                                    ...prev,
                                     lineHeight: e.currentTarget.value,
-                                })
+                                }))
                             }
                         />
                     </div>
@@ -394,7 +393,7 @@ export default function BookReader() {
                 <div
                     id="reader-container"
                     class={containerClass()}
-                    ref={(el) => (containerRef = el)}
+                    ref={containerRef}
                     onClick={() => {
                         setTocOpen(false)
                         setNavOpen(false)
@@ -402,14 +401,14 @@ export default function BookReader() {
                 >
                     <div
                         id="reader-content"
-                        ref={(el) => (contentRef = el)}
+                        ref={contentRef}
                         class={contentClass()}
                         style="font-size: var(--reader-font-size); line-height: var(--reader-line-height);"
                     ></div>
                 </div>
                 <span
                     id="character-counter"
-                    ref={(el) => (charCounterRef = el)}
+                    ref={charCounterRef}
                     class="z-10 right-[0.5rem] bottom-[0.5rem] fixed text-[0.75rem]"
                 ></span>
             </Show>
