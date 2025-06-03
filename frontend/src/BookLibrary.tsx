@@ -63,12 +63,18 @@ export default function BookLibrary() {
                     <For each={books()}>
                         {(book) => (
                             <a href={`/reader/${book.id}`} class="block group">
-                                <div class="bg-white dark:bg-zinc-900 rounded-lg shadow-md hover:shadow-lg transition overflow-hidden">
+                                <div class="relative bg-white dark:bg-zinc-900 rounded-lg shadow-md hover:shadow-lg transition overflow-hidden">
                                     <img
                                         src={covers()[book.id!]}
                                         alt={book.metadata.title}
                                         class="aspect-[3/4] w-full object-cover"
                                     />
+                                    <button
+                                        class="absolute w-8 h-8 top-2 right-2 opacity-0 group-hover:opacity-100 bg-white/80 dark:bg-zinc-800/80 text-gray-700 dark:text-white rounded-full p-1 shadow transition"
+                                        onClick={() => EpubBook.deleteById(book.id)}
+                                    >
+                                        X
+                                    </button>
                                     <div class="px-3 py-2">
                                         <p class="text-sm truncate">{book.metadata.title}</p>
                                         <progress

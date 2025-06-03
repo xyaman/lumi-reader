@@ -166,8 +166,10 @@ export class EpubBook implements IEpubBookRecord {
     /**
      * Deletes an EpubBook instance by ID.
      */
-    // static async deleteById(id: number): Promise<void> {
-    // }
+    static async deleteById(id: number): Promise<void> {
+        const db = await EpubBook.getDB()
+        await db.delete("epubBooks", id)
+    }
 
     /**
      * Saves the current instance to the database.
