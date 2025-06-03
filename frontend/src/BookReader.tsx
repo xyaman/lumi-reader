@@ -40,7 +40,7 @@ export default function BookReader() {
 
     // Reader Style
     const [draftStyle, setDraftStyle] = createSignal({
-        fontSize: Number(localStorage.getItem("reader:fontSize")),
+        fontSize: Number(localStorage.getItem("reader:fontSize") ?? 20),
         lineHeight: localStorage.getItem("reader:lineHeight") ?? "1.5",
     })
 
