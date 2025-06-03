@@ -1,10 +1,5 @@
 @import "tailwindcss";
 
-@theme {
-  --reader-font-size: 16px;
-  --reader-line-height: 1.5;
-}
-
 html,
 body {
   margin: 0;
