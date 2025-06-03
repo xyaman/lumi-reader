@@ -1,8 +1,6 @@
 import { useNavigate, useParams } from "@solidjs/router"
 import { EpubBook } from "./lib/epub"
 import { createEffect, createSignal, For, onCleanup, onMount, Show } from "solid-js"
-import { BookMarkIcon } from "./icons"
-import { render } from "solid-js/web"
 import Navbar from "./components/Navbar"
 import Sidebar from "./components/Sidebar"
 
@@ -35,7 +33,7 @@ export default function BookReader() {
 
     // UI State
     const [navOpen, setNavOpen] = createSignal(false)
-    const [tocOpen, setTocOpen] = createSignal(false)
+    const [sideLeft, setSideLeft] = createSignal<"toc" | "bookmarks" | null>(null)
     const [settingsOpen, setSettingsOpen] = createSignal(false)
 
     // Reader Style
@@ -76,7 +74,7 @@ export default function BookReader() {
         const next = Math.max(0, Math.min(Math.ceil(current + offset * multiplier), max))
         const scrollToOpts = isVertical ? { top: next } : { left: next }
         containerRef.scrollTo({ ...scrollToOpts, behavior: "instant" })
-        handleScroll()
+        updateChars()
     }
 
     // TODO: make the difference between paginated and continous
@@ -86,7 +84,7 @@ export default function BookReader() {
         const anchorId = href.includes("#") ? href.split("#").pop() : null
         if (anchorId) document.getElementById(anchorId)?.scrollIntoView()
         setNavOpen(false)
-        setTocOpen(false)
+        setSideLeft(null)
     }
 
     const setupPagination = () => {
@@ -115,21 +113,7 @@ export default function BookReader() {
         window.addEventListener("resize", () => flipPage(-1))
     }
 
-    const showBookmarkAt = (target: HTMLElement, id: string) => {
-        const iconContainer = document.createElement("span")
-        iconContainer.id = id
-        iconContainer.style.marginLeft = "8px"
-        iconContainer.style.verticalAlign = "middle"
-        iconContainer.style.display = "inline-block"
-
-        target.appendChild(iconContainer)
-
-        render(() => <BookMarkIcon id={id} />, iconContainer)
-    }
-
-    const removeBookmark = (id: string) => document.getElementById(id)?.remove()
-
-    const handleScroll = () => {
+    const updateChars = () => {
         const book = currBook()
         if (!book || !containerRef.isConnected) return
 
@@ -154,10 +138,6 @@ export default function BookReader() {
         book.currChars = currChars
         book.save().catch(console.error)
         charCounterRef.innerHTML = `${book.currChars}/${book.totalChars}`
-
-        // removeBookmark("main-bookmark")
-        // const target = pTags[lastIndex + 1] || pTags[lastIndex]
-        // if (!isVertical && target) showBookmarkAt(target, "main-bookmark")
     }
 
     const initScrollTracking = () => {
@@ -165,7 +145,7 @@ export default function BookReader() {
 
         const debouncedScroll = () => {
             if (scrollTimer !== null) clearTimeout(scrollTimer)
-            scrollTimer = setTimeout(handleScroll, 300)
+            scrollTimer = setTimeout(updateChars, 300)
         }
 
         document.addEventListener("scroll", debouncedScroll)
@@ -224,7 +204,7 @@ export default function BookReader() {
         const onWheel = (e: WheelEvent) => {
             // e.preventDefault()
             mainRef.scrollLeft += e.deltaY
-            handleScroll()
+            updateChars()
         }
 
         initializeBook().then(() => {
@@ -255,6 +235,15 @@ export default function BookReader() {
         updateReaderStyle(fontSize, lineHeight)
     })
 
+    // Effect: block main scroll when one of the side bar is open
+    createEffect(() => {
+        if (sideLeft() !== null || settingsOpen()) {
+            document.body.style.overflow = "hidden"
+        } else {
+            document.body.style.overflow = ""
+        }
+    })
+
     return (
         <div
             ref={mainRef}
@@ -263,16 +252,17 @@ export default function BookReader() {
             <button
                 onClick={() => {
                     setNavOpen(true)
-                    setTocOpen(false)
+                    setSideLeft(null)
                 }}
                 class="fixed top-0 left-0 right-0 h-8 z-10 bg-transparent"
             ></button>
             <Show when={navOpen()}>
                 <Navbar>
                     <Navbar.Left>
+                        {/* Table of contents */}
                         <button
                             onClick={() => {
-                                setTocOpen(true)
+                                setSideLeft("toc")
                                 setNavOpen(false)
                             }}
                             class="flex items-center space-x-2 text-base font-semibold hover:underline"
@@ -292,11 +282,36 @@ export default function BookReader() {
                                 />
                             </svg>
                         </button>
+
+                        {/* Bookmarks */}
+                        <button
+                            onClick={() => {
+                                console.log(currBook()?.bookmarks)
+                                setSideLeft("bookmarks")
+                                setNavOpen(false)
+                            }}
+                            class="flex items-center space-x-2 text-base font-semibold hover:underline"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke-width="1.5"
+                                stroke="currentColor"
+                                class="size-6"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z"
+                                />
+                            </svg>
+                        </button>
                     </Navbar.Left>
                     <Navbar.Right>
                         <button
                             onClick={() => {
-                                setTocOpen(false)
+                                setSideLeft(null)
                                 setSettingsOpen(true)
                             }}
                         >
@@ -341,22 +356,47 @@ export default function BookReader() {
             </Show>
 
             <Sidebar
-                open={tocOpen()}
+                open={sideLeft() !== null}
                 side="left"
-                title="Table of Contents"
+                title={sideLeft() === "toc" ? "Table of Contents" : "Bookmarks"}
                 overlay={true}
-                onClose={() => setTocOpen(false)}
+                onClose={() => setSideLeft(null)}
             >
-                <For each={currBook()?.manifest.nav}>
-                    {(item) => (
-                        <p
-                            class="cursor-pointer text-sm px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
-                            onClick={() => navigationGoTo(item.href)}
-                        >
-                            {item.text}
-                        </p>
-                    )}
-                </For>
+                {/* Table of Contents */}
+                <Show when={sideLeft() === "toc"}>
+                    <For each={currBook()?.manifest.nav}>
+                        {(item) => (
+                            <p
+                                class="cursor-pointer text-sm px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                                onClick={() => navigationGoTo(item.href)}
+                            >
+                                {item.text}
+                            </p>
+                        )}
+                    </For>
+                </Show>
+
+                {/* Bookmarks */}
+                <Show when={sideLeft() === "bookmarks"}>
+                    <div class="max-h-[90vh] overflow-y-auto">
+                        <For each={currBook()?.bookmarks}>
+                            {(b) => (
+                                <p
+                                    class="cursor-pointer text-sm px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                                    onClick={() => {
+                                        setSideLeft(null)
+                                        document
+                                            .querySelector(`p[index="${b.paragraphId}"]`)
+                                            ?.scrollIntoView()
+                                        updateChars()
+                                    }}
+                                >
+                                    <span innerHTML={b.content}></span>
+                                </p>
+                            )}
+                        </For>
+                    </div>
+                </Show>
             </Sidebar>
             <Sidebar
                 side="right"
@@ -458,7 +498,7 @@ export default function BookReader() {
                     class={containerClass()}
                     ref={containerRef}
                     onClick={() => {
-                        setTocOpen(false)
+                        setSideLeft(null)
                         setNavOpen(false)
                     }}
                 >
