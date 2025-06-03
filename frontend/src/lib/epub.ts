@@ -13,6 +13,11 @@ interface IEpubMetadata {
     date?: string
 }
 
+interface IBookmark {
+    paragraphId: number
+    content: string
+}
+
 interface IEpubManifest {
     /**
      * Table of contents.
@@ -47,7 +52,7 @@ interface IEpubBookRecord {
      */
     lastModified?: number
     currParagraphId: number
-    bookmarks: Set<string>
+    bookmarks: IBookmark[]
 
     /**
      * Book total chars estimation
@@ -76,7 +81,7 @@ export class EpubBook implements IEpubBookRecord {
     currParagraphId!: number
     totalChars = 0
     currChars = 0
-    bookmarks = new Set<string>()
+    bookmarks: IBookmark[] = []
 
     // IEpubBookRecord
     metadata!: IEpubMetadata
@@ -181,6 +186,24 @@ export class EpubBook implements IEpubBookRecord {
 
         if (!this.id) this.id = newId
         return newId
+    }
+
+    /**
+     * Adds/Remove a new bookmark, if the bookmark is already present it will be removed
+     * @param id -
+     * @param content -
+     * @returns boolean true if value was present/removed, false otherwise
+     */
+    toggleBookmark(id: number | string, content: string): boolean {
+        const idNum = Number(id)
+        const idx = this.bookmarks.findIndex((b) => b.paragraphId === idNum)
+        if (idx !== -1) {
+            this.bookmarks.splice(idx, 1)
+            return true
+        } else {
+            this.bookmarks.push({ paragraphId: idNum, content })
+            return false
+        }
     }
 
     /**
@@ -298,7 +321,7 @@ function getBaseName(path: string) {
  * @returns IEpubMetadata
  */
 function extractMetadata(pkgDocumentXml: any) {
-    const metadata = {
+    const metadata: IEpubMetadata = {
         identifier: "",
         title: "",
         language: "",

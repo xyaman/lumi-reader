@@ -192,22 +192,20 @@ export default function BookReader() {
                 const target = document.querySelector(`p[index='${book.currParagraphId}']`)
                 target?.scrollIntoView()
 
+                let bookmarksIds = book.bookmarks.map((b) => b.paragraphId.toString())
+                // TODO: refactor, put hightlight outside
                 document.querySelectorAll("p").forEach((p) => {
                     const index = p.getAttribute("index")
                     if (!index) return
 
-                    const highlight = (updateDb = true) => {
-                        const active = p.style.backgroundColor !== ""
-                        p.style.backgroundColor = active ? "" : "black"
-                        active ? removeBookmark(index) : showBookmarkAt(p, index)
-                        if (updateDb) {
-                            active ? book.bookmarks.delete(index) : book.bookmarks.add(index)
-                            book.save()
-                        }
+                    const highlight = () => {
+                        const removed = book.toggleBookmark(index, p.innerHTML)
+                        p.style.backgroundColor = removed ? "" : "black"
+                        book.save()
                     }
 
                     p.addEventListener("click", () => highlight())
-                    if (book.bookmarks.has(index)) highlight(false)
+                    if (bookmarksIds.includes(index)) p.style.backgroundColor = "black"
                 })
 
                 if (isVertical && !isPaginated && book.currParagraphId === 0) {
