@@ -25,14 +25,11 @@ function Sidebar(props: SidebarProps) {
                 <div class="fixed inset-0 bg-black opacity-30 z-30" onClick={props.onClose} />
             </Show>
             <aside
-                class={`fixed top-0 ${sideClass()} h-full w-72 bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-lg p-5 z-40 transform transition-transform duration-300`}
+                class={`sidebar-theme fixed top-0 ${sideClass()} h-full w-72 shadow-lg p-5 z-40 transform transition-transform duration-300`}
             >
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-semibold">{props.title ?? "Sidebar"}</h2>
-                    <button
-                        class="text-gray-500 hover:text-gray-800 dark:hover:text-white"
-                        onClick={props.onClose}
-                    >
+                    <button class="text-[var(--base05)]" onClick={props.onClose}>
                         ✕
                     </button>
                 </div>

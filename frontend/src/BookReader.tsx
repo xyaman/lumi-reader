@@ -245,10 +245,7 @@ export default function BookReader() {
     })
 
     return (
-        <div
-            ref={mainRef}
-            class={`bg-white dark:bg-zinc-800 text-black dark:text-white ${isVertical && "h-screen overflow-y-hidden"}`}
-        >
+        <div ref={mainRef} class={`${isVertical && "h-screen overflow-y-hidden"}`}>
             <button
                 onClick={() => {
                     setNavOpen(true)
@@ -362,41 +359,16 @@ export default function BookReader() {
                 overlay={true}
                 onClose={() => setSideLeft(null)}
             >
-                {/* Table of Contents */}
-                <Show when={sideLeft() === "toc"}>
-                    <For each={currBook()?.manifest.nav}>
-                        {(item) => (
-                            <p
-                                class="cursor-pointer text-sm px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
-                                onClick={() => navigationGoTo(item.href)}
-                            >
-                                {item.text}
-                            </p>
-                        )}
-                    </For>
-                </Show>
-
-                {/* Bookmarks */}
-                <Show when={sideLeft() === "bookmarks"}>
-                    <div class="max-h-[90vh] overflow-y-auto">
-                        <For each={currBook()?.bookmarks}>
-                            {(b) => (
-                                <p
-                                    class="cursor-pointer text-sm px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
-                                    onClick={() => {
-                                        setSideLeft(null)
-                                        document
-                                            .querySelector(`p[index="${b.paragraphId}"]`)
-                                            ?.scrollIntoView()
-                                        updateChars()
-                                    }}
-                                >
-                                    <span innerHTML={b.content}></span>
-                                </p>
-                            )}
-                        </For>
-                    </div>
-                </Show>
+                <For each={currBook()?.manifest.nav}>
+                    {(item) => (
+                        <p
+                            class="sidebar-item cursor-pointer text-sm px-2 py-1 rounded"
+                            onClick={() => navigationGoTo(item.href)}
+                        >
+                            {item.text}
+                        </p>
+                    )}
+                </For>
             </Sidebar>
             <Sidebar
                 side="right"
@@ -407,9 +379,7 @@ export default function BookReader() {
             >
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Font Size (px)
-                        </label>
+                        <label class="block text-sm font-medium">Font Size (px)</label>
                         <input
                             value={draftStyle().fontSize}
                             onInput={(e) =>
@@ -422,9 +392,7 @@ export default function BookReader() {
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Line Height (unitless)
-                        </label>
+                        <label class="block text-sm font-medium">Line Height (unitless)</label>
                         <input
                             value={draftStyle().lineHeight}
                             onInput={(e) =>
@@ -449,10 +417,7 @@ export default function BookReader() {
                                 onInput={(e) => setDraftVertical(e.currentTarget.checked)}
                                 class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
                             />
-                            <label
-                                for="vertical-checkbox"
-                                class="text-sm font-medium text-gray-700 dark:text-gray-300"
-                            >
+                            <label for="vertical-checkbox" class="text-sm font-medium">
                                 Vertical Reading
                             </label>
                         </div>
@@ -464,10 +429,7 @@ export default function BookReader() {
                                 onInput={(e) => setDraftPaginated(e.currentTarget.checked)}
                                 class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
                             />
-                            <label
-                                for="paginated-checkbox"
-                                class="text-sm font-medium text-gray-700 dark:text-gray-300"
-                            >
+                            <label for="paginated-checkbox" class="text-sm font-medium">
                                 Simulate Pages
                             </label>
                         </div>
@@ -483,7 +445,7 @@ export default function BookReader() {
 
                             setSettingsOpen(false)
                         }}
-                        class="px-4 py-2 bg-gray-100 dark:bg-zinc-700 text-gray-900 dark:text-white rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-600"
+                        class="button-theme px-4 py-2 rounded-lg"
                     >
                         Save
                     </button>

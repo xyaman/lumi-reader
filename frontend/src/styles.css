@@ -1,5 +1,70 @@
 @import "tailwindcss";
 
+/* Navbar theme */
+.navbar-theme {
+  color: var(--base05);               /* Primary text */
+  background-color: var(--base01);   /* Nav background */
+}
+
+/* Body theme */
+.body-theme {
+  color: var(--base05);              /* Primary text */
+  background-color: var(--base00);   /* Main background */
+}
+
+/* Button theme */
+.button-theme {
+  background-color: var(--base01);   /* Button background */
+  color: var(--base05);              /* Button text */
+  border: 1px solid var(--base02);   /* Subtle border */
+  transition: background-color 0.2s ease;
+}
+
+.button-theme:hover {
+  background-color: var(--base02);   /* Hover state */
+  color: var(--base06);              /* Slightly brighter text */
+}
+
+/* Card theme (for book cards) */
+.card-theme {
+  background-color: var(--base01);   /* Card background */
+  color: var(--base05);              /* Card text */
+  border: 1px solid var(--base02);   /* Card border */
+  transition: box-shadow 0.2s ease;
+}
+
+.card-theme:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25); /* or blend base03 */
+}
+
+/* Progress bar theme */
+.progress-theme {
+  background-color: var(--base02);   /* Outer progress track */
+}
+
+.progress-theme::-webkit-progress-bar {
+  background-color: var(--base02);   /* Track */
+}
+
+.progress-theme::-webkit-progress-value {
+  background-color: var(--base0D);   /* Blue accent (progress) */
+}
+
+.progress-theme::-moz-progress-bar {
+  background-color: var(--base0D);   /* Same for Firefox */
+}
+
+
+.sidebar-theme {
+  background-color: var(--base01);      /* Sidebar background */
+  color: var(--base05);                 /* Sidebar text */
+  border-right: 1px solid var(--base02);/* Sidebar border */
+}
+
+.sidebar-theme .sidebar-item:hover {
+  background: var(--base02);            /* Hover background */
+}
+
 html,
 body {
   margin: 0;

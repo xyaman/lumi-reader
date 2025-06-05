@@ -40,12 +40,12 @@ export default function BookLibrary() {
     })
 
     return (
-        <div class="h-dvh flex flex-col bg-white dark:bg-zinc-800 text-gray-900 dark:text-white">
+        <div class="body-theme h-dvh flex flex-col">
             {/* Navbar */}
-            <nav class="bg-white dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-700 shadow px-6 py-4 flex justify-between items-center">
+            <nav class="navbar-theme border-b shadow px-6 py-4 flex justify-between items-center">
                 <h1 class="text-2xl font-bold">lumireader</h1>
                 <div class="flex gap-3">
-                    <label class="relative inline-flex items-center px-4 py-2 bg-gray-100 dark:bg-zinc-700 text-gray-900 dark:text-white rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-600 transition">
+                    <label class="button-theme relative inline-flex items-center px-4 py-2 rounded-lg transition">
                         <span>Upload epub</span>
                         <input
                             type="file"
@@ -54,6 +54,12 @@ export default function BookLibrary() {
                             class="absolute inset-0 opacity-0 cursor-pointer"
                         />
                     </label>
+                    <a
+                        href="/settings"
+                        class="button-theme flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm hover:opacity-80 transition"
+                    >
+                        Settings
+                    </a>
                 </div>
             </nav>
 
@@ -63,7 +69,7 @@ export default function BookLibrary() {
                     <For each={books()}>
                         {(book) => (
                             <a href={`/reader/${book.id}`} class="block group">
-                                <div class="relative bg-white dark:bg-zinc-900 rounded-lg shadow-md hover:shadow-lg transition overflow-hidden">
+                                <div class="card-theme rounded-lg shadow-md hover:shadow-lg transition overflow-hidden">
                                     <img
                                         src={covers()[book.id!]}
                                         alt={book.metadata.title}
@@ -78,7 +84,7 @@ export default function BookLibrary() {
                                     <div class="px-3 py-2">
                                         <p class="text-sm truncate">{book.metadata.title}</p>
                                         <progress
-                                            class="w-full h-2 rounded bg-gray-200 dark:bg-zinc-700 [&::-webkit-progress-bar]:rounded [&::-webkit-progress-value]:rounded-full"
+                                            class="progress-theme w-full h-2 rounded [&::-webkit-progress-bar]:rounded [&::-webkit-progress-value]:rounded-full"
                                             value={book.currChars}
                                             max={book.totalChars}
                                         />
