@@ -359,16 +359,41 @@ export default function BookReader() {
                 overlay={true}
                 onClose={() => setSideLeft(null)}
             >
-                <For each={currBook()?.manifest.nav}>
-                    {(item) => (
-                        <p
-                            class="sidebar-item cursor-pointer text-sm px-2 py-1 rounded"
-                            onClick={() => navigationGoTo(item.href)}
-                        >
-                            {item.text}
-                        </p>
-                    )}
-                </For>
+                {/* Table of Contents */}
+                <Show when={sideLeft() === "toc"}>
+                    <For each={currBook()?.manifest.nav}>
+                        {(item) => (
+                            <p
+                                class="cursor-pointer text-sm px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                                onClick={() => navigationGoTo(item.href)}
+                            >
+                                {item.text}
+                            </p>
+                        )}
+                    </For>
+                </Show>
+
+                {/* Bookmarks */}
+                <Show when={sideLeft() === "bookmarks"}>
+                    <div class="max-h-[90vh] overflow-y-auto">
+                        <For each={currBook()?.bookmarks}>
+                            {(b) => (
+                                <p
+                                    class="cursor-pointer text-sm px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                                    onClick={() => {
+                                        setSideLeft(null)
+                                        document
+                                            .querySelector(`p[index="${b.paragraphId}"]`)
+                                            ?.scrollIntoView()
+                                        updateChars()
+                                    }}
+                                >
+                                    <span innerHTML={b.content}></span>
+                                </p>
+                            )}
+                        </For>
+                    </div>
+                </Show>
             </Sidebar>
             <Sidebar
                 side="right"

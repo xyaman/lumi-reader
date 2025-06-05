@@ -69,7 +69,7 @@ export default function BookLibrary() {
                     <For each={books()}>
                         {(book) => (
                             <a href={`/reader/${book.id}`} class="block group">
-                                <div class="card-theme rounded-lg shadow-md hover:shadow-lg transition overflow-hidden">
+                                <div class="card-theme relative rounded-lg shadow-md hover:shadow-lg transition overflow-hidden">
                                     <img
                                         src={covers()[book.id!]}
                                         alt={book.metadata.title}
