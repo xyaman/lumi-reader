@@ -181,14 +181,15 @@ export default function BookReader() {
                     const index = p.getAttribute("index")
                     if (!index) return
 
+                    const bgColor = "bg-[var(--base01)]"
                     const highlight = () => {
                         const removed = book.toggleBookmark(index, p.innerHTML)
-                        p.style.backgroundColor = removed ? "" : "black"
+                        removed ? p.classList.remove(bgColor) : p.classList.add(bgColor)
                         book.save()
                     }
 
                     p.addEventListener("click", () => highlight())
-                    if (bookmarksIds.includes(index)) p.style.backgroundColor = "black"
+                    if (bookmarksIds.includes(index)) p.classList.add(bgColor)
                 })
 
                 if (isVertical && !isPaginated && book.currParagraphId === 0) {
