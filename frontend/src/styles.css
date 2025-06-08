@@ -1,5 +1,17 @@
 @import "tailwindcss";
 
+html,
+body {
+  margin: 0;
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  /* Prevent scrolling in paginated mode iOS */
+  overscroll-behavior: none;
+}
+
 /* Navbar theme */
 .navbar-theme {
   color: var(--base05);               /* Primary text */
@@ -81,12 +93,6 @@
   background: var(--base02);            /* Hover background */
 }
 
-html,
-body {
-  margin: 0;
-  height: 100%;
-  width: 100%;
-}
 
 .writing-mode-vertical {
     writing-mode: vertical-rl;
