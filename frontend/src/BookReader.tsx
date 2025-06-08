@@ -154,7 +154,7 @@ export default function BookReader() {
         book.currParagraphId = lastIndex
         book.currChars = currChars
         book.save().catch(console.error)
-        charCounterRef.innerHTML = `${book.currChars}/${book.totalChars}`
+        charCounterRef.innerHTML = `${book.currChars}/${book.totalChars} (${Math.floor((100 * book.currChars) / book.totalChars)}%)`
     }
 
     const initScrollTracking = () => {
@@ -172,7 +172,7 @@ export default function BookReader() {
             const images = book.renderContent(contentRef, { xhtml: "all" })
             book.insertCss()
             setImgUrls(images)
-            charCounterRef.innerHTML = `${book.currChars}/${book.totalChars}`
+            charCounterRef.innerHTML = `${book.currChars}/${book.totalChars} (${Math.floor((100 * book.currChars) / book.totalChars)}%)`
             document.querySelector(`p[index='${book.currParagraphId}']`)?.scrollIntoView()
             let bookmarksIds = book.bookmarks.map((b) => b.paragraphId.toString())
             document.querySelectorAll("p").forEach((p) => {
