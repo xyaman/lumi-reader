@@ -418,7 +418,7 @@ async function extractManifest(
     }
 
     const [navContent, xhtmlContent, cssContent, imgs] = await Promise.all([
-        zip.file(getFilePath(basePath, navHref))?.async("text")!,
+        zip.file(getFilePath(basePath, navHref))?.async("text"),
         Promise.all(
             xhtmlHref.map((xhtml) => zip.file(getFilePath(basePath, xhtml))?.async("text")!),
         ),
@@ -441,7 +441,7 @@ async function extractManifest(
     }
 
     // TOC (Navigator)
-    manifest.nav = parseNavigator(navContent)
+    manifest.nav = navContent ? parseNavigator(navContent) : []
 
     // Css
     for (const css of cssContent) {
