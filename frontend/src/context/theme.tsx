@@ -1,3 +1,4 @@
+// src/context/ThemeContext.tsx
 import { createContext, createSignal, JSX, useContext } from "solid-js"
 import {
     ITheme,
@@ -42,7 +43,7 @@ export function ThemeProvider(props: { children: JSX.Element }) {
         saveCustomThemes(updated)
         setCustomThemes(updated)
         if (scheme === selectedTheme()) {
-            selectTheme(defaultThemes[0].scheme)
+            selectTheme(defaultThemes[1].scheme)
         }
     }
 

@@ -21,7 +21,7 @@ export interface ITheme {
 
 export const defaultThemes: ITheme[] = [
     {
-        scheme: "Minimal white",
+        scheme: "Minimal White",
         author: "lumireader",
         base00: "#ffffff",
         base01: "#f4f4f4",
