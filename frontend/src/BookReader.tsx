@@ -110,7 +110,20 @@ export default function BookReader() {
             if (e.key === "ArrowDown") flipPage(1)
             else if (e.key === "ArrowUp") flipPage(-1)
         })
-        window.addEventListener("resize", () => flipPage(-1))
+
+        // TODO: temporary solution, find the real one!
+        let bounce = Date.now()
+        window.addEventListener("resize", () => {
+            if (Date.now() - bounce < 2000) return
+
+            setTimeout(() => {
+                containerRef.classList.remove("h-screen")
+                containerRef.classList.add("h-screen")
+                document
+                    .querySelector(`p[index='${currBook()?.currParagraphId}']`)
+                    ?.scrollIntoView()
+            }, 0)
+        })
     }
 
     const updateChars = () => {
@@ -247,7 +260,7 @@ export default function BookReader() {
     })
 
     return (
-        <div ref={mainRef} class={`${isVertical && "h-screen overflow-y-hidden"}`}>
+        <div ref={mainRef} class={`${isVertical ? "h-screen overflow-y-hidden" : ""}`}>
             <button
                 onClick={() => {
                     setNavOpen(true)
