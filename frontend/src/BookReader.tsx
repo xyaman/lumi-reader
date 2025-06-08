@@ -10,6 +10,7 @@ import {
     IconFullscreen,
     IconSettings,
     IconToc,
+    IconWindowed,
 } from "./components/icons"
 import ThemeList from "./components/Themelist"
 import { ThemeProvider } from "./context/theme"
@@ -266,6 +267,10 @@ export default function BookReader() {
         document.body.style.overflow = sideLeft() !== null || settingsOpen() ? "hidden" : ""
     })
 
+    const isFullscreen = () => {
+        return document.fullscreenElement != null
+    }
+
     return (
         <div ref={mainRef} class={`${isVertical ? "h-screen overflow-y-hidden" : ""}`}>
             <button
@@ -298,8 +303,19 @@ export default function BookReader() {
                         </button>
                     </Navbar.Left>
                     <Navbar.Right>
-                        <button onClick={() => document.documentElement.requestFullscreen()}>
-                            <IconFullscreen />
+                        <button
+                            onClick={() => {
+                                if (isFullscreen()) {
+                                    document.exitFullscreen()
+                                } else {
+                                    document.documentElement.requestFullscreen()
+                                }
+                                setNavOpen(false)
+                            }}
+                        >
+                            <Show when={isFullscreen()} fallback={<IconFullscreen />}>
+                                <IconWindowed />
+                            </Show>
                         </button>
                         <button
                             onClick={() => {
