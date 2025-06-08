@@ -1,16 +1,14 @@
 import { useNavigate, useParams } from "@solidjs/router"
 import { EpubBook } from "./lib/epub"
-import { createEffect, createSignal, For, onCleanup, onMount, Show } from "solid-js"
+import { createEffect, createResource, createSignal, For, onCleanup, onMount, Show } from "solid-js"
 import Navbar from "./components/Navbar"
 import Sidebar from "./components/Sidebar"
 import { IconBookmark, IconExit, IconSettings, IconToc } from "./components/icons"
 import ThemeList from "./components/Themelist"
-import { getCustomThemes } from "./theme"
 import { ThemeProvider } from "./context/theme"
 
 function updateReaderStyle(fontSize: number, lineHeight: number | string) {
     const fixedFontSize = Math.max(1, fontSize)
-
     document.documentElement.style.setProperty("--reader-font-size", `${fixedFontSize}px`)
     document.documentElement.style.setProperty("--reader-line-height", `${lineHeight}`)
     localStorage.setItem("reader:fontSize", String(fontSize))
@@ -21,13 +19,18 @@ export default function BookReader() {
     const params = useParams()
     const navigate = useNavigate()
     const id = Number(params.id)
-
     if (!id) navigate("/", { replace: true })
 
-    // Signals
-    const [isReady, setIsReady] = createSignal(false)
-    const [currBook, setCurrBook] = createSignal<EpubBook | null>(null)
     const [imgUrls, setImgUrls] = createSignal<string[]>([])
+    const [currBook] = createResource(async () => {
+        const record = await EpubBook.getById(id)
+        if (!record) {
+            navigate("/", { replace: true })
+            return null
+        }
+        return EpubBook.fromRecord(record)
+    })
+
     const [draftVertical, setDraftVertical] = createSignal(
         localStorage.getItem("reader:vertical") === "true",
     )
@@ -35,18 +38,14 @@ export default function BookReader() {
         localStorage.getItem("reader:paginated") === "true",
     )
 
-    // UI State
     const [navOpen, setNavOpen] = createSignal(false)
     const [sideLeft, setSideLeft] = createSignal<"toc" | "bookmarks" | null>(null)
     const [settingsOpen, setSettingsOpen] = createSignal(false)
-
-    // Reader Style
     const [draftStyle, setDraftStyle] = createSignal({
         fontSize: Number(localStorage.getItem("reader:fontSize") ?? 20),
         lineHeight: localStorage.getItem("reader:lineHeight") ?? "1.5",
     })
 
-    // Refs
     let mainRef!: HTMLDivElement
     let containerRef!: HTMLDivElement
     let contentRef!: HTMLDivElement
@@ -81,8 +80,6 @@ export default function BookReader() {
         updateChars()
     }
 
-    // TODO: make the difference between paginated and continous
-    // Paginated mode should not load all xhtml at once
     const navigationGoTo = (href?: string) => {
         if (!href) return
         const anchorId = href.includes("#") ? href.split("#").pop() : null
@@ -93,15 +90,15 @@ export default function BookReader() {
 
     const setupPagination = () => {
         let startX = 0
-
-        const onTouchStart = (e: TouchEvent) => (startX = e.touches[0].clientX)
-
-        const onTouchEnd = (e: TouchEvent) => {
+        containerRef.addEventListener(
+            "touchstart",
+            (e: TouchEvent) => (startX = e.touches[0].clientX),
+        )
+        containerRef.addEventListener("touchend", (e: TouchEvent) => {
             const delta = e.changedTouches[0].clientX - startX
             if (Math.abs(delta) > 50) flipPage(delta < 0 ? 1 : -1)
-        }
-
-        const onKeyDown = (e: KeyboardEvent) => {
+        })
+        document.addEventListener("keydown", (e: KeyboardEvent) => {
             if (isVertical) {
                 if (e.key === "ArrowLeft") flipPage(1)
                 else if (e.key === "ArrowRight") flipPage(-1)
@@ -109,22 +106,19 @@ export default function BookReader() {
                 if (e.key === "ArrowRight") flipPage(1)
                 else if (e.key === "ArrowLeft") flipPage(-1)
             }
-        }
 
-        containerRef.addEventListener("touchstart", onTouchStart)
-        containerRef.addEventListener("touchend", onTouchEnd)
-        document.addEventListener("keydown", onKeyDown)
+            if (e.key === "ArrowDown") flipPage(1)
+            else if (e.key === "ArrowUp") flipPage(-1)
+        })
         window.addEventListener("resize", () => flipPage(-1))
     }
 
     const updateChars = () => {
         const book = currBook()
         if (!book || !containerRef.isConnected) return
-
         let lastIndex = 0
         let currChars = 0
         const pTags = document.querySelectorAll("p[index]")
-
         for (let i = 0; i < pTags.length; i++) {
             const rect = pTags[i].getBoundingClientRect()
             const visible =
@@ -132,12 +126,10 @@ export default function BookReader() {
                 (!isPaginated && isVertical && rect.x < 0) ||
                 (isPaginated && !isVertical && rect.x > 0) ||
                 (isPaginated && isVertical && rect.y > 0)
-
             if (visible) break
             lastIndex = Number(pTags[i].getAttribute("index")) ?? lastIndex
             currChars = Number(pTags[i].getAttribute("characumm")) ?? currChars
         }
-
         book.currParagraphId = lastIndex
         book.currChars = currChars
         book.save().catch(console.error)
@@ -146,79 +138,50 @@ export default function BookReader() {
 
     const initScrollTracking = () => {
         let scrollTimer: number | null = null
-
         const debouncedScroll = () => {
             if (scrollTimer !== null) clearTimeout(scrollTimer)
             scrollTimer = setTimeout(updateChars, 300)
         }
-
         document.addEventListener("scroll", debouncedScroll)
         return debouncedScroll
     }
 
-    const initializeBook = async () => {
+    const initializeBook = async (book: EpubBook) => {
         try {
-            const record = await EpubBook.getById(id)
-            if (!record) return navigate("/", { replace: true })
-
-            const book = EpubBook.fromRecord(record)
-            setCurrBook(book)
-            setIsReady(true) // triggers DOM to render contentRef
-
-            // defer until DOM is fully ready
-            queueMicrotask(() => {
-                const images = book.renderContent(contentRef, { xhtml: "all" })
-                book.insertCss()
-                setImgUrls(images)
-
-                charCounterRef.innerHTML = `${book.currChars}/${book.totalChars}`
-
-                const target = document.querySelector(`p[index='${book.currParagraphId}']`)
-                target?.scrollIntoView()
-
-                let bookmarksIds = book.bookmarks.map((b) => b.paragraphId.toString())
-                // TODO: refactor, put hightlight outside
-                document.querySelectorAll("p").forEach((p) => {
-                    const index = p.getAttribute("index")
-                    if (!index) return
-
-                    const bgColor = "bg-[var(--base01)]"
-                    const highlight = () => {
-                        const removed = book.toggleBookmark(index, p.innerHTML)
-                        removed ? p.classList.remove(bgColor) : p.classList.add(bgColor)
-                        book.save()
-                    }
-
-                    p.addEventListener("click", () => highlight())
-                    if (bookmarksIds.includes(index)) p.classList.add(bgColor)
-                })
-
-                if (isVertical && !isPaginated && book.currParagraphId === 0) {
-                    containerRef.scrollLeft = 0
+            const images = book.renderContent(contentRef, { xhtml: "all" })
+            book.insertCss()
+            setImgUrls(images)
+            charCounterRef.innerHTML = `${book.currChars}/${book.totalChars}`
+            document.querySelector(`p[index='${book.currParagraphId}']`)?.scrollIntoView()
+            let bookmarksIds = book.bookmarks.map((b) => b.paragraphId.toString())
+            document.querySelectorAll("p").forEach((p) => {
+                const index = p.getAttribute("index")
+                if (!index) return
+                const bgColor = "bg-[var(--base01)]"
+                const highlight = () => {
+                    const removed = book.toggleBookmark(index, p.innerHTML)
+                    removed ? p.classList.remove(bgColor) : p.classList.add(bgColor)
+                    book.save()
                 }
-
-                setupPagination()
+                p.addEventListener("click", highlight)
+                if (bookmarksIds.includes(index)) p.classList.add(bgColor)
             })
+            if (isVertical && !isPaginated && book.currParagraphId === 0) {
+                containerRef.scrollLeft = 0
+            }
+            setupPagination()
         } catch (e) {
             console.error("Failed to load book", e)
             navigate("/", { replace: true })
         }
     }
 
+    const onWheel = (e: WheelEvent) => {
+        mainRef.scrollLeft += e.deltaY
+        updateChars()
+    }
+
     onMount(() => {
-        const onWheel = (e: WheelEvent) => {
-            // e.preventDefault()
-            mainRef.scrollLeft += e.deltaY
-            updateChars()
-        }
-
-        initializeBook().then(() => {
-            if (!isPaginated && isVertical) {
-                // Prevent default vertical scroll
-                mainRef.addEventListener("wheel", onWheel, { passive: false })
-            }
-        })
-
         if (!isPaginated && !isVertical) {
             const debouncedScroll = initScrollTracking()
             onCleanup(() => {
@@ -226,27 +189,30 @@ export default function BookReader() {
                 mainRef.removeEventListener("wheel", onWheel)
             })
         }
-
         onCleanup(() => {
             imgUrls().forEach((url) => URL.revokeObjectURL(url))
             document.head.querySelectorAll("#temp-css").forEach((el) => el.remove())
         })
     })
 
-    // Effect: Update style (and save in local storage) every time it changes
+    createEffect(() => {
+        const book = currBook()
+        if (!book) return
+        initializeBook(book).then(() => {
+            if (!isPaginated && isVertical) {
+                mainRef.addEventListener("wheel", onWheel, { passive: false })
+            }
+        })
+    })
+
     createEffect(() => {
         if (settingsOpen()) return
         const { fontSize, lineHeight } = draftStyle()
         updateReaderStyle(fontSize, lineHeight)
     })
 
-    // Effect: block main scroll when one of the side bar is open
     createEffect(() => {
-        if (sideLeft() !== null || settingsOpen()) {
-            document.body.style.overflow = "hidden"
-        } else {
-            document.body.style.overflow = ""
-        }
+        document.body.style.overflow = sideLeft() !== null || settingsOpen() ? "hidden" : ""
     })
 
     return (
@@ -257,11 +223,10 @@ export default function BookReader() {
                     setSideLeft(null)
                 }}
                 class="fixed top-0 left-0 right-0 h-8 z-10 bg-transparent"
-            ></button>
+            />
             <Show when={navOpen()}>
                 <Navbar>
                     <Navbar.Left>
-                        {/* Table of contents */}
                         <button
                             onClick={() => {
                                 setSideLeft("toc")
@@ -271,11 +236,8 @@ export default function BookReader() {
                         >
                             <IconToc />
                         </button>
-
-                        {/* Bookmarks */}
                         <button
                             onClick={() => {
-                                console.log(currBook()?.bookmarks)
                                 setSideLeft("bookmarks")
                                 setNavOpen(false)
                             }}
@@ -299,15 +261,13 @@ export default function BookReader() {
                     </Navbar.Right>
                 </Navbar>
             </Show>
-
             <Sidebar
                 open={sideLeft() !== null}
                 side="left"
                 title={sideLeft() === "toc" ? "Table of Contents" : "Bookmarks"}
-                overlay={true}
+                overlay
                 onClose={() => setSideLeft(null)}
             >
-                {/* Table of Contents */}
                 <Show when={sideLeft() === "toc"}>
                     <For each={currBook()?.manifest.nav}>
                         {(item) => (
@@ -320,8 +280,6 @@ export default function BookReader() {
                         )}
                     </For>
                 </Show>
-
-                {/* Bookmarks */}
                 <Show when={sideLeft() === "bookmarks"}>
                     <div class="max-h-[90vh] overflow-y-auto">
                         <For each={currBook()?.bookmarks}>
@@ -336,7 +294,7 @@ export default function BookReader() {
                                         updateChars()
                                     }}
                                 >
-                                    <span innerHTML={b.content}></span>
+                                    <span innerHTML={b.content} />
                                 </p>
                             )}
                         </For>
@@ -345,7 +303,7 @@ export default function BookReader() {
             </Sidebar>
             <Sidebar
                 side="right"
-                overlay={true}
+                overlay
                 title="Settings"
                 open={settingsOpen()}
                 onClose={() => setSettingsOpen(false)}
@@ -363,7 +321,6 @@ export default function BookReader() {
                             }
                         />
                     </div>
-
                     <div>
                         <label class="block text-sm font-medium">Line Height (unitless)</label>
                         <input
@@ -376,7 +333,6 @@ export default function BookReader() {
                             }
                         />
                     </div>
-
                     <hr />
                     <div class="space-y-4">
                         <p class="font-bold text-sm">
@@ -407,7 +363,6 @@ export default function BookReader() {
                             </label>
                         </div>
                     </div>
-
                     <button
                         onClick={() => {
                             const changed =
@@ -415,21 +370,19 @@ export default function BookReader() {
                             localStorage.setItem("reader:vertical", String(draftVertical()))
                             localStorage.setItem("reader:paginated", String(draftPaginated()))
                             if (changed) location.reload()
-
                             setSettingsOpen(false)
                         }}
                         class="button-theme px-4 py-2 rounded-lg"
                     >
                         Save
                     </button>
-
                     <ThemeProvider>
-                        <ThemeList selectOnly={true} />
+                        <ThemeList selectOnly />
                     </ThemeProvider>
                 </div>
             </Sidebar>
             <Show
-                when={isReady()}
+                when={currBook()}
                 fallback={<div class="h-screen w-screen p-8 text-center">Loading book…</div>}
             >
                 <div
@@ -446,13 +399,13 @@ export default function BookReader() {
                         ref={contentRef}
                         class={contentClass()}
                         style="font-size: var(--reader-font-size); line-height: var(--reader-line-height);"
-                    ></div>
+                    />
                 </div>
                 <span
                     id="character-counter"
                     ref={charCounterRef}
                     class="z-10 right-[0.5rem] bottom-[0.5rem] fixed text-[0.75rem]"
-                ></span>
+                />
             </Show>
         </div>
     )
