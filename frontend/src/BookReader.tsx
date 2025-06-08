@@ -3,7 +3,7 @@ import { EpubBook } from "./lib/epub"
 import { createEffect, createResource, createSignal, For, onCleanup, onMount, Show } from "solid-js"
 import Navbar from "./components/Navbar"
 import Sidebar from "./components/Sidebar"
-import { IconBookmark, IconExit, IconSettings, IconToc } from "./components/icons"
+import { IconBookmark, IconBookmarkFull, IconExit, IconSettings, IconToc } from "./components/icons"
 import ThemeList from "./components/Themelist"
 import { ThemeProvider } from "./context/theme"
 
@@ -159,11 +159,42 @@ export default function BookReader() {
                 if (!index) return
                 const bgColor = "bg-[var(--base01)]"
                 const highlight = () => {
-                    const removed = book.toggleBookmark(index, p.innerHTML)
-                    removed ? p.classList.remove(bgColor) : p.classList.add(bgColor)
-                    book.save()
+                    if (p.children.length) {
+                        const hasIcon = Array.from(p.children).filter(
+                            (p) => p.id === "bookmark-icon",
+                        )
+                        if (hasIcon.length === 1) {
+                            document.getElementById("bookmark-icon")?.remove()
+                            return
+                        }
+                    }
+
+                    document.getElementById("bookmark-icon")?.remove()
+
+                    const boomarkClick = () => {
+                        const removed = book.toggleBookmark(index, p.innerHTML)
+                        removed ? p.classList.remove(bgColor) : p.classList.add(bgColor)
+                        book.save()
+                    }
+
+                    const bookmarkIcon = document.createElement("span")
+                    bookmarkIcon.appendChild(IconBookmarkFull() as HTMLElement)
+
+                    if (isVertical) {
+                        bookmarkIcon.className =
+                            "absolute right-0 bottom-0 w-[40px] h-[40px] cursor-pointer rounded-lg p-1 bg-[var(--base01)]"
+                    } else {
+                        bookmarkIcon.className =
+                            "absolute right-0 top-0 w-[40px] h-[40px] cursor-pointer rounded-lg p-1 bg-[var(--base01)]"
+                    }
+                    bookmarkIcon.id = "bookmark-icon"
+                    bookmarkIcon.onclick = boomarkClick
+
+                    p.appendChild(bookmarkIcon)
                 }
                 p.addEventListener("click", highlight)
+                p.classList.add("relative")
+
                 if (bookmarksIds.includes(index)) p.classList.add(bgColor)
             })
             if (isVertical && !isPaginated && book.currParagraphId === 0) {
