@@ -1,6 +1,7 @@
 import { For, Show } from "solid-js"
 import { useThemeContext } from "../context/theme"
 import { ITheme } from "../theme"
+import { IconDuplicate, IconEdit, IconTrash } from "./icons"
 
 export default function ThemeList(props: {
     selectOnly?: boolean
@@ -19,36 +20,35 @@ export default function ThemeList(props: {
                         class={`flex items-center justify-between p-3 my-2 rounded border ${
                             selectedTheme() === theme.scheme ? "border-blue-600" : "border-zinc-600"
                         }`}
+                        onClick={() => selectTheme(theme.scheme)}
                     >
-                        <span>{theme.scheme}</span>
+                        <p class="cursor-pointer">
+                            {theme.scheme}
+                            <Show when={!props.selectOnly}>
+                                <span class="text-xs text-[var(--base03)]"> {theme.author}</span>
+                            </Show>
+                        </p>
                         <div class="flex gap-2">
-                            <button
-                                class="ml-2 text-sm text-blue-400 hover:underline"
-                                onClick={() => selectTheme(theme.scheme)}
-                                disabled={selectedTheme() === theme.scheme}
-                            >
-                                {selectedTheme() === theme.scheme ? "Selected" : "Select"}
-                            </button>
                             <Show when={!props.selectOnly}>
                                 <button
-                                    class="ml-2 text-sm text-green-400 hover:underline"
+                                    class="ml-2 text-sm text-[var(--base05)] cursor-pointer"
                                     onClick={() => duplicateTheme(theme)}
                                 >
-                                    Duplicate
+                                    <IconDuplicate />
                                 </button>
                             </Show>
                             <Show when={!isDefaultTheme(theme.scheme) && !props.selectOnly}>
                                 <button
-                                    class="ml-2 text-sm text-yellow-400 hover:underline"
+                                    class="ml-2 text-sm text-[var(--base05)] cursor-pointer"
                                     onClick={() => props.onEdit?.(theme)}
                                 >
-                                    Edit
+                                    <IconEdit />
                                 </button>
                                 <button
-                                    class="ml-2 text-sm text-red-400 hover:underline"
+                                    class="ml-2 text-sm text-[var(--base05)] cursor-pointer"
                                     onClick={() => deleteTheme(theme.scheme)}
                                 >
-                                    Remove
+                                    <IconTrash />
                                 </button>
                             </Show>
                         </div>
