@@ -312,7 +312,7 @@ export default function BookReader() {
                     <For each={currBook()?.manifest.nav}>
                         {(item) => (
                             <p
-                                class="cursor-pointer text-sm px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                                class="cursor-pointer text-sm px-2 py-1 rounded hover:bg-[var(--base00)]"
                                 onClick={() => navigationGoTo(item.href)}
                             >
                                 {item.text}
@@ -327,7 +327,7 @@ export default function BookReader() {
                         <For each={currBook()?.bookmarks}>
                             {(b) => (
                                 <p
-                                    class="cursor-pointer text-sm px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                                    class="cursor-pointer text-sm px-2 py-1 rounded hover:bg-[var(--base00)]"
                                     onClick={() => {
                                         setSideLeft(null)
                                         document
