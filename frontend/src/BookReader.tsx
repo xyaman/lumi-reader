@@ -3,7 +3,14 @@ import { EpubBook } from "./lib/epub"
 import { createEffect, createResource, createSignal, For, onCleanup, onMount, Show } from "solid-js"
 import Navbar from "./components/Navbar"
 import Sidebar from "./components/Sidebar"
-import { IconBookmark, IconBookmarkFull, IconExit, IconSettings, IconToc } from "./components/icons"
+import {
+    IconBookmark,
+    IconBookmarkFull,
+    IconExit,
+    IconFullscreen,
+    IconSettings,
+    IconToc,
+} from "./components/icons"
 import ThemeList from "./components/Themelist"
 import { ThemeProvider } from "./context/theme"
 
@@ -291,6 +298,9 @@ export default function BookReader() {
                         </button>
                     </Navbar.Left>
                     <Navbar.Right>
+                        <button onClick={() => document.documentElement.requestFullscreen()}>
+                            <IconFullscreen />
+                        </button>
                         <button
                             onClick={() => {
                                 setSideLeft(null)
