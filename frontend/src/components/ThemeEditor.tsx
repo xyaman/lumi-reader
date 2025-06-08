@@ -1,5 +1,6 @@
 import { createEffect, createSignal, For } from "solid-js"
 import { ITheme } from "../theme"
+import { useThemeContext } from "../context/theme"
 
 type Base16Key = keyof ITheme
 
@@ -18,6 +19,7 @@ const parseSimpleYaml = (yaml: string): Partial<ITheme> => {
     })
     return obj
 }
+
 const base16Keys: Base16Key[] = Array.from(
     { length: 16 },
     (_, i) => `base0${i.toString(16).toUpperCase()}` as Base16Key,
@@ -69,8 +71,8 @@ export default function ThemeEditor(props: {
     initialTheme?: ITheme
     mode?: "create" | "edit"
     onClose: () => void
-    onSave?: (theme: ITheme, oldName?: string) => void
 }) {
+    const { saveTheme } = useThemeContext()
     const [form, setForm] = createSignal<ITheme>(
         props.initialTheme ? { ...props.initialTheme } : emptyTheme,
     )
@@ -80,7 +82,6 @@ export default function ThemeEditor(props: {
 
     createEffect(() => setYamlString(themeToYAML(form())))
 
-    // Handlers
     const handleFormChange = (key: keyof ITheme, value: string) =>
         setForm((prev) => ({ ...prev, [key]: value }))
 
@@ -114,15 +115,9 @@ export default function ThemeEditor(props: {
         e.preventDefault()
         const theme = form()
         if (!theme.scheme.trim()) return
-        if (props.mode === "edit") {
-            // Update existing theme
-            props.onSave?.(theme, originalName)
-        } else {
-            // Create new theme
-            props.onSave?.(theme)
-            setForm(emptyTheme)
-        }
+        saveTheme(theme, props.mode === "edit" ? originalName : undefined)
         props.onClose()
+        if (props.mode === "create") setForm(emptyTheme)
     }
 
     return (
@@ -139,6 +134,7 @@ export default function ThemeEditor(props: {
                     ← Back
                 </button>
             </div>
+
             <div class="mb-3">
                 <label class="block text-sm mb-1">Name:</label>
                 <input
@@ -149,6 +145,7 @@ export default function ThemeEditor(props: {
                     class="w-full p-2 rounded bg-zinc-800 border border-zinc-600"
                 />
             </div>
+
             <div class="mb-3">
                 <label class="block text-sm mb-1">Author:</label>
                 <input
@@ -159,8 +156,8 @@ export default function ThemeEditor(props: {
                     class="w-full p-2 rounded bg-zinc-800 border border-zinc-600"
                 />
             </div>
+
             <div class="flex flex-col md:flex-row gap-6">
-                {/* Left: Color pickers */}
                 <div class="flex-1">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 mb-4">
                         <For each={base16Keys}>
@@ -183,7 +180,6 @@ export default function ThemeEditor(props: {
                     </div>
                 </div>
 
-                {/* Right: YAML textarea */}
                 <div class="flex-1">
                     <label class="block mb-1 font-semibold text-sm">YAML Editor:</label>
                     <textarea
@@ -194,6 +190,7 @@ export default function ThemeEditor(props: {
                     {yamlError() && <div class="text-red-500 text-xs mt-1">{yamlError()}</div>}
                 </div>
             </div>
+
             <div class="space-x-2 mb-4">
                 <button type="submit" class="button-theme px-4 py-2 rounded">
                     {props.mode === "edit" ? "Save" : "Create"}

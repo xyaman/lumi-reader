@@ -6,6 +6,7 @@ import Sidebar from "./components/Sidebar"
 import { IconBookmark, IconExit, IconSettings, IconToc } from "./components/icons"
 import ThemeList from "./components/Themelist"
 import { getCustomThemes } from "./theme"
+import { ThemeProvider } from "./context/theme"
 
 function updateReaderStyle(fontSize: number, lineHeight: number | string) {
     const fixedFontSize = Math.max(1, fontSize)
@@ -422,7 +423,9 @@ export default function BookReader() {
                         Save
                     </button>
 
-                    <ThemeList customThemes={getCustomThemes()} />
+                    <ThemeProvider>
+                        <ThemeList selectOnly={true} />
+                    </ThemeProvider>
                 </div>
             </Sidebar>
             <Show

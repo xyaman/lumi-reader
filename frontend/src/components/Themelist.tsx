@@ -1,26 +1,19 @@
-import { ITheme, defaultThemes, setGlobalTheme, getSelectedTheme } from "../theme"
-import { createSignal, For, Show } from "solid-js"
+import { For, Show } from "solid-js"
+import { useThemeContext } from "../context/theme"
+import { ITheme } from "../theme"
 
 export default function ThemeList(props: {
-    customThemes: ITheme[]
-    onRemove?: (name: string) => void
+    selectOnly?: boolean
     onEdit?: (theme: ITheme) => void
-    onDuplicate?: (theme: ITheme) => void
 }) {
-    const [selectedTheme, setSelectedTheme] = createSignal(getSelectedTheme())
-
-    const handleSelect = (name: string) => {
-        setSelectedTheme(name)
-        setGlobalTheme(name)
-    }
-
-    // Helper to check if a theme is default
-    const isDefaultTheme = (scheme: string) => defaultThemes.some((t) => t.scheme === scheme)
+    const { selectedTheme, selectTheme, allThemes, deleteTheme, duplicateTheme } = useThemeContext()
+    const isDefaultTheme = (scheme: string) =>
+        allThemes().some((t) => t.scheme === scheme && t.author === "lumireader")
 
     return (
         <div>
             <h3 class="text-lg font-medium mb-2">Available Themes</h3>
-            <For each={[...defaultThemes, ...props.customThemes]}>
+            <For each={allThemes()}>
                 {(theme) => (
                     <div
                         class={`flex items-center justify-between p-3 my-2 rounded border ${
@@ -31,38 +24,29 @@ export default function ThemeList(props: {
                         <div class="flex gap-2">
                             <button
                                 class="ml-2 text-sm text-blue-400 hover:underline"
-                                onClick={() => handleSelect(theme.scheme)}
+                                onClick={() => selectTheme(theme.scheme)}
                                 disabled={selectedTheme() === theme.scheme}
                             >
                                 {selectedTheme() === theme.scheme ? "Selected" : "Select"}
                             </button>
-                            {/* Duplicate button for all themes */}
-                            <Show when={props.onDuplicate !== undefined}>
+                            <Show when={!props.selectOnly}>
                                 <button
                                     class="ml-2 text-sm text-green-400 hover:underline"
-                                    onClick={() => props.onDuplicate?.(theme)}
+                                    onClick={() => duplicateTheme(theme)}
                                 >
                                     Duplicate
                                 </button>
                             </Show>
-                            {/* Only show edit/remove for custom themes */}
-                            <Show when={!isDefaultTheme(theme.scheme) && props.onEdit}>
+                            <Show when={!isDefaultTheme(theme.scheme) && !props.selectOnly}>
                                 <button
                                     class="ml-2 text-sm text-yellow-400 hover:underline"
                                     onClick={() => props.onEdit?.(theme)}
                                 >
                                     Edit
                                 </button>
-                            </Show>
-                            <Show when={!isDefaultTheme(theme.scheme) && props.onRemove}>
                                 <button
                                     class="ml-2 text-sm text-red-400 hover:underline"
-                                    onClick={() => {
-                                        if (theme.scheme == getSelectedTheme()) {
-                                            setSelectedTheme("Minimal white")
-                                        }
-                                        props.onRemove?.(theme.scheme)
-                                    }}
+                                    onClick={() => deleteTheme(theme.scheme)}
                                 >
                                     Remove
                                 </button>
