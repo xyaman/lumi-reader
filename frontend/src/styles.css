@@ -6,35 +6,51 @@
   background-color: var(--base01);   /* Nav background */
 }
 
+.border-theme {
+    border-color: var(--base05);
+}
+
+.yaml-theme {
+    background-color: var(--base01);
+    color: var(--base05);
+}
+
 /* Body theme */
 .body-theme {
-  color: var(--base05);              /* Primary text */
-  background-color: var(--base00);   /* Main background */
+  color: var(--base05);
+  background-color: var(--base00);
 }
 
 /* Button theme */
 .button-theme {
-  background-color: var(--base01);   /* Button background */
-  color: var(--base05);              /* Button text */
-  border: 1px solid var(--base02);   /* Subtle border */
+  background-color: var(--base00);
+  color: var(--base05);
+  border: 1px solid
+  transition: background-color 0.2s ease;
+}
+
+.button-theme-alt {
+  background-color: var(--base01);
+  color: var(--base05);
+  border: 1px solid
   transition: background-color 0.2s ease;
 }
 
 .button-theme:hover {
-  background-color: var(--base02);   /* Hover state */
-  color: var(--base06);              /* Slightly brighter text */
+  background-color: var(--base02);
+  color: var(--base06);
 }
 
 /* Card theme (for book cards) */
 .card-theme {
-  background-color: var(--base01);   /* Card background */
-  color: var(--base05);              /* Card text */
-  border: 1px solid var(--base02);   /* Card border */
+  background-color: var(--base01);
+  color: var(--base05);
+  border: 1px solid var(--base02);
   transition: box-shadow 0.2s ease;
 }
 
 .card-theme:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25); /* or blend base03 */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 /* Progress bar theme */

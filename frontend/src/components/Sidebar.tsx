@@ -34,7 +34,7 @@ function Sidebar(props: SidebarProps) {
                     </button>
                 </div>
 
-                <div class="space-y-2 overflow-y-auto">{props.children}</div>
+                <div class="space-y-2">{props.children}</div>
             </aside>
         </>
     )
