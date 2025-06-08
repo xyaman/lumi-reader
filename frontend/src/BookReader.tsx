@@ -4,7 +4,7 @@ import { createEffect, createSignal, For, onCleanup, onMount, Show } from "solid
 import Navbar from "./components/Navbar"
 import Sidebar from "./components/Sidebar"
 import { IconBookmark, IconExit, IconSettings, IconToc } from "./components/icons"
-import { ThemeList } from "./Settings"
+import ThemeList from "./components/Themelist"
 import { getCustomThemes } from "./theme"
 
 function updateReaderStyle(fontSize: number, lineHeight: number | string) {
