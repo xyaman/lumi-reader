@@ -288,7 +288,7 @@ export default function BookReader() {
                     setNavOpen(true)
                     setSideLeft(null)
                 }}
-                class="fixed top-0 left-0 right-0 h-8 z-10 bg-transparent"
+                class="fixed top-0 left-0 right-0 h-12 z-10 bg-transparent cursor-pointer"
             />
             <Show when={navOpen()}>
                 <Navbar>
