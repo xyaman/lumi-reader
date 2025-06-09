@@ -14,6 +14,7 @@ import {
 } from "./components/icons"
 import ThemeList from "./components/Themelist"
 import { ThemeProvider } from "./context/theme"
+import ReaderSettings from "./components/ReaderSettings"
 
 function updateReaderStyle(fontSize: number, lineHeight: number | string) {
     const fixedFontSize = Math.max(1, fontSize)
@@ -38,13 +39,6 @@ export default function BookReader() {
         }
         return EpubBook.fromRecord(record)
     })
-
-    const [draftVertical, setDraftVertical] = createSignal(
-        localStorage.getItem("reader:vertical") === "true",
-    )
-    const [draftPaginated, setDraftPaginated] = createSignal(
-        localStorage.getItem("reader:paginated") === "true",
-    )
 
     const [navOpen, setNavOpen] = createSignal(false)
     const [sideLeft, setSideLeft] = createSignal<"toc" | "bookmarks" | null>(null)
@@ -155,6 +149,22 @@ export default function BookReader() {
         book.currChars = currChars
         book.save().catch(console.error)
         charCounterRef.innerHTML = `${book.currChars}/${book.totalChars} (${Math.floor((100 * book.currChars) / book.totalChars)}%)`
+    }
+
+    const handleSettingsSave = (
+        fontSize: number,
+        lineHeight: string,
+        newVertical: boolean,
+        newPaginated: boolean,
+    ) => {
+        const changed = isVertical !== newVertical || isPaginated !== newPaginated
+        localStorage.setItem("reader:vertical", String(newVertical))
+        localStorage.setItem("reader:paginated", String(newPaginated))
+
+        setDraftStyle({ fontSize, lineHeight })
+
+        if (changed) location.reload()
+        setSettingsOpen(false)
     }
 
     const initScrollTracking = () => {
@@ -379,73 +389,7 @@ export default function BookReader() {
                 onClose={() => setSettingsOpen(false)}
             >
                 <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium">Font Size (px)</label>
-                        <input
-                            value={draftStyle().fontSize}
-                            onInput={(e) =>
-                                setDraftStyle((prev) => ({
-                                    ...prev,
-                                    fontSize: Number(e.currentTarget.value),
-                                }))
-                            }
-                        />
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium">Line Height (unitless)</label>
-                        <input
-                            value={draftStyle().lineHeight}
-                            onInput={(e) =>
-                                setDraftStyle((prev) => ({
-                                    ...prev,
-                                    lineHeight: e.currentTarget.value,
-                                }))
-                            }
-                        />
-                    </div>
-                    <hr />
-                    <div class="space-y-4">
-                        <p class="font-bold text-sm">
-                            *These options will reload the reader. Unsaved progress will be lost.
-                        </p>
-                        <div class="flex items-center space-x-2">
-                            <input
-                                id="vertical-checkbox"
-                                type="checkbox"
-                                checked={draftVertical()}
-                                onInput={(e) => setDraftVertical(e.currentTarget.checked)}
-                                class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
-                            />
-                            <label for="vertical-checkbox" class="text-sm font-medium">
-                                Vertical Reading
-                            </label>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <input
-                                id="paginated-checkbox"
-                                type="checkbox"
-                                checked={draftPaginated()}
-                                onInput={(e) => setDraftPaginated(e.currentTarget.checked)}
-                                class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
-                            />
-                            <label for="paginated-checkbox" class="text-sm font-medium">
-                                Simulate Pages
-                            </label>
-                        </div>
-                    </div>
-                    <button
-                        onClick={() => {
-                            const changed =
-                                isVertical !== draftVertical() || isPaginated !== draftPaginated()
-                            localStorage.setItem("reader:vertical", String(draftVertical()))
-                            localStorage.setItem("reader:paginated", String(draftPaginated()))
-                            if (changed) location.reload()
-                            setSettingsOpen(false)
-                        }}
-                        class="button-theme px-4 py-2 rounded-lg"
-                    >
-                        Save
-                    </button>
+                    <ReaderSettings onSave={handleSettingsSave} />
                     <ThemeProvider>
                         <ThemeList selectOnly />
                     </ThemeProvider>
