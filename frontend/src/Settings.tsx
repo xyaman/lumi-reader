@@ -6,6 +6,7 @@ import { useNavigate } from "@solidjs/router"
 import ThemeList from "./components/Themelist"
 import ThemeEditor from "./components/ThemeEditor"
 import { ThemeProvider } from "./context/theme"
+import ReaderSettings from "./components/ReaderSettings"
 
 export default function ThemeSettings() {
     const navigate = useNavigate()
@@ -108,6 +109,7 @@ export default function ThemeSettings() {
                         <Show when={selectedMenu() === "reader"}>
                             <section>
                                 <h2 class="text-2xl font-semibold">Reader Settings</h2>
+                                <ReaderSettings />
                             </section>
                         </Show>
                     </div>

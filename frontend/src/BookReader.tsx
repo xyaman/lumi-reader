@@ -16,14 +16,6 @@ import ThemeList from "./components/Themelist"
 import { ThemeProvider } from "./context/theme"
 import ReaderSettings from "./components/ReaderSettings"
 
-function updateReaderStyle(fontSize: number, lineHeight: number | string) {
-    const fixedFontSize = Math.max(1, fontSize)
-    document.documentElement.style.setProperty("--reader-font-size", `${fixedFontSize}px`)
-    document.documentElement.style.setProperty("--reader-line-height", `${lineHeight}`)
-    localStorage.setItem("reader:fontSize", String(fontSize))
-    localStorage.setItem("reader:lineHeight", String(lineHeight))
-}
-
 export default function BookReader() {
     const params = useParams()
     const navigate = useNavigate()
@@ -43,10 +35,6 @@ export default function BookReader() {
     const [navOpen, setNavOpen] = createSignal(false)
     const [sideLeft, setSideLeft] = createSignal<"toc" | "bookmarks" | null>(null)
     const [settingsOpen, setSettingsOpen] = createSignal(false)
-    const [draftStyle, setDraftStyle] = createSignal({
-        fontSize: Number(localStorage.getItem("reader:fontSize") ?? 20),
-        lineHeight: localStorage.getItem("reader:lineHeight") ?? "1.5",
-    })
 
     let mainRef!: HTMLDivElement
     let containerRef!: HTMLDivElement
@@ -151,18 +139,8 @@ export default function BookReader() {
         charCounterRef.innerHTML = `${book.currChars}/${book.totalChars} (${Math.floor((100 * book.currChars) / book.totalChars)}%)`
     }
 
-    const handleSettingsSave = (
-        fontSize: number,
-        lineHeight: string,
-        newVertical: boolean,
-        newPaginated: boolean,
-    ) => {
+    const handleSettingsSave = (newVertical: boolean, newPaginated: boolean) => {
         const changed = isVertical !== newVertical || isPaginated !== newPaginated
-        localStorage.setItem("reader:vertical", String(newVertical))
-        localStorage.setItem("reader:paginated", String(newPaginated))
-
-        setDraftStyle({ fontSize, lineHeight })
-
         if (changed) location.reload()
         setSettingsOpen(false)
     }
@@ -265,12 +243,6 @@ export default function BookReader() {
                 mainRef.addEventListener("wheel", onWheel, { passive: false })
             }
         })
-    })
-
-    createEffect(() => {
-        if (settingsOpen()) return
-        const { fontSize, lineHeight } = draftStyle()
-        updateReaderStyle(fontSize, lineHeight)
     })
 
     createEffect(() => {

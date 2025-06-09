@@ -1,12 +1,15 @@
-import { createSignal } from "solid-js"
+import { createSignal, createEffect, Show } from "solid-js"
+
+function updateReaderStyle(fontSize: number, lineHeight: number | string) {
+    const fixedFontSize = Math.max(1, fontSize)
+    document.documentElement.style.setProperty("--reader-font-size", `${fixedFontSize}px`)
+    document.documentElement.style.setProperty("--reader-line-height", `${lineHeight}`)
+    localStorage.setItem("reader:fontSize", String(fontSize))
+    localStorage.setItem("reader:lineHeight", String(lineHeight))
+}
 
 type Props = {
-    onSave: (
-        fontSize: number,
-        lineHeight: string,
-        isVertical: boolean,
-        isPaginated: boolean,
-    ) => void
+    onSave?: (isVertical: boolean, isPaginated: boolean) => void
 }
 
 export default function ReaderSettings(props: Props) {
@@ -21,6 +24,18 @@ export default function ReaderSettings(props: Props) {
     const [draftPaginated, setDraftPaginated] = createSignal(
         localStorage.getItem("reader:paginated") === "true",
     )
+
+    createEffect(() => {
+        if (props.onSave) return
+
+        const { fontSize, lineHeight } = draftStyle()
+        const isVertical = draftVertical()
+        const isPaginated = draftPaginated()
+
+        localStorage.setItem("reader:vertical", String(isVertical))
+        localStorage.setItem("reader:paginated", String(isPaginated))
+        updateReaderStyle(fontSize, lineHeight)
+    })
 
     return (
         <div>
@@ -78,21 +93,24 @@ export default function ReaderSettings(props: Props) {
                     </label>
                 </div>
             </div>
-            <button
-                onClick={() => {
-                    const { fontSize, lineHeight } = draftStyle()
-                    props.onSave(fontSize, lineHeight, draftVertical(), draftPaginated())
-                    // const changed =
-                    //     isVertical !== draftVertical() || isPaginated !== draftPaginated()
-                    // localStorage.setItem("reader:vertical", String(draftVertical()))
-                    // localStorage.setItem("reader:paginated", String(draftPaginated()))
-                    // if (changed) location.reload()
-                    // setSettingsOpen(false)
-                }}
-                class="button-theme px-4 py-2 rounded-lg"
-            >
-                Save
-            </button>
+            <Show when={props.onSave}>
+                <button
+                    onClick={() => {
+                        const { fontSize, lineHeight } = draftStyle()
+                        const isVertical = draftVertical()
+                        const isPaginated = draftPaginated()
+
+                        localStorage.setItem("reader:vertical", String(isVertical))
+                        localStorage.setItem("reader:paginated", String(isPaginated))
+
+                        updateReaderStyle(fontSize, lineHeight)
+                        props.onSave?.(isVertical, isPaginated)
+                    }}
+                    class="button-theme px-4 py-2 rounded-lg"
+                >
+                    Save
+                </button>
+            </Show>
         </div>
     )
 }
