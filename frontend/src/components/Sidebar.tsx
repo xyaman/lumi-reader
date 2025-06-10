@@ -1,5 +1,4 @@
-import { Show } from "solid-js"
-import { JSX } from "solid-js/jsx-runtime"
+import { Show, JSX } from "solid-js"
 
 type SidebarProps = {
     open: boolean

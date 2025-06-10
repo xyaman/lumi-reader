@@ -1,7 +1,7 @@
 import { Route, Router } from "@solidjs/router"
-import BookLibrary from "./BookLibrary"
-import BookReader from "./BookReader"
-import Settings from "./Settings"
+import BookLibrary from "@/BookLibrary"
+import BookReader from "@/BookReader"
+import Settings from "@/Settings"
 import { getSelectedTheme, setGlobalTheme } from "./theme"
 
 function App() {

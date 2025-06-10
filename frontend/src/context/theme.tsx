@@ -7,7 +7,7 @@ import {
     saveCustomThemes,
     getSelectedTheme,
     setGlobalTheme,
-} from "../theme"
+} from "@/theme"
 
 type ThemeContextType = {
     customThemes: () => ITheme[]

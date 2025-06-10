@@ -1,5 +1,5 @@
 import { createSignal, For, onCleanup } from "solid-js"
-import { EpubBook } from "./lib/epub"
+import { EpubBook } from "@/lib/epub"
 
 export default function BookLibrary() {
     const [books, setBooks] = createSignal<EpubBook[]>([])

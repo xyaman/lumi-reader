@@ -1,7 +1,7 @@
 import { For, Show } from "solid-js"
-import { useThemeContext } from "../context/theme"
-import { ITheme } from "../theme"
-import { IconDuplicate, IconEdit, IconTrash } from "./icons"
+import { useThemeContext } from "@/context/theme"
+import { ITheme } from "@/theme"
+import { IconDuplicate, IconEdit, IconTrash } from "@/components/icons"
 
 export default function ThemeList(props: {
     selectOnly?: boolean

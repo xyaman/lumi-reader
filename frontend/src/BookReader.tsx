@@ -1,8 +1,8 @@
-import { useNavigate, useParams } from "@solidjs/router"
-import { EpubBook } from "./lib/epub"
 import { createEffect, createResource, createSignal, For, onCleanup, onMount, Show } from "solid-js"
-import Navbar from "./components/Navbar"
-import Sidebar from "./components/Sidebar"
+import { useNavigate, useParams } from "@solidjs/router"
+import { EpubBook } from "@/lib/epub"
+import Navbar from "@/components/Navbar"
+import Sidebar from "@/components/Sidebar"
 import {
     IconBookmark,
     IconBookmarkFull,
@@ -11,10 +11,10 @@ import {
     IconSettings,
     IconToc,
     IconWindowed,
-} from "./components/icons"
-import ThemeList from "./components/Themelist"
-import { ThemeProvider } from "./context/theme"
-import ReaderSettings from "./components/ReaderSettings"
+} from "@/components/icons"
+import ThemeList from "@/components/Themelist"
+import { ThemeProvider } from "@/context/theme"
+import ReaderSettings from "@/components/ReaderSettings"
 
 export default function BookReader() {
     const params = useParams()

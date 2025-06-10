@@ -3,7 +3,7 @@ import { XMLParser } from "fast-xml-parser"
 import { Parser } from "htmlparser2"
 import { IDBPDatabase, openDB } from "idb"
 
-import { assert, parseCss } from "./utils"
+import { assert, parseCss } from "@/lib/utils"
 
 interface IEpubMetadata {
     identifier: string

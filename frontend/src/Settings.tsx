@@ -1,12 +1,12 @@
 import { createSignal, Show } from "solid-js"
-import { ITheme } from "./theme"
-import Navbar from "./components/Navbar"
-import { IconExit, IconToc } from "./components/icons"
+import { ITheme } from "@/theme"
+import Navbar from "@/components/Navbar"
+import { IconExit, IconToc } from "@/components/icons"
 import { useNavigate } from "@solidjs/router"
-import ThemeList from "./components/Themelist"
-import ThemeEditor from "./components/ThemeEditor"
-import { ThemeProvider } from "./context/theme"
-import ReaderSettings from "./components/ReaderSettings"
+import ThemeList from "@/components/Themelist"
+import ThemeEditor from "@/components/ThemeEditor"
+import { ThemeProvider } from "@/context/theme"
+import ReaderSettings from "@/components/ReaderSettings"
 
 export default function ThemeSettings() {
     const navigate = useNavigate()
