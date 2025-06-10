@@ -1,4 +1,5 @@
 import { createSignal, For, onCleanup } from "solid-js"
+import { IconSettings, IconTrash, IconUpload } from "@/components/icons"
 import { EpubBook } from "@/lib/epub"
 
 export default function BookLibrary() {
@@ -45,8 +46,12 @@ export default function BookLibrary() {
             <nav class="navbar-theme border-b shadow px-6 py-4 flex justify-between items-center">
                 <h1 class="text-2xl font-bold">lumireader</h1>
                 <div class="flex gap-3">
-                    <label class="button-theme relative inline-flex items-center px-4 py-2 rounded-lg transition">
-                        <span>Upload epub</span>
+                    <label
+                        class="button-theme relative inline-flex items-center justify-center px-4 py-2 rounded-lg transition cursor-pointer"
+                        aria-label="Upload epub"
+                    >
+                        <IconUpload />
+                        <span class="sr-only">Upload epub</span>
                         <input
                             type="file"
                             accept=".epub"
@@ -56,9 +61,10 @@ export default function BookLibrary() {
                     </label>
                     <a
                         href="/settings"
-                        class="button-theme flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm hover:opacity-80 transition"
+                        class="button-theme flex items-center justify-center px-4 py-2 rounded-lg shadow-sm hover:opacity-80 transition"
+                        aria-label="Settings"
                     >
-                        Settings
+                        <IconSettings />
                     </a>
                 </div>
             </nav>
@@ -76,10 +82,11 @@ export default function BookLibrary() {
                                         class="aspect-[3/4] w-full object-cover"
                                     />
                                     <button
-                                        class="absolute w-8 h-8 top-2 right-2 opacity-0 group-hover:opacity-100 bg-white/80 dark:bg-zinc-800/80 text-gray-700 dark:text-white rounded-full p-1 shadow transition"
+                                        class="absolute w-8 h-8 top-2 right-2 opacity-0 group-hover:opacity-100 bg-white/80 dark:bg-zinc-800/80 text-gray-700 dark:text-white rounded-full p-1 shadow transition flex items-center justify-center"
                                         onClick={() => EpubBook.deleteById(book.id)}
+                                        aria-label="Delete book"
                                     >
-                                        X
+                                        <IconTrash />
                                     </button>
                                     <div class="px-3 py-2">
                                         <p class="text-sm truncate">{book.metadata.title}</p>
