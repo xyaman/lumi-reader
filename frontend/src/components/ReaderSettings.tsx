@@ -106,7 +106,7 @@ export default function ReaderSettings(props: Props) {
                         updateReaderStyle(fontSize, lineHeight)
                         props.onSave?.(isVertical, isPaginated)
                     }}
-                    class="button-theme px-4 py-2 rounded-lg"
+                    class="button-theme cursor-pointer px-4 py-2 rounded-lg"
                 >
                     Save
                 </button>

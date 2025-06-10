@@ -28,7 +28,7 @@ function Sidebar(props: SidebarProps) {
             >
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-semibold">{props.title ?? "Sidebar"}</h2>
-                    <button class="text-[var(--base05)]" onClick={props.onClose}>
+                    <button class="cursor-pointer text-[var(--base05)]" onClick={props.onClose}>
                         ✕
                     </button>
                 </div>

@@ -266,26 +266,27 @@ export default function BookReader() {
                 <Navbar>
                     <Navbar.Left>
                         <button
+                            class="cursor-pointer"
                             onClick={() => {
                                 setSideLeft("toc")
                                 setNavOpen(false)
                             }}
-                            class="flex items-center space-x-2 text-base font-semibold hover:underline"
                         >
                             <IconToc />
                         </button>
                         <button
+                            class="cursor-pointer"
                             onClick={() => {
                                 setSideLeft("bookmarks")
                                 setNavOpen(false)
                             }}
-                            class="flex items-center space-x-2 text-base font-semibold hover:underline"
                         >
                             <IconBookmark />
                         </button>
                     </Navbar.Left>
                     <Navbar.Right>
                         <button
+                            class="cursor-pointer"
                             onClick={() => {
                                 if (isFullscreen()) {
                                     document.exitFullscreen()
@@ -300,6 +301,7 @@ export default function BookReader() {
                             </Show>
                         </button>
                         <button
+                            class="cursor-pointer"
                             onClick={() => {
                                 setSideLeft(null)
                                 setSettingsOpen(true)
@@ -307,7 +309,7 @@ export default function BookReader() {
                         >
                             <IconSettings />
                         </button>
-                        <button onClick={() => navigate("/")}>
+                        <button class="cursor-pointer" onClick={() => navigate("/")}>
                             <IconExit />
                         </button>
                     </Navbar.Right>
