@@ -18,27 +18,22 @@ body {
   background-color: var(--base01);   /* Nav background */
 }
 
-.border-theme {
-    border-color: var(--base05);
-}
-
-.yaml-theme {
-    background-color: var(--base01);
-    color: var(--base05);
-}
-
 /* Body theme */
 .body-theme {
   color: var(--base05);
   background-color: var(--base00);
 }
 
-/* Button theme */
+/* == Buttons == */
 .button-theme {
   background-color: var(--base00);
   color: var(--base05);
   border: 1px solid
   transition: background-color 0.2s ease;
+}
+
+.button-theme:hover {
+  background-color: var(--base02);
 }
 
 .button-theme-alt {
@@ -48,12 +43,11 @@ body {
   transition: background-color 0.2s ease;
 }
 
-.button-theme:hover {
+.button-theme-alt:hover {
   background-color: var(--base02);
-  color: var(--base06);
 }
 
-/* Card theme (for book cards) */
+/* == Card (Library) == */
 .card-theme {
   background-color: var(--base01);
   color: var(--base05);
@@ -65,21 +59,23 @@ body {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
-/* Progress bar theme */
+/* == Progress bar == */
 .progress-theme {
-  background-color: var(--base02);   /* Outer progress track */
+  background-color: var(--base02);
 }
 
 .progress-theme::-webkit-progress-bar {
-  background-color: var(--base02);   /* Track */
+  background-color: var(--base02);
 }
 
+/* Blue accent (progress) */
 .progress-theme::-webkit-progress-value {
-  background-color: var(--base0D);   /* Blue accent (progress) */
+  background-color: var(--base0D);
 }
 
+/* Firefox */
 .progress-theme::-moz-progress-bar {
-  background-color: var(--base0D);   /* Same for Firefox */
+  background-color: var(--base0D);
 }
 
 
@@ -88,11 +84,6 @@ body {
   color: var(--base05);                 /* Sidebar text */
   border-right: 1px solid var(--base02);/* Sidebar border */
 }
-
-.sidebar-theme .sidebar-item:hover {
-  background: var(--base02);            /* Hover background */
-}
-
 
 .writing-mode-vertical {
     writing-mode: vertical-rl;
