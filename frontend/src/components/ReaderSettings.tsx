@@ -1,21 +1,39 @@
-import { createSignal, createEffect, Show } from "solid-js"
+import { createSignal, createEffect, Show, onMount } from "solid-js"
 
-function updateReaderStyle(fontSize: number, lineHeight: number | string) {
+function updateReaderStyle(
+    fontSize: number,
+    lineHeight: number | string,
+    verticalPadding: number,
+    horizontalPadding: number,
+) {
     const fixedFontSize = Math.max(1, fontSize)
     document.documentElement.style.setProperty("--reader-font-size", `${fixedFontSize}px`)
     document.documentElement.style.setProperty("--reader-line-height", `${lineHeight}`)
+    document.documentElement.style.setProperty(
+        "--reader-vertical-padding",
+        `${100 - verticalPadding}vh`,
+    )
+    document.documentElement.style.setProperty(
+        "--reader-horizontal-padding",
+        `${100 - horizontalPadding}vw`,
+    )
+
     localStorage.setItem("reader:fontSize", String(fontSize))
     localStorage.setItem("reader:lineHeight", String(lineHeight))
+    localStorage.setItem("reader:verticalPadding", String(verticalPadding))
+    localStorage.setItem("reader:horizontalPadding", String(horizontalPadding))
 }
 
 type Props = {
-    onSave?: (isVertical: boolean, isPaginated: boolean) => void
+    onSave?: (isVertical: boolean, isPaginated: boolean, padding: boolean) => void
 }
 
 export default function ReaderSettings(props: Props) {
     const [draftStyle, setDraftStyle] = createSignal({
         fontSize: Number(localStorage.getItem("reader:fontSize") ?? 20),
         lineHeight: localStorage.getItem("reader:lineHeight") ?? "1.5",
+        verticalPadding: Number(localStorage.getItem("reader:verticalPadding") ?? 0),
+        horizontalPadding: Number(localStorage.getItem("reader:horizontalPadding") ?? 5),
     })
 
     const [draftVertical, setDraftVertical] = createSignal(
@@ -25,16 +43,26 @@ export default function ReaderSettings(props: Props) {
         localStorage.getItem("reader:paginated") === "true",
     )
 
-    createEffect(() => {
-        if (props.onSave) return
-
-        const { fontSize, lineHeight } = draftStyle()
+    onMount(() => {
+        const { fontSize, lineHeight, verticalPadding, horizontalPadding } = draftStyle()
         const isVertical = draftVertical()
         const isPaginated = draftPaginated()
 
         localStorage.setItem("reader:vertical", String(isVertical))
         localStorage.setItem("reader:paginated", String(isPaginated))
-        updateReaderStyle(fontSize, lineHeight)
+        updateReaderStyle(fontSize, lineHeight, verticalPadding, horizontalPadding)
+    })
+
+    createEffect(() => {
+        if (props.onSave) return
+
+        const { fontSize, lineHeight, verticalPadding, horizontalPadding } = draftStyle()
+        const isVertical = draftVertical()
+        const isPaginated = draftPaginated()
+
+        localStorage.setItem("reader:vertical", String(isVertical))
+        localStorage.setItem("reader:paginated", String(isPaginated))
+        updateReaderStyle(fontSize, lineHeight, verticalPadding, horizontalPadding)
     })
 
     return (
@@ -92,19 +120,49 @@ export default function ReaderSettings(props: Props) {
                         Simulate Pages
                     </label>
                 </div>
+                <div>
+                    <label class="block text-sm font-medium">Vertical Padding (%)</label>
+                    <input
+                        value={draftStyle().verticalPadding}
+                        onInput={(e) =>
+                            setDraftStyle((prev) => ({
+                                ...prev,
+                                verticalPadding: Number(e.currentTarget.value),
+                            }))
+                        }
+                    />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium">Horizontal Padding (%)</label>
+                    <input
+                        value={draftStyle().horizontalPadding}
+                        onInput={(e) =>
+                            setDraftStyle((prev) => ({
+                                ...prev,
+                                horizontalPadding: Number(e.currentTarget.value),
+                            }))
+                        }
+                    />
+                </div>
             </div>
             <Show when={props.onSave}>
                 <button
                     onClick={() => {
-                        const { fontSize, lineHeight } = draftStyle()
+                        const { fontSize, lineHeight, verticalPadding, horizontalPadding } =
+                            draftStyle()
                         const isVertical = draftVertical()
                         const isPaginated = draftPaginated()
+                        const paddingChanged =
+                            verticalPadding !==
+                                Number(localStorage.getItem("reader:verticalPadding") ?? 0) ||
+                            horizontalPadding !==
+                                Number(localStorage.getItem("reader:horizontalPadding") ?? 5)
 
                         localStorage.setItem("reader:vertical", String(isVertical))
                         localStorage.setItem("reader:paginated", String(isPaginated))
 
-                        updateReaderStyle(fontSize, lineHeight)
-                        props.onSave?.(isVertical, isPaginated)
+                        updateReaderStyle(fontSize, lineHeight, verticalPadding, horizontalPadding)
+                        props.onSave?.(isVertical, isPaginated, paddingChanged)
                     }}
                     class="button-theme cursor-pointer px-4 py-2 rounded-lg"
                 >

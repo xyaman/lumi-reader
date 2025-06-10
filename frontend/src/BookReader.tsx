@@ -48,7 +48,7 @@ export default function BookReader() {
         !isPaginated
             ? "px-8"
             : isVertical
-              ? "relative w-[95vw] overflow-hidden snap-y snap-mandatory"
+              ? "relative mx-auto w-[var(--reader-horizontal-padding)] h-[var(--reader-vertical-padding)] overflow-hidden snap-y snap-mandatory"
               : "relative mx-8 py-12 h-screen overflow-x-hidden snap-x snap-mandatory"
 
     const contentClass = () =>
@@ -139,8 +139,12 @@ export default function BookReader() {
         charCounterRef.innerHTML = `${book.currChars}/${book.totalChars} (${Math.floor((100 * book.currChars) / book.totalChars)}%)`
     }
 
-    const handleSettingsSave = (newVertical: boolean, newPaginated: boolean) => {
-        const changed = isVertical !== newVertical || isPaginated !== newPaginated
+    const handleSettingsSave = (
+        newVertical: boolean,
+        newPaginated: boolean,
+        paddingChanged: boolean,
+    ) => {
+        const changed = isVertical !== newVertical || isPaginated !== newPaginated || paddingChanged
         if (changed) location.reload()
         setSettingsOpen(false)
     }
@@ -254,7 +258,16 @@ export default function BookReader() {
     }
 
     return (
-        <div ref={mainRef} class={`${isVertical ? "h-screen overflow-y-hidden" : ""}`}>
+        <div
+            ref={mainRef}
+            class={`${
+                isPaginated && isVertical
+                    ? "h-screen flex items-center"
+                    : isVertical
+                      ? "h-screen overflow-y-hidden"
+                      : ""
+            }`}
+        >
             <button
                 onClick={() => {
                     setNavOpen(true)
