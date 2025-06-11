@@ -162,56 +162,59 @@ export default function BookReader() {
         try {
             book.renderContent(contentRef, { xhtml: "all" })
             book.insertCss()
-            charCounterRef.innerHTML = `${book.currChars}/${book.totalChars} (${Math.floor((100 * book.currChars) / book.totalChars)}%)`
-            document.querySelector(`p[index='${book.currParagraphId}']`)?.scrollIntoView()
-            let bookmarksIds = book.bookmarks.map((b) => b.paragraphId.toString())
-            document.querySelectorAll("p").forEach((p) => {
-                const index = p.getAttribute("index")
-                if (!index) return
-                const bgColor = "bg-[var(--base01)]"
-                const highlight = () => {
-                    if (p.children.length) {
-                        const hasIcon = Array.from(p.children).filter(
-                            (p) => p.id === "bookmark-icon",
-                        )
-                        if (hasIcon.length === 1) {
-                            document.getElementById("bookmark-icon")?.remove()
-                            return
+
+            requestAnimationFrame(() => {
+                charCounterRef.innerHTML = `${book.currChars}/${book.totalChars} (${Math.floor((100 * book.currChars) / book.totalChars)}%)`
+                document.querySelector(`p[index='${book.currParagraphId}']`)?.scrollIntoView()
+                let bookmarksIds = book.bookmarks.map((b) => b.paragraphId.toString())
+                document.querySelectorAll("p").forEach((p) => {
+                    const index = p.getAttribute("index")
+                    if (!index) return
+                    const bgColor = "bg-[var(--base01)]"
+                    const highlight = () => {
+                        if (p.children.length) {
+                            const hasIcon = Array.from(p.children).filter(
+                                (p) => p.id === "bookmark-icon",
+                            )
+                            if (hasIcon.length === 1) {
+                                document.getElementById("bookmark-icon")?.remove()
+                                return
+                            }
                         }
+
+                        document.getElementById("bookmark-icon")?.remove()
+
+                        const boomarkClick = () => {
+                            const removed = book.toggleBookmark(index, p.innerHTML)
+                            removed ? p.classList.remove(bgColor) : p.classList.add(bgColor)
+                            book.save()
+                        }
+
+                        const bookmarkIcon = document.createElement("span")
+                        bookmarkIcon.appendChild(IconBookmarkFull() as HTMLElement)
+
+                        if (isVertical) {
+                            bookmarkIcon.className =
+                                "absolute right-0 bottom-0 w-[40px] h-[40px] cursor-pointer rounded-lg p-1 bg-[var(--base01)]"
+                        } else {
+                            bookmarkIcon.className =
+                                "absolute right-0 top-0 w-[40px] h-[40px] cursor-pointer rounded-lg p-1 bg-[var(--base01)]"
+                        }
+                        bookmarkIcon.id = "bookmark-icon"
+                        bookmarkIcon.onclick = boomarkClick
+
+                        p.appendChild(bookmarkIcon)
                     }
+                    p.addEventListener("click", highlight)
+                    p.classList.add("relative")
 
-                    document.getElementById("bookmark-icon")?.remove()
-
-                    const boomarkClick = () => {
-                        const removed = book.toggleBookmark(index, p.innerHTML)
-                        removed ? p.classList.remove(bgColor) : p.classList.add(bgColor)
-                        book.save()
-                    }
-
-                    const bookmarkIcon = document.createElement("span")
-                    bookmarkIcon.appendChild(IconBookmarkFull() as HTMLElement)
-
-                    if (isVertical) {
-                        bookmarkIcon.className =
-                            "absolute right-0 bottom-0 w-[40px] h-[40px] cursor-pointer rounded-lg p-1 bg-[var(--base01)]"
-                    } else {
-                        bookmarkIcon.className =
-                            "absolute right-0 top-0 w-[40px] h-[40px] cursor-pointer rounded-lg p-1 bg-[var(--base01)]"
-                    }
-                    bookmarkIcon.id = "bookmark-icon"
-                    bookmarkIcon.onclick = boomarkClick
-
-                    p.appendChild(bookmarkIcon)
+                    if (bookmarksIds.includes(index)) p.classList.add(bgColor)
+                })
+                if (isVertical && !isPaginated && book.currParagraphId === 0) {
+                    containerRef.scrollLeft = 0
                 }
-                p.addEventListener("click", highlight)
-                p.classList.add("relative")
-
-                if (bookmarksIds.includes(index)) p.classList.add(bgColor)
+                setupPagination()
             })
-            if (isVertical && !isPaginated && book.currParagraphId === 0) {
-                containerRef.scrollLeft = 0
-            }
-            setupPagination()
         } catch (e) {
             console.error("Failed to load book", e)
             navigate("/", { replace: true })
