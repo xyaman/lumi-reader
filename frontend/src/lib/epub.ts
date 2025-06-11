@@ -87,6 +87,10 @@ export class EpubBook implements IEpubBookRecord {
     metadata!: IEpubMetadata
     manifest!: IEpubManifest
 
+    // this properties are not saved into record,
+    // but are needed at runtime
+    blobs: Record<string, string> = {}
+
     /**
      * Helper method to serialize an EpubBook instance for database storage.
      */
@@ -258,7 +262,6 @@ export class EpubBook implements IEpubBookRecord {
 
     /**
      * @param element - The element where the epub will be rendered
-     * @returns The images blob urls, the caller needs to free/revoke the urls
      */
     public renderContent(element: HTMLElement, options: { xhtml: number | "all" }) {
         const starttime = Date.now()
@@ -271,11 +274,12 @@ export class EpubBook implements IEpubBookRecord {
             element.innerHTML = body
         }
 
-        const blobs: Record<string, string> = {}
-        for (let i = 0; i < this.manifest.imgs.length; i++) {
-            const imgFilename = getBaseName(this.manifest.imgs[i].filename)!
-            const url = URL.createObjectURL(this.manifest.imgs[i].blob)
-            blobs[imgFilename] = url
+        if (Object.keys(this.blobs).length === 0) {
+            for (let i = 0; i < this.manifest.imgs.length; i++) {
+                const imgFilename = getBaseName(this.manifest.imgs[i].filename)!
+                const url = URL.createObjectURL(this.manifest.imgs[i].blob)
+                this.blobs[imgFilename] = url
+            }
         }
 
         // Update all <img>, <svg image>, and <image> tags with correct URLs
@@ -283,7 +287,7 @@ export class EpubBook implements IEpubBookRecord {
             const val = el.getAttribute(attr)
             if (!val) return
             const base = getBaseName(val)
-            if (base && blobs[base]) el.setAttribute(attr, blobs[base])
+            if (base && this.blobs[base]) el.setAttribute(attr, this.blobs[base])
         }
 
         // <img src="">
@@ -292,7 +296,6 @@ export class EpubBook implements IEpubBookRecord {
         element.querySelectorAll("image").forEach((el) => updateImageSrc(el, "xlink:href"))
 
         console.log(`Epub rendered in ${Date.now() - starttime}ms`)
-        return Object.values(blobs)
     }
 
     /**

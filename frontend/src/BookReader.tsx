@@ -22,7 +22,6 @@ export default function BookReader() {
     const id = Number(params.id)
     if (!id) navigate("/", { replace: true })
 
-    const [imgUrls, setImgUrls] = createSignal<string[]>([])
     const [currBook] = createResource(async () => {
         const record = await EpubBook.getById(id)
         if (!record) {
@@ -161,9 +160,8 @@ export default function BookReader() {
 
     const initializeBook = async (book: EpubBook) => {
         try {
-            const images = book.renderContent(contentRef, { xhtml: "all" })
+            book.renderContent(contentRef, { xhtml: "all" })
             book.insertCss()
-            setImgUrls(images)
             charCounterRef.innerHTML = `${book.currChars}/${book.totalChars} (${Math.floor((100 * book.currChars) / book.totalChars)}%)`
             document.querySelector(`p[index='${book.currParagraphId}']`)?.scrollIntoView()
             let bookmarksIds = book.bookmarks.map((b) => b.paragraphId.toString())
@@ -234,7 +232,9 @@ export default function BookReader() {
             })
         }
         onCleanup(() => {
-            imgUrls().forEach((url) => URL.revokeObjectURL(url))
+            const blobs = currBook()?.blobs
+            if (!blobs) return
+            Object.values(blobs).forEach((url) => URL.revokeObjectURL(url))
             document.head.querySelectorAll("#temp-css").forEach((el) => el.remove())
         })
     })
