@@ -2,7 +2,7 @@ import { createEffect, createResource, createSignal, For, onCleanup, onMount, Sh
 import { useNavigate, useParams } from "@solidjs/router"
 import { EpubBook } from "@/lib/epub"
 import Navbar from "@/components/Navbar"
-import Sidebar from "@/components/Sidebar"
+import Sidebar, { SettingsSidebar } from "@/components/Sidebar"
 import {
     IconBookmark,
     IconBookmarkFull,
@@ -375,20 +375,16 @@ export default function BookReader() {
                     </div>
                 </Show>
             </Sidebar>
-            <Sidebar
+
+            <SettingsSidebar
                 side="right"
                 overlay
                 title="Settings"
                 open={settingsOpen()}
+                onSave={handleSettingsSave}
                 onClose={() => setSettingsOpen(false)}
-            >
-                <div class="space-y-4">
-                    <ReaderSettings onSave={handleSettingsSave} />
-                    <ThemeProvider>
-                        <ThemeList selectOnly />
-                    </ThemeProvider>
-                </div>
-            </Sidebar>
+            />
+
             <Show
                 when={currBook()}
                 fallback={<div class="h-screen w-screen p-8 text-center">Loading book…</div>}
@@ -409,11 +405,6 @@ export default function BookReader() {
                         style="font-size: var(--reader-font-size); line-height: var(--reader-line-height);"
                     />
                 </div>
-                <span
-                    id="character-counter"
-                    ref={charCounterRef}
-                    class="z-10 right-[0.5rem] bottom-[0.5rem] fixed text-[0.75rem]"
-                />
                 <CharacterCounter ref={(el) => (charCounterRef = el)} />
             </Show>
         </div>

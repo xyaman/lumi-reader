@@ -1,15 +1,18 @@
 import { Show, JSX } from "solid-js"
+import { ThemeProvider } from "@/context/theme"
+import ThemeList from "@/components/Themelist"
+import ReaderSettings from "@/components/ReaderSettings"
 
 type SidebarProps = {
     open: boolean
     side: "left" | "right"
     title: string
-    children: JSX.Element
+    children?: JSX.Element
     onClose?: () => void
     overlay?: boolean
 }
 
-function Sidebar(props: SidebarProps) {
+export default function Sidebar(props: SidebarProps) {
     const sideClass = () => {
         if (props.side === "left") {
             return props.open ? "left-0 translate-x-0" : "-translate-x-full"
@@ -27,10 +30,12 @@ function Sidebar(props: SidebarProps) {
                 class={`sidebar-theme fixed top-0 ${sideClass()} h-full w-72 shadow-lg p-5 z-40 transform transition-transform duration-300`}
             >
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-semibold">{props.title ?? "Sidebar"}</h2>
-                    <button class="cursor-pointer text-[var(--base05)]" onClick={props.onClose}>
-                        ✕
-                    </button>
+                    <h2 class="text-lg font-semibold">{props.title}</h2>
+                    <Show when={props.onClose}>
+                        <button class="cursor-pointer text-[var(--base05)]" onClick={props.onClose}>
+                            ✕
+                        </button>
+                    </Show>
                 </div>
 
                 <div class="space-y-2">{props.children}</div>
@@ -39,4 +44,19 @@ function Sidebar(props: SidebarProps) {
     )
 }
 
-export default Sidebar
+type SettingsSidebarProps = SidebarProps & {
+    onSave: (isVertical: boolean, isPaginated: boolean, padding: boolean) => void
+}
+
+export function SettingsSidebar(props: SettingsSidebarProps) {
+    return (
+        <Sidebar side="right" overlay title="Settings" open={props.open} onClose={props.onClose}>
+            <div class="space-y-4">
+                <ReaderSettings onSave={props.onSave} />
+                <ThemeProvider>
+                    <ThemeList selectOnly />
+                </ThemeProvider>
+            </div>
+        </Sidebar>
+    )
+}
