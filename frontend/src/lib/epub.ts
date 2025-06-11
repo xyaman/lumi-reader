@@ -146,7 +146,7 @@ export class EpubBook implements IEpubBookRecord {
     /**
      * Retrieves an EpubBook instance by ID.
      */
-    static async getById(id: number): Promise<EpubBook | undefined> {
+    static async getById(id: number): Promise<IEpubBookRecord | undefined> {
         const db = await EpubBook.getDB()
         return db.get("epubBooks", id)
     }
