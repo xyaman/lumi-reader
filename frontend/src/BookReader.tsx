@@ -16,6 +16,10 @@ import ThemeList from "@/components/Themelist"
 import { ThemeProvider } from "@/context/theme"
 import ReaderSettings from "@/components/ReaderSettings"
 
+function CharacterCounter(props: { ref: (el: HTMLElement) => void }) {
+    return <span ref={props.ref} class="z-10 right-[0.5rem] bottom-[0.5rem] fixed text-[0.75rem]" />
+}
+
 export default function BookReader() {
     const params = useParams()
     const navigate = useNavigate()
@@ -410,6 +414,7 @@ export default function BookReader() {
                     ref={charCounterRef}
                     class="z-10 right-[0.5rem] bottom-[0.5rem] fixed text-[0.75rem]"
                 />
+                <CharacterCounter ref={(el) => (charCounterRef = el)} />
             </Show>
         </div>
     )
