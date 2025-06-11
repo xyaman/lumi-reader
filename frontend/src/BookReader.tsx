@@ -12,9 +12,6 @@ import {
     IconToc,
     IconWindowed,
 } from "@/components/icons"
-import ThemeList from "@/components/Themelist"
-import { ThemeProvider } from "@/context/theme"
-import ReaderSettings from "@/components/ReaderSettings"
 
 function CharacterCounter(props: { ref: (el: HTMLElement) => void }) {
     return <span ref={props.ref} class="z-10 right-[0.5rem] bottom-[0.5rem] fixed text-[0.75rem]" />
