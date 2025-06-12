@@ -1,6 +1,7 @@
-import { createEffect, createResource, createSignal, For, onCleanup, onMount, Show } from "solid-js"
+import { createEffect, createResource, For, onCleanup, onMount, Show } from "solid-js"
 import { useNavigate, useParams } from "@solidjs/router"
 import { EpubBook } from "@/lib/epub"
+import { readerStore, setReaderStore } from "@/stores/readerStore"
 import Navbar from "@/components/Navbar"
 import Sidebar, { SettingsSidebar } from "@/components/Sidebar"
 import {
@@ -31,10 +32,6 @@ export default function BookReader() {
         }
         return EpubBook.fromRecord(record)
     })
-
-    const [navOpen, setNavOpen] = createSignal(false)
-    const [sideLeft, setSideLeft] = createSignal<"toc" | "bookmarks" | null>(null)
-    const [settingsOpen, setSettingsOpen] = createSignal(false)
 
     let mainRef!: HTMLDivElement
     let containerRef!: HTMLDivElement
@@ -74,8 +71,8 @@ export default function BookReader() {
         if (!href) return
         const anchorId = href.includes("#") ? href.split("#").pop() : null
         if (anchorId) document.getElementById(anchorId)?.scrollIntoView()
-        setNavOpen(false)
-        setSideLeft(null)
+        setReaderStore("navOpen", false)
+        setReaderStore("sideLeft", null)
     }
 
     const setupPagination = () => {
@@ -146,7 +143,7 @@ export default function BookReader() {
     ) => {
         const changed = isVertical !== newVertical || isPaginated !== newPaginated || paddingChanged
         if (changed) location.reload()
-        setSettingsOpen(false)
+        setReaderStore("settingsOpen", false)
     }
 
     const initScrollTracking = () => {
@@ -253,8 +250,10 @@ export default function BookReader() {
         })
     })
 
+    // Prevent to scroll when at least one of the sidebars is open
     createEffect(() => {
-        document.body.style.overflow = sideLeft() !== null || settingsOpen() ? "hidden" : ""
+        document.body.style.overflow =
+            readerStore.sideLeft !== null || readerStore.settingsOpen ? "hidden" : ""
     })
 
     const isFullscreen = () => {
@@ -274,19 +273,19 @@ export default function BookReader() {
         >
             <button
                 onClick={() => {
-                    setNavOpen(true)
-                    setSideLeft(null)
+                    setReaderStore("navOpen", true)
+                    setReaderStore("sideLeft", null)
                 }}
                 class="fixed top-0 left-0 right-0 h-12 z-10 bg-transparent cursor-pointer"
             />
-            <Show when={navOpen()}>
+            <Show when={readerStore.navOpen}>
                 <Navbar>
                     <Navbar.Left>
                         <button
                             class="cursor-pointer"
                             onClick={() => {
-                                setSideLeft("toc")
-                                setNavOpen(false)
+                                setReaderStore("sideLeft", "toc")
+                                setReaderStore("navOpen", false)
                             }}
                         >
                             <IconToc />
@@ -294,8 +293,8 @@ export default function BookReader() {
                         <button
                             class="cursor-pointer"
                             onClick={() => {
-                                setSideLeft("bookmarks")
-                                setNavOpen(false)
+                                setReaderStore("sideLeft", "bookmarks")
+                                setReaderStore("navOpen", false)
                             }}
                         >
                             <IconBookmark />
@@ -310,7 +309,7 @@ export default function BookReader() {
                                 } else {
                                     document.documentElement.requestFullscreen()
                                 }
-                                setNavOpen(false)
+                                setReaderStore("navOpen", false)
                             }}
                         >
                             <Show when={isFullscreen()} fallback={<IconFullscreen />}>
@@ -320,8 +319,8 @@ export default function BookReader() {
                         <button
                             class="cursor-pointer"
                             onClick={() => {
-                                setSideLeft(null)
-                                setSettingsOpen(true)
+                                setReaderStore("sideLeft", null)
+                                setReaderStore("settingsOpen", true)
                             }}
                         >
                             <IconSettings />
@@ -333,13 +332,13 @@ export default function BookReader() {
                 </Navbar>
             </Show>
             <Sidebar
-                open={sideLeft() !== null}
+                open={readerStore.sideLeft !== null}
                 side="left"
-                title={sideLeft() === "toc" ? "Table of Contents" : "Bookmarks"}
+                title={readerStore.sideLeft === "toc" ? "Table of Contents" : "Bookmarks"}
                 overlay
-                onClose={() => setSideLeft(null)}
+                onClose={() => setReaderStore("sideLeft", null)}
             >
-                <Show when={sideLeft() === "toc"}>
+                <Show when={readerStore.sideLeft === "toc"}>
                     <For each={currBook()?.manifest.nav}>
                         {(item) => (
                             <p
@@ -351,14 +350,14 @@ export default function BookReader() {
                         )}
                     </For>
                 </Show>
-                <Show when={sideLeft() === "bookmarks"}>
+                <Show when={readerStore.sideLeft === "bookmarks"}>
                     <div class="max-h-[90vh] overflow-y-auto">
                         <For each={currBook()?.bookmarks}>
                             {(b) => (
                                 <p
                                     class="cursor-pointer text-sm px-2 py-1 rounded hover:bg-[var(--base00)]"
                                     onClick={() => {
-                                        setSideLeft(null)
+                                        setReaderStore("sideLeft", null)
                                         document
                                             .querySelector(`p[index="${b.paragraphId}"]`)
                                             ?.scrollIntoView()
@@ -377,9 +376,9 @@ export default function BookReader() {
                 side="right"
                 overlay
                 title="Settings"
-                open={settingsOpen()}
+                open={readerStore.settingsOpen}
                 onSave={handleSettingsSave}
-                onClose={() => setSettingsOpen(false)}
+                onClose={() => setReaderStore("settingsOpen", false)}
             />
 
             <Show
@@ -391,8 +390,8 @@ export default function BookReader() {
                     class={containerClass()}
                     ref={containerRef}
                     onClick={() => {
-                        setSideLeft(null)
-                        setNavOpen(false)
+                        setReaderStore("sideLeft", null)
+                        setReaderStore("navOpen", false)
                     }}
                 >
                     <div
