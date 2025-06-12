@@ -18,20 +18,32 @@ function CharacterCounter(props: { ref: (el: HTMLElement) => void }) {
     return <span ref={props.ref} class="z-10 right-[0.5rem] bottom-[0.5rem] fixed text-[0.75rem]" />
 }
 
-export default function BookReader() {
-    const params = useParams()
+export function useBook(id: number) {
     const navigate = useNavigate()
-    const id = Number(params.id)
-    if (!id) navigate("/", { replace: true })
 
-    const [currBook] = createResource(async () => {
+    onMount(async () => {
+        if (readerStore.currBook) return
         const record = await EpubBook.getById(id)
         if (!record) {
             navigate("/", { replace: true })
-            return null
+            return
         }
-        return EpubBook.fromRecord(record)
+        const book = EpubBook.fromRecord(record)
+        setReaderStore("currBook", book)
     })
+
+    return () => readerStore.currBook
+}
+
+export default function BookReader() {
+    const params = useParams()
+    const id = Number(params.id)
+
+    const navigate = useNavigate()
+    if (!id) navigate("/", { replace: true })
+
+    const currBook = useBook(id)
+    onCleanup(() => setReaderStore("currBook", null))
 
     let mainRef!: HTMLDivElement
     let containerRef!: HTMLDivElement
