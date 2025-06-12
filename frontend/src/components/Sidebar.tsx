@@ -1,7 +1,9 @@
-import { Show, JSX } from "solid-js"
+import { Show, JSX, For } from "solid-js"
 import { ThemeProvider } from "@/context/theme"
 import ThemeList from "@/components/Themelist"
 import ReaderSettings from "@/components/ReaderSettings"
+
+import { readerStore, setReaderStore } from "@/stores/readerStore"
 
 type SidebarProps = {
     open: boolean
@@ -58,5 +60,40 @@ export function SettingsSidebar(props: SettingsSidebarProps) {
                 </ThemeProvider>
             </div>
         </Sidebar>
+    )
+}
+
+export function TocSidebarContent(props: { goTo: (href?: string) => void }) {
+    return (
+        <For each={readerStore.currBook?.manifest.nav}>
+            {(item) => (
+                <p
+                    class="cursor-pointer text-sm px-2 py-1 rounded hover:bg-[var(--base00)]"
+                    onClick={() => props.goTo(item.href)}
+                >
+                    {item.text}
+                </p>
+            )}
+        </For>
+    )
+}
+
+export function BookmarksSidebarContent(props: { onItemClick: (id: number) => void }) {
+    return (
+        <div class="max-h-[90vh] overflow-y-auto">
+            <For each={readerStore.currBook?.bookmarks}>
+                {(b) => (
+                    <p
+                        class="cursor-pointer text-sm px-2 py-1 rounded hover:bg-[var(--base00)]"
+                        onClick={() => {
+                            setReaderStore("sideLeft", null)
+                            props.onItemClick(b.paragraphId)
+                        }}
+                    >
+                        <span innerHTML={b.content} />
+                    </p>
+                )}
+            </For>
+        </div>
     )
 }

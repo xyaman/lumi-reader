@@ -3,7 +3,11 @@ import { useNavigate, useParams } from "@solidjs/router"
 import { EpubBook } from "@/lib/epub"
 import { readerStore, setReaderStore } from "@/stores/readerStore"
 import Navbar from "@/components/Navbar"
-import Sidebar, { SettingsSidebar } from "@/components/Sidebar"
+import Sidebar, {
+    BookmarksSidebarContent,
+    SettingsSidebar,
+    TocSidebarContent,
+} from "@/components/Sidebar"
 import {
     IconBookmark,
     IconBookmarkFull,
@@ -351,36 +355,15 @@ export default function BookReader() {
                 onClose={() => setReaderStore("sideLeft", null)}
             >
                 <Show when={readerStore.sideLeft === "toc"}>
-                    <For each={currBook()?.manifest.nav}>
-                        {(item) => (
-                            <p
-                                class="cursor-pointer text-sm px-2 py-1 rounded hover:bg-[var(--base00)]"
-                                onClick={() => navigationGoTo(item.href)}
-                            >
-                                {item.text}
-                            </p>
-                        )}
-                    </For>
+                    <TocSidebarContent goTo={navigationGoTo} />
                 </Show>
                 <Show when={readerStore.sideLeft === "bookmarks"}>
-                    <div class="max-h-[90vh] overflow-y-auto">
-                        <For each={currBook()?.bookmarks}>
-                            {(b) => (
-                                <p
-                                    class="cursor-pointer text-sm px-2 py-1 rounded hover:bg-[var(--base00)]"
-                                    onClick={() => {
-                                        setReaderStore("sideLeft", null)
-                                        document
-                                            .querySelector(`p[index="${b.paragraphId}"]`)
-                                            ?.scrollIntoView()
-                                        updateChars()
-                                    }}
-                                >
-                                    <span innerHTML={b.content} />
-                                </p>
-                            )}
-                        </For>
-                    </div>
+                    <BookmarksSidebarContent
+                        onItemClick={(paragraphId) => {
+                            document.querySelector(`p[index="${paragraphId}"]`)?.scrollIntoView()
+                            updateChars()
+                        }}
+                    />
                 </Show>
             </Sidebar>
 
