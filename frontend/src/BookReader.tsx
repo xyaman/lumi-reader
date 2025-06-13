@@ -1,22 +1,14 @@
-import { createEffect, createResource, For, onCleanup, onMount, Show } from "solid-js"
+import { createEffect, onCleanup, onMount, Show } from "solid-js"
 import { useNavigate, useParams } from "@solidjs/router"
 import { EpubBook } from "@/lib/epub"
 import { readerStore, setReaderStore } from "@/stores/readerStore"
-import Navbar from "@/components/Navbar"
 import Sidebar, {
     BookmarksSidebarContent,
     SettingsSidebar,
     TocSidebarContent,
 } from "@/components/Sidebar"
-import {
-    IconBookmark,
-    IconBookmarkFull,
-    IconExit,
-    IconFullscreen,
-    IconSettings,
-    IconToc,
-    IconWindowed,
-} from "@/components/icons"
+import { IconBookmarkFull } from "@/components/icons"
+import ReaderNavbar from "./components/ReaderNavbar"
 
 function CharacterCounter(props: { ref: (el: HTMLElement) => void }) {
     return <span ref={props.ref} class="z-10 right-[0.5rem] bottom-[0.5rem] fixed text-[0.75rem]" />
@@ -272,10 +264,6 @@ export default function BookReader() {
             readerStore.sideLeft !== null || readerStore.settingsOpen ? "hidden" : ""
     })
 
-    const isFullscreen = () => {
-        return document.fullscreenElement != null
-    }
-
     return (
         <div
             ref={mainRef}
@@ -287,66 +275,10 @@ export default function BookReader() {
                       : ""
             }`}
         >
-            <button
-                onClick={() => {
-                    setReaderStore("navOpen", true)
-                    setReaderStore("sideLeft", null)
-                }}
-                class="fixed top-0 left-0 right-0 h-12 z-10 bg-transparent cursor-pointer"
-            />
-            <Show when={readerStore.navOpen}>
-                <Navbar>
-                    <Navbar.Left>
-                        <button
-                            class="cursor-pointer"
-                            onClick={() => {
-                                setReaderStore("sideLeft", "toc")
-                                setReaderStore("navOpen", false)
-                            }}
-                        >
-                            <IconToc />
-                        </button>
-                        <button
-                            class="cursor-pointer"
-                            onClick={() => {
-                                setReaderStore("sideLeft", "bookmarks")
-                                setReaderStore("navOpen", false)
-                            }}
-                        >
-                            <IconBookmark />
-                        </button>
-                    </Navbar.Left>
-                    <Navbar.Right>
-                        <button
-                            class="cursor-pointer"
-                            onClick={() => {
-                                if (isFullscreen()) {
-                                    document.exitFullscreen()
-                                } else {
-                                    document.documentElement.requestFullscreen()
-                                }
-                                setReaderStore("navOpen", false)
-                            }}
-                        >
-                            <Show when={isFullscreen()} fallback={<IconFullscreen />}>
-                                <IconWindowed />
-                            </Show>
-                        </button>
-                        <button
-                            class="cursor-pointer"
-                            onClick={() => {
-                                setReaderStore("sideLeft", null)
-                                setReaderStore("settingsOpen", true)
-                            }}
-                        >
-                            <IconSettings />
-                        </button>
-                        <button class="cursor-pointer" onClick={() => navigate("/")}>
-                            <IconExit />
-                        </button>
-                    </Navbar.Right>
-                </Navbar>
-            </Show>
+            {/* Navbar: it is only shown when top side is clicked, it hides when clicking anywhere in the screen */}
+            <ReaderNavbar />
+
+            {/* Sidebars */}
             <Sidebar
                 open={readerStore.sideLeft !== null}
                 side="left"
@@ -376,6 +308,7 @@ export default function BookReader() {
                 onClose={() => setReaderStore("settingsOpen", false)}
             />
 
+            {/* BookContent */}
             <Show
                 when={currBook()}
                 fallback={<div class="h-screen w-screen p-8 text-center">Loading book…</div>}
@@ -396,6 +329,7 @@ export default function BookReader() {
                         style="font-size: var(--reader-font-size); line-height: var(--reader-line-height);"
                     />
                 </div>
+
                 <CharacterCounter ref={(el) => (charCounterRef = el)} />
             </Show>
         </div>
