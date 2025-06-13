@@ -1,5 +1,8 @@
 import { createSignal, createEffect, Show, onMount } from "solid-js"
 
+/**
+ * Updates the reader's CSS variables and persists settings to localStorage.
+ */
 function updateReaderStyle(
     fontSize: number,
     lineHeight: number | string,
@@ -24,10 +27,17 @@ function updateReaderStyle(
     localStorage.setItem("reader:horizontalPadding", String(horizontalPadding))
 }
 
+/**
+ * Props for ReaderSettings component.
+ * @property onSave Optional callback when settings are saved. Should be set when using the component outside `Settings.tsx`
+ */
 type Props = {
     onSave?: (isVertical: boolean, isPaginated: boolean, padding: boolean) => void
 }
 
+/**
+ * ReaderSettings component for adjusting reader appearance and behavior.
+ */
 export default function ReaderSettings(props: Props) {
     const [draftStyle, setDraftStyle] = createSignal({
         fontSize: Number(localStorage.getItem("reader:fontSize") ?? 20),
@@ -43,6 +53,7 @@ export default function ReaderSettings(props: Props) {
         localStorage.getItem("reader:paginated") === "true",
     )
 
+    // On mount, sync state to localStorage and update styles
     onMount(() => {
         const { fontSize, lineHeight, verticalPadding, horizontalPadding } = draftStyle()
         const isVertical = draftVertical()
@@ -53,6 +64,7 @@ export default function ReaderSettings(props: Props) {
         updateReaderStyle(fontSize, lineHeight, verticalPadding, horizontalPadding)
     })
 
+    // Auto-save changes to localStorage and update styles if no onSave prop
     createEffect(() => {
         if (props.onSave) return
 

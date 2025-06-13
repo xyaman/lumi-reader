@@ -1,6 +1,5 @@
 import { Show } from "solid-js"
 import Navbar from "@/components/Navbar"
-import { readerStore, setReaderStore } from "@/stores/readerStore"
 import {
     IconBookmark,
     IconExit,
@@ -10,17 +9,25 @@ import {
     IconWindowed,
 } from "@/components/icons"
 import { useNavigate } from "@solidjs/router"
+import { useReaderContext } from "@/context/reader"
 
+/**
+ * ReaderNavbar component for `BookReader`
+ * Displays navigation buttons for table of contents, bookmarks, etc.
+ * Hidden by default, is shown when user clicks the top side of the reader
+ */
 export default function ReaderNavbar() {
     const navigate = useNavigate()
     const isFullscreen = () => document.fullscreenElement != null
+
+    const { readerStore, setReaderStore } = useReaderContext()
 
     return (
         <>
             <button
                 onClick={() => {
                     setReaderStore("navOpen", true)
-                    setReaderStore("sideLeft", null)
+                    setReaderStore("sideBar", null)
                 }}
                 class="fixed top-0 left-0 right-0 h-12 z-10 bg-transparent cursor-pointer"
             />
@@ -29,19 +36,13 @@ export default function ReaderNavbar() {
                     <Navbar.Left>
                         <button
                             class="cursor-pointer"
-                            onClick={() => {
-                                setReaderStore("sideLeft", "toc")
-                                setReaderStore("navOpen", false)
-                            }}
+                            onClick={() => setReaderStore("sideBar", "toc")}
                         >
                             <IconToc />
                         </button>
                         <button
                             class="cursor-pointer"
-                            onClick={() => {
-                                setReaderStore("sideLeft", "bookmarks")
-                                setReaderStore("navOpen", false)
-                            }}
+                            onClick={() => setReaderStore("sideBar", "bookmarks")}
                         >
                             <IconBookmark />
                         </button>
@@ -64,10 +65,7 @@ export default function ReaderNavbar() {
                         </button>
                         <button
                             class="cursor-pointer"
-                            onClick={() => {
-                                setReaderStore("sideLeft", null)
-                                setReaderStore("settingsOpen", true)
-                            }}
+                            onClick={() => setReaderStore("sideBar", "settings")}
                         >
                             <IconSettings />
                         </button>

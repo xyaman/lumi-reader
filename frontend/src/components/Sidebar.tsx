@@ -5,7 +5,7 @@ import ReaderSettings from "@/components/ReaderSettings"
 
 import { readerStore, setReaderStore } from "@/stores/readerStore"
 
-type SidebarProps = {
+export type SidebarProps = {
     open: boolean
     side: "left" | "right"
     title: string
