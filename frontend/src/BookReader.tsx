@@ -7,22 +7,24 @@ import ReaderNavbar from "./components/ReaderNavbar"
 import { SettingsSidebar, ReaderLeftSidebar } from "./components/ReaderSidebar"
 import ReaderContent from "./components/ReaderContent"
 
+// CharacterCounter toggles visibility on click, always clickable
 function CharacterCounter() {
     const [show, setShow] = createSignal(true)
-
     const { readerStore } = useReaderContext()
     const currPercentage = () =>
         ((100 * readerStore.currChars) / readerStore.book.totalChars).toFixed(2)
 
     return (
-        <Show when={show()}>
-            <span
-                class="z-10 right-[0.5rem] bottom-[0.5rem] fixed text-[0.75rem] cursor-pointer"
-                onClick={() => setShow((prev) => !prev)}
-            >
-                {readerStore.currChars}/{readerStore.book.totalChars} ({currPercentage()}%)
-            </span>
-        </Show>
+        <span
+            class="z-10 right-[0.5rem] bottom-[0.5rem] fixed text-[0.75rem] cursor-pointer"
+            onClick={() => setShow((prev) => !prev)}
+        >
+            {show() ? (
+                `${readerStore.currChars}/${readerStore.book.totalChars} (${currPercentage()}%)`
+            ) : (
+                <span class="opacity-20">Show counter</span>
+            )}
+        </span>
     )
 }
 
