@@ -170,10 +170,11 @@ export default function ReaderSettings(props: Props) {
                             horizontalPadding !==
                                 Number(localStorage.getItem("reader:horizontalPadding") ?? 5)
 
+                        // save new values in local storage
                         localStorage.setItem("reader:vertical", String(isVertical))
                         localStorage.setItem("reader:paginated", String(isPaginated))
-
                         updateReaderStyle(fontSize, lineHeight, verticalPadding, horizontalPadding)
+
                         props.onSave?.(isVertical, isPaginated, paddingChanged)
                     }}
                     class="button-theme cursor-pointer px-4 py-2 rounded-lg"

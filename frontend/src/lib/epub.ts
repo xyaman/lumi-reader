@@ -13,7 +13,7 @@ interface IEpubMetadata {
     date?: string
 }
 
-interface IBookmark {
+export interface IBookmark {
     paragraphId: number
     content: string
 }
@@ -261,6 +261,18 @@ export class EpubBook implements IEpubBookRecord {
     }
 
     /**
+     * Returns the xhtml index for a given paragraphId.
+     */
+    public findSectionIndex(paragraphId: number): number {
+        for (let i = 0; i < this.manifest.xhtml.length; i++) {
+            if (paragraphId <= this.manifest.xhtml[i].lastIndex) {
+                return i
+            }
+        }
+        return -1
+    }
+
+    /**
      * @param element - The element where the epub will be rendered
      */
     public renderContent(element: HTMLElement, options: { xhtml: number | "all" }) {
@@ -314,7 +326,7 @@ export class EpubBook implements IEpubBookRecord {
     }
 }
 
-function getBaseName(path: string) {
+export function getBaseName(path: string) {
     const match = path.match(/(?:.*\/)?([^\/]+\.(?:png|jpe?g|svg|xhtml))$/i)
     return match ? match[1] : path
 }
