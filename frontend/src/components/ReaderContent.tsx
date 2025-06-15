@@ -200,6 +200,15 @@ export default function ReaderContent() {
         }
     }
 
+    createEffect(() => {
+        if (isVertical() && isPaginated()) {
+            setTimeout(() => {
+                const currPosition = readerStore.book.currParagraphId
+                document.querySelector(`p[index="${currPosition}"]`)?.scrollIntoView()
+            }, 0)
+        }
+    })
+
     // Sets up pagination event listeners (touch, keyboard, scroll)
     // - When paginated: adds touch, keydown, and scroll listeners to container/document
     // - When not paginated: adds scroll listener to document only
