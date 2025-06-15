@@ -8,14 +8,21 @@ import { SettingsSidebar, ReaderLeftSidebar } from "./components/ReaderSidebar"
 import ReaderContent from "./components/ReaderContent"
 
 function CharacterCounter() {
+    const [show, setShow] = createSignal(true)
+
     const { readerStore } = useReaderContext()
     const currPercentage = () =>
         ((100 * readerStore.currChars) / readerStore.book.totalChars).toFixed(2)
 
     return (
-        <span class="z-10 right-[0.5rem] bottom-[0.5rem] fixed text-[0.75rem]">
-            {readerStore.currChars}/{readerStore.book.totalChars} ({currPercentage()}%)
-        </span>
+        <Show when={show()}>
+            <span
+                class="z-10 right-[0.5rem] bottom-[0.5rem] fixed text-[0.75rem] cursor-pointer"
+                onClick={() => setShow((prev) => !prev)}
+            >
+                {readerStore.currChars}/{readerStore.book.totalChars} ({currPercentage()}%)
+            </span>
+        </Show>
     )
 }
 
