@@ -1,4 +1,4 @@
-import { createEffect, For, onCleanup, onMount, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, For, onCleanup, onMount, Show } from "solid-js"
 import ReaderSettings from "./ReaderSettings"
 import Sidebar from "./Sidebar"
 import ThemeList from "./Themelist"
@@ -73,11 +73,51 @@ export function TocSidebarContent(props: { goTo: (href?: string) => void }) {
 
 export function BookmarksSidebarContent(props: { onItemClick: (b: IBookmark) => void }) {
     const { readerStore, setReaderStore } = useReaderContext()
+    const [sortOption, setSortOption] = createSignal("added-newest")
+
+    const sortedBookmarks = createMemo(() => {
+        const bookmarks = [...readerStore.book.bookmarks]
+        switch (sortOption()) {
+            case "added-oldest":
+                return bookmarks
+            case "paragraph-asc":
+                return bookmarks.slice().sort((a, b) => a.paragraphId - b.paragraphId)
+            case "paragraph-desc":
+                return bookmarks.slice().sort((a, b) => b.paragraphId - a.paragraphId)
+            case "added-newest":
+            default:
+                return bookmarks.slice().reverse()
+        }
+    })
 
     return (
         <div class="max-h-[90vh] overflow-y-auto">
-            <For each={readerStore.book.bookmarks}>
-                {(b) => (
+            <div class="mb-2 flex items-center gap-2 row">
+                <label for="bookmark-sort" class="text-xs text-(--base05)]">
+                    Sort by:
+                </label>
+                <select
+                    id="bookmark-sort"
+                    class="text-xs px-2 py-1 rounded outline-none transition-colors bg-(--base01) text-(--base05) border border-(--base03) focus:border-(--base0D)"
+                    value={sortOption()}
+                    onInput={(e) => setSortOption(e.currentTarget.value)}
+                >
+                    <option value="added-newest" class="bg-(--base01) text-(--base05)">
+                        Added (Newest)
+                    </option>
+                    <option value="added-oldest" class="bg-(--base01) text-(--base05)">
+                        Added (Oldest)
+                    </option>
+                    <option value="paragraph-asc" class="bg-(--base01) text-(--base05)">
+                        Paragraph (Ascending)
+                    </option>
+                    <option value="paragraph-desc" class="bg-(--base01) text-(--base05)">
+                        Paragraph (Descending)
+                    </option>
+                </select>
+            </div>
+            <For each={sortedBookmarks()}>
+                {(b, i) => (
                     <p
                         class="cursor-pointer text-sm px-2 py-1 rounded hover:bg-[var(--base00)]"
                         onClick={() => {
@@ -85,7 +125,7 @@ export function BookmarksSidebarContent(props: { onItemClick: (b: IBookmark) => 
                             props.onItemClick(b)
                         }}
                     >
-                        <span innerHTML={b.content} />
+                        {i() + 1}. <span innerHTML={b.content.trim()} />
                     </p>
                 )}
             </For>
