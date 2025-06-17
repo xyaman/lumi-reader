@@ -29,17 +29,28 @@ export default function ReaderContent() {
     let shouldUpdateChars = false
 
     // == component classes
+    const mainClass = () =>
+        isPaginated()
+            ? isVertical()
+                ? "h-screen flex items-center"
+                : "h-screen flex center"
+            : isVertical()
+              ? "h-[95vh] flex items-center"
+              : ""
+
     const containerClass = () =>
         !isPaginated()
-            ? "px-8"
+            ? isVertical()
+                ? "h-(--reader-vertical-padding) my-auto"
+                : "w-(--reader-horizontal-padding) mx-auto" // continous - (horizontal & vertical)
             : isVertical()
-              ? "relative mx-auto w-[var(--reader-horizontal-padding)] h-[var(--reader-vertical-padding)] overflow-hidden snap-y snap-mandatory"
-              : "relative mx-8 py-12 h-screen overflow-x-hidden snap-x snap-mandatory"
+              ? "relative mx-auto w-(--reader-horizontal-padding) h-(--reader-vertical-padding) overflow-hidden snap-y snap-mandatory"
+              : "relative mx-auto my-auto w-(--reader-horizontal-padding) h-(--reader-vertical-padding) overflow-x-hidden snap-x snap-mandatory"
 
     const contentClass = () =>
         !isPaginated()
             ? isVertical()
-                ? "writing-mode-vertical max-h-[98vh]"
+                ? "writing-mode-vertical"
                 : "h-full"
             : isVertical()
               ? "h-full w-full [column-width:100vw] [column-fill:auto] [column-gap:0px] text-[20px] writing-mode-vertical"
@@ -248,9 +259,8 @@ export default function ReaderContent() {
 
             const handleResize = () => {
                 setTimeout(() => {
-                    console.log("called")
-                    containerRef.classList.remove("h-screen")
-                    containerRef.classList.add("h-screen")
+                    containerRef.style.height = "0px"
+                    containerRef.style.removeProperty("height")
                     document
                         .querySelector(`p[index='${readerStore.book.currParagraphId}']`)
                         ?.scrollIntoView()
@@ -336,36 +346,38 @@ export default function ReaderContent() {
     )
 
     return (
-        <div
-            id="reader-container"
-            ref={containerRef}
-            class={containerClass()}
-            onClick={() => {
-                setReaderStore("sideBar", null)
-                setReaderStore("navOpen", false)
-            }}
-        >
+        <div class={mainClass()}>
             <div
-                id="reader-content"
-                class={contentClass()}
-                style="font-size: var(--reader-font-size); line-height: var(--reader-line-height);"
+                id="reader-container"
+                ref={containerRef}
+                class={containerClass()}
+                onClick={() => {
+                    setReaderStore("sideBar", null)
+                    setReaderStore("navOpen", false)
+                }}
             >
-                <Show
-                    when={!isPaginated()}
-                    fallback={
-                        <div
-                            innerHTML={
-                                readerStore.book.manifest.xhtml[readerStore.currSection].content
-                            }
-                        />
-                    }
+                <div
+                    id="reader-content"
+                    class={contentClass()}
+                    style="font-size: var(--reader-font-size); line-height: var(--reader-line-height);"
                 >
-                    <For each={readerStore.book?.manifest.xhtml}>
-                        {(x) => {
-                            return <div innerHTML={x.content} />
-                        }}
-                    </For>
-                </Show>
+                    <Show
+                        when={!isPaginated()}
+                        fallback={
+                            <div
+                                innerHTML={
+                                    readerStore.book.manifest.xhtml[readerStore.currSection].content
+                                }
+                            />
+                        }
+                    >
+                        <For each={readerStore.book?.manifest.xhtml}>
+                            {(x) => {
+                                return <div innerHTML={x.content} />
+                            }}
+                        </For>
+                    </Show>
+                </div>
             </div>
         </div>
     )
