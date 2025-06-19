@@ -1,25 +1,30 @@
-import { createSignal, For, onCleanup } from "solid-js"
+import { createSignal, For, onCleanup, createEffect, onMount } from "solid-js"
 import { IconSettings, IconTrash, IconUpload } from "@/components/icons"
 import { EpubBook } from "@/lib/epub"
+
+const LS_SORTBY = "library:sortBy"
+const LS_DIRECTION = "library:direction"
 
 export default function BookLibrary() {
     const [books, setBooks] = createSignal<EpubBook[]>([])
     const [covers, setCovers] = createSignal<Record<number, string>>({})
 
-    // Load books and covers
-    EpubBook.getAll().then((books) => {
-        setBooks(books)
-        const coversMap: Record<number, string> = {}
-        books.forEach((book) => {
-            const url = URL.createObjectURL(book.manifest.imgs[0].blob)
-            coversMap[book.id] = url
+    const [sortBy, setSortBy] = createSignal<"lastModified" | "creationDate">(
+        (localStorage.getItem(LS_SORTBY) as "lastModified" | "creationDate") || "lastModified",
+    )
+    const [direction, setDirection] = createSignal<"asc" | "desc">(
+        (localStorage.getItem(LS_DIRECTION) as "asc" | "desc") || "desc",
+    )
+
+    const sortBooks = (books: EpubBook[]) => {
+        const dir = direction() === "desc" ? -1 : 1
+        return [...books].sort((a, b) => {
+            const aVal = a[sortBy()] ?? 0
+            const bVal = b[sortBy()] ?? 0
+            return (aVal - bVal) * dir
         })
-        setCovers(coversMap)
+    }
 
-        console.log(books)
-    })
-
-    // Upload handler
     const onBook = (e: Event) => {
         const file = (e.target as HTMLInputElement).files?.item(0)
         if (file) {
@@ -32,7 +37,17 @@ export default function BookLibrary() {
         }
     }
 
-    // Cleanup URLs
+    onMount(async () => {
+        const books = await EpubBook.getAll()
+        setBooks(sortBooks(books))
+        const coversMap: Record<number, string> = {}
+        books.forEach((book) => {
+            const url = URL.createObjectURL(book.manifest.imgs[0].blob)
+            coversMap[book.id] = url
+        })
+        setCovers(coversMap)
+    })
+
     onCleanup(() => {
         const coverObjs = covers()
         for (const id in coverObjs) {
@@ -40,12 +55,33 @@ export default function BookLibrary() {
         }
     })
 
+    createEffect(() => setBooks((prev) => sortBooks(prev)))
+    createEffect(() => localStorage.setItem(LS_SORTBY, sortBy()))
+    createEffect(() => localStorage.setItem(LS_DIRECTION, direction()))
+
     return (
         <div class="body-theme h-dvh flex flex-col">
-            {/* Navbar */}
             <nav class="navbar-theme border-b shadow px-6 py-4 flex justify-between items-center">
                 <h1 class="text-2xl font-bold">lumireader</h1>
-                <div class="flex gap-3">
+                <div class="flex gap-3 items-center">
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm font-medium">Sort by:</label>
+                        <select
+                            class="button-theme px-2 py-1 rounded bg-transparent border border-gray-300 dark:border-zinc-700"
+                            value={sortBy()}
+                            onInput={(e) => setSortBy((e.target as HTMLSelectElement).value as any)}
+                        >
+                            <option value="lastModified">Last Updated</option>
+                            <option value="creationDate">Date Added</option>
+                        </select>
+                        <button
+                            class="button-theme px-2 py-1 rounded border border-gray-300 dark:border-zinc-700"
+                            onClick={() => setDirection((d) => (d === "asc" ? "desc" : "asc"))}
+                            aria-label="Toggle sort direction"
+                        >
+                            {direction() === "asc" ? "↑" : "↓"}
+                        </button>
+                    </div>
                     <label
                         class="button-theme relative inline-flex items-center justify-center px-4 py-2 rounded-lg transition cursor-pointer"
                         aria-label="Upload epub"
@@ -68,8 +104,6 @@ export default function BookLibrary() {
                     </a>
                 </div>
             </nav>
-
-            {/* Main content */}
             <main class="flex-1 overflow-y-auto p-6">
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5">
                     <For each={books()}>
