@@ -51,6 +51,7 @@ interface IEpubBookRecord {
      * (DB) Timestamp for tracking changes (server and client)
      */
     lastModified?: number
+    creationDate: number
     currParagraphId: number
     bookmarks: IBookmark[]
 
@@ -64,7 +65,6 @@ interface IEpubBookRecord {
      * Books metadata, does not follow exactly epub reference.
      */
     metadata: IEpubMetadata
-
     manifest: IEpubManifest
 }
 
@@ -77,6 +77,7 @@ export class EpubBook implements IEpubBookRecord {
 
     // Database-related properties
     id!: number
+    creationDate: number = Date.now()
     lastModified?: number
     currParagraphId!: number
     totalChars = 0
@@ -97,6 +98,7 @@ export class EpubBook implements IEpubBookRecord {
     toRecord(): Record<string, any> {
         const record: Partial<IEpubBookRecord> = {
             lastModified: Date.now(),
+            creationDate: this.creationDate,
             metadata: this.metadata,
             manifest: this.manifest,
             currParagraphId: this.currParagraphId,
@@ -116,6 +118,7 @@ export class EpubBook implements IEpubBookRecord {
     static fromRecord(record: IEpubBookRecord): EpubBook {
         const book = new EpubBook()
         book.id = record.id
+        book.creationDate = record.creationDate
         book.lastModified = record.lastModified
         book.metadata = record.metadata
         book.manifest = record.manifest
