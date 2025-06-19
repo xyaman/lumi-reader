@@ -34,8 +34,7 @@ export function SettingsSidebar() {
 }
 
 export function ReaderLeftSidebar() {
-    const navigationGoTo = () => {}
-    const { bookmarkGoTo, readerStore, setReaderStore } = useReaderContext()
+    const { navigationGoTo, bookmarkGoTo, readerStore, setReaderStore } = useReaderContext()
 
     return (
         <Sidebar
@@ -49,20 +48,22 @@ export function ReaderLeftSidebar() {
                 <TocSidebarContent goTo={navigationGoTo} />
             </Show>
             <Show when={readerStore.sideBar === "bookmarks"}>
-                <BookmarksSidebarContent onItemClick={(b) => bookmarkGoTo(b)} />
+                <BookmarksSidebarContent onItemClick={bookmarkGoTo} />
             </Show>
         </Sidebar>
     )
 }
 
-export function TocSidebarContent(props: { goTo: (href?: string) => void }) {
+export function TocSidebarContent(props: { goTo: (file: string) => void }) {
     const { readerStore } = useReaderContext()
     return (
         <For each={readerStore.book.manifest.nav}>
             {(item) => (
                 <p
                     class="cursor-pointer text-sm px-2 py-1 rounded hover:bg-[var(--base00)]"
-                    onClick={() => props.goTo(item.href)}
+                    onClick={() => {
+                        if (item.file) props.goTo(item.file)
+                    }}
                 >
                     {item.text}
                 </p>

@@ -6,6 +6,7 @@ import { createStore, SetStoreFunction } from "solid-js/store"
  * State for the reader UI.
  */
 interface ReaderStore {
+    // reader related
     shouldReload: boolean
     navOpen: boolean
     sideBar: "toc" | "bookmarks" | "settings" | null
@@ -18,9 +19,12 @@ interface ReaderStore {
 }
 
 const initialState: Omit<ReaderStore, "book"> = {
-    navOpen: false,
+    // reader related
     shouldReload: false,
+    navOpen: false,
     sideBar: null,
+
+    // book related
     currIndex: 0,
     currChars: 0,
     currSection: 0,
@@ -28,6 +32,7 @@ const initialState: Omit<ReaderStore, "book"> = {
 
 type ReaderContextType = {
     updateChars: (isPaginated: boolean, isVertical: boolean) => number
+    navigationGoTo: (file: string) => void
     bookmarkGoTo: (bookmark: IBookmark) => void
     readerStore: ReaderStore
     setReaderStore: SetStoreFunction<ReaderStore>
@@ -90,10 +95,26 @@ export function ReaderProvider(props: { book: EpubBook; children: JSX.Element })
                 ?.scrollIntoView({ block: "center" })
         }, 0)
     }
-    const navigationGoTo = (bookmarkIndex: number) => {}
+    const navigationGoTo = (file: string) => {
+        const xhtml = readerStore.book.manifest.xhtml[readerStore.currSection]
+        const currentFile = xhtml.filename
+
+        if (currentFile !== file) {
+            const sectionId = readerStore.book.manifest.xhtml.findIndex(
+                (xhtml) => xhtml.filename === file,
+            )!
+            setReaderStore("currSection", sectionId)
+        }
+
+        setTimeout(() => {
+            document.getElementById(file)?.scrollIntoView({ block: "center" })
+        }, 0)
+    }
 
     return (
-        <ReaderContext.Provider value={{ updateChars, bookmarkGoTo, readerStore, setReaderStore }}>
+        <ReaderContext.Provider
+            value={{ updateChars, navigationGoTo, bookmarkGoTo, readerStore, setReaderStore }}
+        >
             {props.children}
         </ReaderContext.Provider>
     )

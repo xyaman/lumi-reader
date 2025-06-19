@@ -22,12 +22,12 @@ interface IEpubManifest {
     /**
      * Table of contents.
      */
-    nav: { href?: string; text: string }[]
+    nav: { text: string; file?: string; id?: string }[]
 
     /**
      * Xhtml (xml) contents (does not include navigation)
      */
-    xhtml: { lastIndex: number; content: string }[]
+    xhtml: { lastIndex: number; content: string; filename: string }[]
 
     /**
      * Imgs of the book.
@@ -327,7 +327,7 @@ export class EpubBook implements IEpubBookRecord {
 }
 
 export function getBaseName(path: string) {
-    const match = path.match(/(?:.*\/)?([^\/]+\.(?:png|jpe?g|svg|xhtml))$/i)
+    const match = path.match(/(?:.*\/)?([^\/]+\.(?:png|jpe?g|svg|xhtml|html))$/i)
     return match ? match[1] : path
 }
 
@@ -441,22 +441,18 @@ async function extractManifest(
         Promise.all(imgsHref.map((img) => zip.file(getFilePath(basePath, img))?.async("blob")!)),
     ])
 
+    // TOC (Navigator)
+    manifest.nav = navContent ? parseNavigator(navContent) : []
+
     // paragraphs + character counts
     let currId = 0
     for (const [i, c] of xhtmlContent.entries()) {
-        const [content, id, charsCount] = parseBodyContent(
-            getFilePath(basePath, xhtmlHref[i]),
-            c,
-            currId,
-            totalChars,
-        )
+        const realFilePath = getFilePath(basePath, xhtmlHref[i])
+        const [content, id, charsCount] = parseBodyContent(realFilePath, c, currId, totalChars)
         currId = id
         totalChars = charsCount
-        manifest.xhtml.push({ lastIndex: id, content })
+        manifest.xhtml.push({ lastIndex: id, content, filename: getBaseName(realFilePath) })
     }
-
-    // TOC (Navigator)
-    manifest.nav = navContent ? parseNavigator(navContent) : []
 
     // Css
     for (const css of cssContent) {
@@ -547,7 +543,7 @@ function parseNavigator(navContent: string) {
 
     let insideNav = false
     let insideLi = false
-    const items: Array<{ text: string; href?: string }> = []
+    const items: Array<{ text: string; file?: string; id?: string }> = []
 
     const parser = new Parser({
         onopentag(name, attribs) {
@@ -563,7 +559,14 @@ function parseNavigator(navContent: string) {
             }
 
             if (insideLi && name === "a") {
-                items.push({ href: attribs.href, text: "none" })
+                const [filepath, id] = attribs.href.split("#")
+                const current: { text: string; file?: string; id?: string } = {
+                    file: getBaseName(filepath),
+                    text: "none",
+                }
+
+                if (id) current.id = id
+                items.push(current)
             }
 
             if (insideLi && name === "span") {
