@@ -1,4 +1,4 @@
-import { EpubBook, IBookmark } from "@/lib/epub"
+import { Bookmark, ReaderSource } from "@/lib/readerSource"
 import { createContext, JSX, useContext } from "solid-js"
 import { createStore, SetStoreFunction } from "solid-js/store"
 
@@ -12,7 +12,7 @@ interface ReaderStore {
     sideBar: "toc" | "bookmarks" | "settings" | null
 
     // book related
-    book: EpubBook
+    book: ReaderSource
     currIndex: number
     currChars: number
     currSection: number
@@ -33,7 +33,7 @@ const initialState: Omit<ReaderStore, "book"> = {
 type ReaderContextType = {
     updateChars: (isPaginated: boolean, isVertical: boolean) => number
     navigationGoTo: (file: string) => void
-    bookmarkGoTo: (bookmark: IBookmark) => void
+    bookmarkGoTo: (bookmark: Bookmark) => void
     readerStore: ReaderStore
     setReaderStore: SetStoreFunction<ReaderStore>
 }
@@ -44,11 +44,11 @@ const ReaderContext = createContext<ReaderContextType>()
  * Provides the reader context to its children.
  * @param props - Contains the book and children components.
  */
-export function ReaderProvider(props: { book: EpubBook; children: JSX.Element }) {
+export function ReaderProvider(props: { book: ReaderSource; children: JSX.Element }) {
     const [readerStore, setReaderStore] = createStore({
         ...initialState,
         book: props.book,
-        currSection: props.book.findSectionIndex(props.book.currParagraphId),
+        currSection: props.book.findSectionIndex(props.book.currParagraph) ?? 0,
     })
 
     const updateChars = (isPaginated: boolean, isVertical: boolean) => {
@@ -72,7 +72,7 @@ export function ReaderProvider(props: { book: EpubBook; children: JSX.Element })
         }
 
         // update localstorage book
-        props.book.currParagraphId = lastIndex
+        props.book.currParagraph = lastIndex
         props.book.currChars = currChars
         props.book.save().catch(console.error)
 
@@ -83,9 +83,9 @@ export function ReaderProvider(props: { book: EpubBook; children: JSX.Element })
         return lastIndex
     }
 
-    const bookmarkGoTo = (bookmark: IBookmark) => {
+    const bookmarkGoTo = (bookmark: Bookmark) => {
         const sectionId = readerStore.book.findSectionIndex(bookmark.paragraphId)
-        if (readerStore.currSection !== sectionId) {
+        if (readerStore.currSection !== sectionId && sectionId) {
             setReaderStore("currSection", sectionId)
         }
 
@@ -95,19 +95,19 @@ export function ReaderProvider(props: { book: EpubBook; children: JSX.Element })
                 ?.scrollIntoView({ block: "center" })
         }, 0)
     }
-    const navigationGoTo = (file: string) => {
-        const xhtml = readerStore.book.manifest.xhtml[readerStore.currSection]
-        const currentFile = xhtml.filename
+    const navigationGoTo = (name: string) => {
+        const section = readerStore.book.sections[readerStore.currSection]
+        const currentFile = section.name
 
-        if (currentFile !== file) {
-            const sectionId = readerStore.book.manifest.xhtml.findIndex(
-                (xhtml) => xhtml.filename === file,
+        if (currentFile !== name) {
+            const sectionId = readerStore.book.sections.findIndex(
+                (section) => section.name === name,
             )!
             setReaderStore("currSection", sectionId)
         }
 
         setTimeout(() => {
-            document.getElementById(file)?.scrollIntoView({ block: "center" })
+            document.getElementById(name)?.scrollIntoView({ block: "center" })
         }, 0)
     }
 

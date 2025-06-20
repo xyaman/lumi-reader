@@ -1,4 +1,4 @@
-import { Show, JSX, For } from "solid-js"
+import { Show, JSX } from "solid-js"
 export type SidebarProps = {
     open: boolean
     side: "left" | "right"

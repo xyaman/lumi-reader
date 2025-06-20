@@ -6,6 +6,7 @@ import { EpubBook, getBaseName } from "@/lib/epub"
 import ReaderNavbar from "./components/ReaderNavbar"
 import { SettingsSidebar, ReaderLeftSidebar } from "./components/ReaderSidebar"
 import ReaderContent from "./components/ReaderContent"
+import { ReaderSourceDB } from "./lib/readerSourceDb"
 
 // CharacterCounter toggles visibility on click, always clickable
 function CharacterCounter() {
@@ -121,32 +122,30 @@ export default function BookReader(): JSX.Element {
 
     const [currBook, setCurrBook] = createSignal<EpubBook | null>(null)
     onMount(async () => {
-        const record = await EpubBook.getById(id)
+        const record = await ReaderSourceDB.getBookById(id)
         if (!record) {
             navigate("/", { replace: true })
             return
         }
-        const book = EpubBook.fromRecord(record)
-        setCurrBook(book)
 
-        book.insertCss()
+        if (record.kind === "epub") {
+            const book = EpubBook.fromReaderSourceRecord(record)
+            setCurrBook(book)
 
-        // setup images
-        if (Object.keys(book.blobs).length === 0) {
-            for (let i = 0; i < book.manifest.imgs.length; i++) {
-                const imgFilename = getBaseName(book.manifest.imgs[i].filename)!
-                const url = URL.createObjectURL(book.manifest.imgs[i].blob)
-                book.blobs[imgFilename] = url
-            }
+            const bookStyle = book.getCssStyle()
+            bookStyle.id = "book-css"
+            document.head.appendChild(bookStyle)
+            document.documentElement.lang = book.language
+        } else {
+            navigate("/", { replace: true })
+            return
         }
     })
 
     onCleanup(() => {
-        // currBook()?.cleanUp()
-        const blobs = currBook()?.blobs
-        if (!blobs) return
-        Object.values(blobs).forEach((url) => URL.revokeObjectURL(url))
-        document.head.querySelectorAll("#temp-css").forEach((el) => el.remove())
+        currBook()?.deinit()
+        document.head.querySelector("#book-css")?.remove()
+        document.documentElement.removeAttribute("lang")
     })
 
     return (

@@ -1,7 +1,11 @@
 import { useReaderContext } from "@/context/reader"
-import { getBaseName } from "@/lib/epub"
 import { createEffect, createSignal, For, on, onCleanup, Show } from "solid-js"
 import { IconBookmarkFull } from "./icons"
+
+function getBaseName(path: string) {
+    const match = path.match(/(?:.*\/)?([^\/]+\.(?:png|jpe?g|svg|xhtml|html))$/i)
+    return match ? match[1] : path
+}
 
 /**
  * ReaderContent component displays the book content in the reader,
@@ -15,6 +19,8 @@ import { IconBookmarkFull } from "./icons"
  */
 export default function ReaderContent() {
     const { updateChars, readerStore, setReaderStore } = useReaderContext()
+
+    console.log(readerStore.book)
 
     let containerRef: HTMLDivElement | undefined
 
@@ -64,9 +70,10 @@ export default function ReaderContent() {
         const updateImageSrc = (el: Element, attr: string) => {
             const val = el.getAttribute(attr)
             if (!val) return
+
             const base = getBaseName(val)
-            if (base && readerStore.book.blobs[base])
-                el.setAttribute(attr, readerStore.book.blobs[base])
+            const image = readerStore.book.images.find((v) => getBaseName(v.filename) === base)
+            if (image && image.url) el.setAttribute(attr, image.url)
         }
 
         setTimeout(() => {
@@ -100,16 +107,16 @@ export default function ReaderContent() {
         if (isStart && multiplier === -1) {
             if (readerStore.currSection === 0) return
             setReaderStore("currSection", readerStore.currSection - 1)
-            const nextId = readerStore.book.manifest.xhtml[readerStore.currSection].lastIndex - 1
+            const nextId = readerStore.book.sections[readerStore.currSection].lastIndex - 1
             // scroll into last item of the xhtml
             document.querySelector(`p[index="${nextId}"]`)?.scrollIntoView()
             return
         } else if (isEnd && multiplier === 1) {
-            if (readerStore.currSection === readerStore.book.manifest.xhtml.length - 1) return
+            if (readerStore.currSection === readerStore.book.sections.length - 1) return
             setReaderStore("currSection", readerStore.currSection + 1)
 
             // scroll into the first item of the xtml
-            const nextId = readerStore.book.manifest.xhtml[readerStore.currSection].lastIndex
+            const nextId = readerStore.book.sections[readerStore.currSection].lastIndex
             document.querySelector(`p[index="${nextId}"]`)?.scrollIntoView()
             return
         }
@@ -120,6 +127,24 @@ export default function ReaderContent() {
         const next = Math.max(0, Math.min(Math.ceil(current + offset * multiplier), max))
         const scrollToOpts = isVertical() ? { top: next } : { left: next }
         containerRef.scrollTo({ ...scrollToOpts, behavior: "instant" })
+    }
+
+    /**
+     * Adds/Remove a new bookmark, if the bookmark is already present it will be removed
+     * @param id -
+     * @param content -
+     * @returns boolean true if value was present/removed, false otherwise
+     */
+    const toggleBookmark = (id: number | string, content: string) => {
+        const idNum = Number(id)
+        const idx = readerStore.book.bookmarks.findIndex((b) => b.paragraphId === idNum)
+        if (idx !== -1) {
+            readerStore.book.bookmarks.splice(idx, 1)
+            return true
+        } else {
+            readerStore.book.bookmarks.push({ paragraphId: idNum, content })
+            return false
+        }
     }
 
     // == bookmarks
@@ -189,7 +214,7 @@ export default function ReaderContent() {
                 setTimeout(() => document.getElementById("bookmark-icon")?.remove(), 0)
 
                 const index = p.getAttribute("index")!
-                const removed = readerStore.book.toggleBookmark(index, p.textContent!)
+                const removed = toggleBookmark(index, p.textContent!)
                 removed ? p.classList.remove(bgcolor) : p.classList.add(bgcolor)
                 readerStore.book.save()
 
@@ -214,7 +239,7 @@ export default function ReaderContent() {
     createEffect(() => {
         if (isVertical() && isPaginated()) {
             setTimeout(() => {
-                const currPosition = readerStore.book.currParagraphId
+                const currPosition = readerStore.book.currParagraph
                 document.querySelector(`p[index="${currPosition}"]`)?.scrollIntoView()
             }, 0)
         }
@@ -262,7 +287,7 @@ export default function ReaderContent() {
                     containerRef.style.height = "0px"
                     containerRef.style.removeProperty("height")
                     document
-                        .querySelector(`p[index='${readerStore.book.currParagraphId}']`)
+                        .querySelector(`p[index='${readerStore.book.currParagraph}']`)
                         ?.scrollIntoView()
                 }, 0)
             }
@@ -271,10 +296,8 @@ export default function ReaderContent() {
 
             if (isPaginated()) {
                 // update last xhtml
-                const newSection = readerStore.book.findSectionIndex(
-                    readerStore.book.currParagraphId,
-                )
-                if (readerStore.currSection != newSection) {
+                const newSection = readerStore.book.findSectionIndex(readerStore.book.currParagraph)
+                if (readerStore.currSection != newSection && newSection) {
                     setReaderStore("currSection", newSection)
                 }
 
@@ -311,7 +334,7 @@ export default function ReaderContent() {
 
             // wait to next render
             setTimeout(() => {
-                const currPosition = readerStore.book.currParagraphId
+                const currPosition = readerStore.book.currParagraph
                 document.querySelector(`p[index="${currPosition}"]`)?.scrollIntoView()
             }, 0)
         }),
@@ -366,12 +389,13 @@ export default function ReaderContent() {
                         fallback={
                             <div
                                 innerHTML={
-                                    readerStore.book.manifest.xhtml[readerStore.currSection].content
+                                    readerStore.book.sections[readerStore.currSection].content ??
+                                    "error??"
                                 }
                             />
                         }
                     >
-                        <For each={readerStore.book?.manifest.xhtml}>
+                        <For each={readerStore.book.sections}>
                             {(x) => {
                                 return <div innerHTML={x.content} />
                             }}

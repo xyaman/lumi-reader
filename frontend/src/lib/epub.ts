@@ -1,9 +1,9 @@
 import JSZip from "jszip"
+import { Bookmark, SourceImage, NavigationItem, ReaderSource, Section } from "./readerSource"
 import { XMLParser } from "fast-xml-parser"
 import { Parser } from "htmlparser2"
-import { IDBPDatabase, openDB } from "idb"
-
-import { assert, parseCss } from "@/lib/utils"
+import { assert, parseCss } from "./utils"
+import { ReaderSourceDB, ReaderSourceRecord } from "./readerSourceDb"
 
 interface IEpubMetadata {
     identifier: string
@@ -13,21 +13,16 @@ interface IEpubMetadata {
     date?: string
 }
 
-export interface IBookmark {
-    paragraphId: number
-    content: string
-}
-
 interface IEpubManifest {
     /**
      * Table of contents.
      */
-    nav: { text: string; file?: string; id?: string }[]
+    nav: NavigationItem[]
 
     /**
      * Xhtml (xml) contents (does not include navigation)
      */
-    xhtml: { lastIndex: number; content: string; filename: string }[]
+    xhtml: { lastIndex: number; content: string; name: string }[]
 
     /**
      * Imgs of the book.
@@ -41,184 +36,49 @@ interface IEpubManifest {
     css: string
 }
 
-interface IEpubBookRecord {
-    /**
-     * (DB) Local id, epub identifier is in `metadata.identifier`
-     */
-    id: number
-
-    /**
-     * (DB) Timestamp for tracking changes (server and client)
-     */
-    lastModified?: number
-    creationDate: number
-    currParagraphId: number
-    bookmarks: IBookmark[]
-
-    /**
-     * Book total chars estimation
-     */
-    totalChars: number
-    currChars: number
-
-    /**
-     * Books metadata, does not follow exactly epub reference.
-     */
-    metadata: IEpubMetadata
-    manifest: IEpubManifest
-}
-
-/**
- * Represents a epub book, this class can't be saved directly into indexedDB,
- * check `EpubBookDB`.
- */
-export class EpubBook implements IEpubBookRecord {
-    private static dbPromise: Promise<IDBPDatabase> | null = null
-
-    // Database-related properties
-    id!: number
+export class EpubBook implements ReaderSource {
+    localId!: number
+    uniqueId!: string
     creationDate: number = Date.now()
-    lastModified?: number
-    currParagraphId!: number
-    totalChars = 0
-    currChars = 0
-    bookmarks: IBookmark[] = []
+    lastModifiedDate: number = Date.now()
+    title!: string
+    language!: string
+    creator: string[] = []
+    totalChars!: number
+    currChars: number = 0
+    currParagraph: number = 0
 
-    // IEpubBookRecord
-    metadata!: IEpubMetadata
-    manifest!: IEpubManifest
+    bookmarks: Bookmark[] = []
+    nav: NavigationItem[] = []
+    sections: Section[] = []
+    css: string = ""
+    images: SourceImage[] = []
 
-    // this properties are not saved into record,
-    // but are needed at runtime
-    blobs: Record<string, string> = {}
-
-    /**
-     * Helper method to serialize an EpubBook instance for database storage.
-     */
-    toRecord(): Record<string, any> {
-        const record: Partial<IEpubBookRecord> = {
-            lastModified: Date.now(),
-            creationDate: this.creationDate,
-            metadata: this.metadata,
-            manifest: this.manifest,
-            currParagraphId: this.currParagraphId,
-            totalChars: this.totalChars,
-            currChars: this.currChars,
-            bookmarks: this.bookmarks,
-        }
-
-        if (this.id) record.id = this.id
-
-        return record
-    }
-
-    /**
-     * Helper method to deserialize a database record into an EpubBook instance.
-     */
-    static fromRecord(record: IEpubBookRecord): EpubBook {
+    // Create EpubBook from ReaderSourceRecord
+    static fromReaderSourceRecord(record: ReaderSourceRecord): EpubBook {
         const book = new EpubBook()
-        book.id = record.id
+        book.localId = record.localId
+        book.uniqueId = record.uniqueId
         book.creationDate = record.creationDate
-        book.lastModified = record.lastModified
-        book.metadata = record.metadata
-        book.manifest = record.manifest
-        book.currParagraphId = record.currParagraphId ?? 0
+        book.lastModifiedDate = record.lastModifiedDate
+        book.title = record.title
+        book.language = record.language
+        book.creator = record.creator
         book.totalChars = record.totalChars
         book.currChars = record.currChars
+        book.currParagraph = record.currParagraph
+
         book.bookmarks = record.bookmarks
+        book.nav = record.nav
+        book.sections = record.sections
+        book.css = record.css
+        book.images = record.images.map((img) => ({
+            ...img,
+            url: URL.createObjectURL(img.blob),
+        }))
+
         return book
     }
-
-    private static getDB(): Promise<IDBPDatabase> {
-        if (!EpubBook.dbPromise) {
-            EpubBook.dbPromise = openDB("epub-reader-db", 1, {
-                upgrade(db) {
-                    const store = db.createObjectStore("epubBooks", {
-                        keyPath: "id",
-                        autoIncrement: true,
-                    })
-                    store.createIndex("title", "metadata.title")
-                    store.createIndex("identifier", "metadata.identifier")
-                    store.createIndex("lastModified", "lastModified")
-                },
-            })
-        }
-        return EpubBook.dbPromise
-    }
-
-    /**
-     * Retrieves an EpubBook instance by ID.
-     */
-    static async getById(id: number): Promise<IEpubBookRecord | undefined> {
-        const db = await EpubBook.getDB()
-        return db.get("epubBooks", id)
-    }
-
-    //     async getBookByEpubIdentifier(
-    //         id: string,
-    //     ): Promise<EpubBookRecord | undefined> {
-    //         const db = await this.dbPromise;
-    //         return db.getFromIndex("epubBooks", "metadata.identifier", id);
-    //     }
-
-    /**
-     * Retrieves all EpubBook instances from the database.
-     */
-    static async getAll(): Promise<EpubBook[]> {
-        const db = await EpubBook.getDB()
-        const objBooks = await db.getAll("epubBooks")
-        return objBooks.map((o) => EpubBook.fromRecord(o))
-    }
-
-    /**
-     * Deletes an EpubBook instance by ID.
-     */
-    static async deleteById(id: number): Promise<void> {
-        const db = await EpubBook.getDB()
-        await db.delete("epubBooks", id)
-    }
-
-    /**
-     * Saves the current instance to the database.
-     */
-    async save(): Promise<number> {
-        const db = await EpubBook.getDB()
-        const record = this.toRecord()
-        const newId = (await db.put("epubBooks", record)) as number
-
-        // https://web.dev/articles/persistent-storage
-        // @ts-ignore (some browser *may* not support this function)
-        if (navigator.storage && navigator.storage.persist) {
-            const isPersisted = await navigator.storage.persisted()
-            console.log(`Persisted storage granted: ${isPersisted}`)
-        }
-
-        if (!this.id) this.id = newId
-        return newId
-    }
-
-    /**
-     * Adds/Remove a new bookmark, if the bookmark is already present it will be removed
-     * @param id -
-     * @param content -
-     * @returns boolean true if value was present/removed, false otherwise
-     */
-    toggleBookmark(id: number | string, content: string): boolean {
-        const idNum = Number(id)
-        const idx = this.bookmarks.findIndex((b) => b.paragraphId === idNum)
-        if (idx !== -1) {
-            this.bookmarks.splice(idx, 1)
-            return true
-        } else {
-            this.bookmarks.push({ paragraphId: idNum, content })
-            return false
-        }
-    }
-
-    /**
-     * Deletes the current instance from the database.
-     */
-    async delete(): Promise<void> {}
 
     static async fromFile(file: File): Promise<EpubBook> {
         const starttime = Date.now()
@@ -252,10 +112,21 @@ export class EpubBook implements IEpubBookRecord {
         if (idx > -1) {
             basePath = opfFilename.slice(0, idx)
         }
-        book.metadata = extractMetadata(pkgDocumentXml)
+        const metadata = extractMetadata(pkgDocumentXml)
+        book.title = metadata.title
+        book.creator = metadata.creator
+        book.language = metadata.language
+        book.uniqueId = metadata.identifier
+
         const [manifest, totalChars] = await extractManifest(zip, pkgDocumentXml, basePath)
-        book.manifest = manifest
         book.totalChars = totalChars
+        book.nav = manifest.nav
+        book.sections = manifest.xhtml
+        book.css = manifest.css
+        book.images = manifest.imgs.map((img) => ({
+            ...img,
+            url: URL.createObjectURL(img.blob),
+        }))
 
         console.log(`Epub loaded in ${Date.now() - starttime}ms`)
 
@@ -263,75 +134,67 @@ export class EpubBook implements IEpubBookRecord {
         return book
     }
 
-    /**
-     * Returns the xhtml index for a given paragraphId.
-     */
-    public findSectionIndex(paragraphId: number): number {
-        for (let i = 0; i < this.manifest.xhtml.length; i++) {
-            if (paragraphId <= this.manifest.xhtml[i].lastIndex) {
+    findSectionIndex(paragraphId: number): number | null | undefined {
+        for (let i = 0; i < this.sections.length; i++) {
+            if (paragraphId <= this.sections[i].lastIndex) {
                 return i
             }
         }
-        return -1
+
+        return null
     }
 
-    /**
-     * @param element - The element where the epub will be rendered
-     */
-    public renderContent(element: HTMLElement, options: { xhtml: number | "all" }) {
-        const starttime = Date.now()
-
-        if (options.xhtml == "all") {
-            let body = ""
-            for (const xhtml of this.manifest.xhtml) {
-                body += xhtml.content
-            }
-            element.innerHTML = body
-        }
-
-        if (Object.keys(this.blobs).length === 0) {
-            for (let i = 0; i < this.manifest.imgs.length; i++) {
-                const imgFilename = getBaseName(this.manifest.imgs[i].filename)!
-                const url = URL.createObjectURL(this.manifest.imgs[i].blob)
-                this.blobs[imgFilename] = url
-            }
-        }
-
-        // Update all <img>, <svg image>, and <image> tags with correct URLs
-        const updateImageSrc = (el: Element, attr: string) => {
-            const val = el.getAttribute(attr)
-            if (!val) return
-            const base = getBaseName(val)
-            if (base && this.blobs[base]) el.setAttribute(attr, this.blobs[base])
-        }
-
-        // <img src="">
-        element.querySelectorAll("img[src]").forEach((el) => updateImageSrc(el, "src"))
-        // <image xlink:href="">
-        element.querySelectorAll("image").forEach((el) => updateImageSrc(el, "xlink:href"))
-
-        console.log(`Epub rendered in ${Date.now() - starttime}ms`)
+    getImages(): SourceImage[] {
+        return this.images
     }
 
-    /**
-     * The callers needs to remove the css from the header after unmount.
-     * The style imported has the id = "temp-css"
-     * */
-    public async insertCss() {
-        const starttime = Date.now()
+    getCover(): SourceImage {
+        return this.images[0]
+    }
 
+    getCssStyle(): HTMLStyleElement {
         const style = document.createElement("style")
-        style.id = "temp-css"
-        style.textContent = this.manifest.css
-        document.head.append(style)
-
-        console.log(`Css injected in ${Date.now() - starttime}ms`)
+        style.textContent = this.css
+        return style
     }
-}
 
-export function getBaseName(path: string) {
-    const match = path.match(/(?:.*\/)?([^\/]+\.(?:png|jpe?g|svg|xhtml|html))$/i)
-    return match ? match[1] : path
+    toReaderSourceRecord(): Partial<ReaderSourceRecord> {
+        // toReaderSourceRecord(): ReaderSourceRecord {
+        return {
+            kind: "epub",
+            uniqueId: this.uniqueId,
+            title: this.title,
+            creator: this.creator,
+            lastModifiedDate: this.lastModifiedDate,
+            creationDate: this.creationDate,
+            language: this.language,
+            totalChars: this.totalChars,
+            currChars: this.currChars,
+            currParagraph: this.currParagraph,
+            bookmarks: this.bookmarks,
+            nav: this.nav,
+            css: this.css,
+            sections: this.sections,
+            images: this.images,
+        }
+    }
+
+    async save(): Promise<void> {
+        const record = this.toReaderSourceRecord() as ReaderSourceRecord
+        if (this.localId) record.localId = this.localId
+        await ReaderSourceDB.save(record)
+
+        // Update localId if it was assigned by IndexedDB
+        if (record.localId != null) this.localId = record.localId
+    }
+
+    deinit(): void {
+        for (const img of this.images) {
+            if (img.url) {
+                URL.revokeObjectURL(img.url)
+            }
+        }
+    }
 }
 
 /**
@@ -454,7 +317,7 @@ async function extractManifest(
         const [content, id, charsCount] = parseBodyContent(realFilePath, c, currId, totalChars)
         currId = id
         totalChars = charsCount
-        manifest.xhtml.push({ lastIndex: id, content, filename: getBaseName(realFilePath) })
+        manifest.xhtml.push({ lastIndex: id, content, name: getBaseName(realFilePath) })
     }
 
     // Css
@@ -540,13 +403,13 @@ function getJapaneseCharacterCount(text: string): number {
 }
 
 // https://www.w3.org/TR/epub-33/#sec-nav-def-model
-function parseNavigator(navContent: string) {
+function parseNavigator(navContent: string): NavigationItem[] {
     const starttime = Date.now()
     const nav = navContent
 
     let insideNav = false
     let insideLi = false
-    const items: Array<{ text: string; file?: string; id?: string }> = []
+    const items: NavigationItem[] = []
 
     const parser = new Parser({
         onopentag(name, attribs) {
@@ -673,4 +536,9 @@ function parseBodyContent(
 
 function getFilePath(basePath: string = "", fn: string): string {
     return basePath ? `${basePath}/${fn}` : fn
+}
+
+function getBaseName(path: string) {
+    const match = path.match(/(?:.*\/)?([^\/]+\.(?:png|jpe?g|svg|xhtml|html))$/i)
+    return match ? match[1] : path
 }

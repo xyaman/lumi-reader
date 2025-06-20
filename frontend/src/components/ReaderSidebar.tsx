@@ -1,10 +1,10 @@
-import { createEffect, createMemo, createSignal, For, onCleanup, onMount, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, For, Show } from "solid-js"
 import ReaderSettings from "./ReaderSettings"
 import Sidebar from "./Sidebar"
 import ThemeList from "./Themelist"
 import { useReaderContext } from "@/context/reader"
 import { ThemeProvider } from "@/context/theme"
-import { IBookmark } from "@/lib/epub"
+import { Bookmark } from "@/lib/readerSource"
 
 export function SettingsSidebar() {
     const { readerStore, setReaderStore } = useReaderContext()
@@ -57,7 +57,7 @@ export function ReaderLeftSidebar() {
 export function TocSidebarContent(props: { goTo: (file: string) => void }) {
     const { readerStore } = useReaderContext()
     return (
-        <For each={readerStore.book.manifest.nav}>
+        <For each={readerStore.book.nav}>
             {(item) => (
                 <p
                     class="cursor-pointer text-sm px-2 py-1 rounded hover:bg-[var(--base00)]"
@@ -72,7 +72,7 @@ export function TocSidebarContent(props: { goTo: (file: string) => void }) {
     )
 }
 
-export function BookmarksSidebarContent(props: { onItemClick: (b: IBookmark) => void }) {
+export function BookmarksSidebarContent(props: { onItemClick: (b: Bookmark) => void }) {
     const { readerStore, setReaderStore } = useReaderContext()
     const [sortOption, setSortOption] = createSignal("added-newest")
 
