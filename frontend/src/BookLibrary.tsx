@@ -281,7 +281,21 @@ export default function BookLibrary() {
                                             >
                                                 ℹ️
                                             </button>
-                                            <button class="absolute top-2 right-2 w-8 h-8 opacity-0 group-hover:opacity-100 bg-white/80 dark:bg-zinc-800/80 rounded-full p-1 shadow flex items-center justify-center">
+                                            <button
+                                                class="absolute top-2 right-2 w-8 h-8 opacity-0 group-hover:opacity-100 bg-zinc-800/80 rounded-full p-1 shadow flex items-center justify-center"
+                                                onClick={(e) => {
+                                                    e.preventDefault()
+                                                    ReaderSourceDB.deleteBook(b.localId).then(
+                                                        () => {
+                                                            setBooks((prev) =>
+                                                                prev.filter(
+                                                                    (i) => i.localId !== b.localId,
+                                                                ),
+                                                            )
+                                                        },
+                                                    )
+                                                }}
+                                            >
                                                 <IconTrash />
                                             </button>
                                             <div class="px-3 py-2">
