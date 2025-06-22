@@ -105,9 +105,6 @@ export default function ReaderSettings(props: Props) {
             </div>
             <hr />
             <div class="space-y-4">
-                <p class="font-bold text-sm">
-                    *These options will reload the reader. Unsaved progress will be lost.
-                </p>
                 <div class="flex items-center space-x-2">
                     <input
                         id="vertical-checkbox"
