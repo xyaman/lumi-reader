@@ -88,6 +88,7 @@ export class ReaderSourceDB {
 
     static async save(source: ReaderSourceRecord): Promise<void> {
         const db = await this.getDB()
+        source.lastModifiedDate = Date.now()
 
         // Prepare lightRecord, omitting localId if not present
         const lightRecord = {
