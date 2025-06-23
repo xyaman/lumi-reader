@@ -125,7 +125,7 @@ export default function BookLibrary() {
                         class={`flex-1 text-left truncate text-sm ${
                             activeShelf() === null
                                 ? "font-semibold border-l-2 pl-1"
-                                : "text-zinc-800 dark:text-zinc-100"
+                                : "font-light text-(--base05)"
                         }`}
                         onClick={() => setActiveShelf(null)}
                     >
@@ -141,7 +141,7 @@ export default function BookLibrary() {
                                     class={`flex-1 text-left truncate text-sm ${
                                         activeShelf() === s.id
                                             ? "font-semibold border-l-2 pl-1"
-                                            : "text-zinc-800 dark:text-zinc-100"
+                                            : "font-light text-(--base05)"
                                     }`}
                                     onClick={() => setActiveShelf(s.id)}
                                 >
@@ -344,7 +344,7 @@ export default function BookLibrary() {
                                             <span>
                                                 {inShelf ? "✓" : "+"} {s.name}
                                             </span>
-                                            <span class="text-xs text-zinc-500">
+                                            <span class="text-xs">
                                                 {inShelf ? "Remove" : "Add"}
                                             </span>
                                         </button>
