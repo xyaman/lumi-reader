@@ -47,6 +47,9 @@ interface ReaderDBSchema extends DBSchema {
     [STORE_LIGHT]: {
         key: number
         value: ReaderSourceLightRecord
+        indexes: {
+            uniqueId: string
+        }
     }
 
     [STORE_SHELVES]: {
@@ -68,12 +71,15 @@ export class ReaderSourceDB {
                             autoIncrement: true,
                         })
                     }
+
                     if (!db.objectStoreNames.contains(STORE_LIGHT)) {
-                        db.createObjectStore(STORE_LIGHT, {
+                        const store = db.createObjectStore(STORE_LIGHT, {
                             keyPath: "localId",
                             autoIncrement: true,
                         })
+                        store.createIndex("uniqueId", "uniqueId", { unique: true })
                     }
+
                     if (!db.objectStoreNames.contains(STORE_SHELVES)) {
                         db.createObjectStore(STORE_SHELVES, {
                             keyPath: "id",
@@ -105,11 +111,17 @@ export class ReaderSourceDB {
         } as Partial<ReaderSourceLightRecord>
         if (source.localId) lightRecord.localId = source.localId
 
+        const existing = await db.getFromIndex(STORE_LIGHT, "uniqueId", source.uniqueId)
         const tx = db.transaction([STORE_FULL, STORE_LIGHT], "readwrite")
 
         let localId = source.localId
+        // Add new entry, let IndexedDB generate the key
         if (!localId) {
-            // Add new entry, let IndexedDB generate the key
+            // Check for duplicate by uniqueId
+            if (existing) {
+                return
+            }
+
             localId = await tx.objectStore(STORE_FULL).put(source)
             lightRecord.localId = localId
             await tx.objectStore(STORE_LIGHT).put(lightRecord as ReaderSourceLightRecord)

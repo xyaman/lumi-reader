@@ -218,7 +218,7 @@ function extractMetadata(pkgDocumentXml: any) {
         throw new Error("dc:identifier not found. Not a valid epub file.")
     }
 
-    metadata.identifier = extractId(ids)
+    metadata.identifier = String(extractId(ids))
 
     const titles = pkgDocumentXml.package.metadata["dc:title"]
     if (!titles) {
