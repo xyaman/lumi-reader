@@ -56,21 +56,30 @@ export default function BookLibrary() {
     }
 
     const handleUpload = async (e: Event) => {
-        const file = (e.target as HTMLInputElement).files?.[0]
-        if (!file || (!file.type.includes("epub") && !file.name.endsWith(".epub"))) return
+        const files = Array.from((e.target as HTMLInputElement).files || [])
+        const newBooks: ReaderSourceLightRecord[] = []
+        const newCovers: Record<number, string> = {}
 
-        const book = await EpubBook.fromFile(file)
-        book.deinit()
+        for (const file of files) {
+            if (!file.type.includes("epub") && !file.name.endsWith(".epub")) continue
+            const book = await EpubBook.fromFile(file)
+            book.deinit()
+            // TODO: book that already exists
+            // TODO: throw exception
+            if (!book.localId) continue
 
-        const light = await ReaderSourceDB.getLightBookById(book.localId)
-        if (light) {
-            setBooks((prev) => sortBooks([...prev, light]))
-            if (light.coverImage) {
-                setCovers((prev) => ({
-                    ...prev,
-                    [light.localId]: URL.createObjectURL(light.coverImage!.blob),
-                }))
+            const light = await ReaderSourceDB.getLightBookById(book.localId)
+            if (light) {
+                newBooks.push(light)
+                if (light.coverImage) {
+                    newCovers[light.localId] = URL.createObjectURL(light.coverImage.blob)
+                }
             }
+        }
+
+        if (newBooks.length > 0) {
+            setBooks((prev) => sortBooks([...prev, ...newBooks]))
+            setCovers((prev) => ({ ...prev, ...newCovers }))
         }
     }
 
@@ -222,6 +231,7 @@ export default function BookLibrary() {
                             <input
                                 type="file"
                                 accept=".epub"
+                                multiple
                                 onInput={handleUpload}
                                 class="absolute inset-0 opacity-0"
                             />
