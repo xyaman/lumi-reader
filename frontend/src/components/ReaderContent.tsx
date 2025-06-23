@@ -32,6 +32,10 @@ export default function ReaderContent() {
         localStorage.getItem("reader:vertical") === "true",
     )
 
+    const [showFurigana, setShowFurigana] = createSignal(
+        localStorage.getItem("reader:showFurigana") === "true",
+    )
+
     let shouldUpdateChars = false
 
     // == component classes
@@ -340,13 +344,27 @@ export default function ReaderContent() {
         }),
     )
 
+    // Update furigana
+    createEffect(() => {
+        if (!showFurigana()) {
+            document.querySelectorAll("rt").forEach((rt) => (rt.style.display = "none"))
+        } else {
+            document.querySelectorAll("rt").forEach((rt) => rt.style.removeProperty("display"))
+        }
+    })
+
     // Update local state when settings changes
     // ref: `ReaderSettings.tsx`
     createEffect(() => {
         if (readerStore.shouldReload == true) {
+            setReaderStore("shouldReload", false)
             setIsPaginated(localStorage.getItem("reader:paginated") === "true")
             setIsVertical(localStorage.getItem("reader:vertical") === "true")
-            setReaderStore("shouldReload", false)
+
+            const newFurigana = localStorage.getItem("reader:showFurigana") === "true"
+            if (newFurigana !== showFurigana()) {
+                setShowFurigana((prev) => !prev)
+            }
         }
     })
 
