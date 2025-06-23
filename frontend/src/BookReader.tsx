@@ -1,7 +1,7 @@
 import { createSignal, JSX, onCleanup, onMount, Show } from "solid-js"
 import { useNavigate, useParams } from "@solidjs/router"
 import { ReaderProvider, useReaderContext } from "@/context/reader"
-import { EpubBook, getBaseName } from "@/lib/epub"
+import { EpubBook } from "@/lib/epub"
 
 import ReaderNavbar from "./components/ReaderNavbar"
 import { SettingsSidebar, ReaderLeftSidebar } from "./components/ReaderSidebar"
