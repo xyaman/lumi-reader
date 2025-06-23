@@ -4,12 +4,12 @@ logs/
 *.log
 
 # --- Bun/Vite frontend ---
-node_modules/
-dist/
+node_modules
+dist
 
 # --- Rust backend ---
-target/
-**/target/
+target
+debug
 
 # --- OS / Editor / Misc ---
 .DS_Store
