@@ -1,0 +1,38 @@
+name: Feature Request
+description: Suggest a feature or improvement
+title: "[Feature] <brief description>"
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform (if relevant)
+      options:
+        - Desktop
+        - Mobile
+    validations:
+      required: false
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: What do you want to see?
+      placeholder: Describe the feature or improvement
+    validations:
+      required: true
+
+  - type: textarea
+    id: usecase
+    attributes:
+      label: Why is it useful?
+      placeholder: Explain the purpose or problem it solves
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Confirmation
+      options:
+        - label: I searched for existing feature requests.
+          required: true

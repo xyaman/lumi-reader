@@ -1,0 +1,58 @@
+name: Bug Report
+description: Report a bug or unexpected behavior
+title: "[BUG] <brief description>"
+labels: ["bug"]
+body:
+  - type: input
+    id: browser
+    attributes:
+
+      label: Browser
+      placeholder: e.g. Chrome 125, Firefox 126
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Desktop
+        - Mobile
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      placeholder: Describe the issue briefly
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      placeholder: |
+        1. Open a book
+        2. Click on X
+        3. See error
+    validations:
+      required: false
+
+  - type: textarea
+    id: media
+    attributes:
+      label: Screenshot or Logs (optional)
+      placeholder: Paste logs or drag images here
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Confirmation
+      options:
+        - label: I searched for existing issues.
+          required: true
