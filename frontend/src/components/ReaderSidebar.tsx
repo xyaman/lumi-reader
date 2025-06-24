@@ -24,7 +24,7 @@ export function SettingsSidebar() {
         >
             <div class="space-y-4">
                 {/* TODO: only reload if changed pagination, vertical etc */}
-                <ReaderSettings onSave={() => setReaderStore("shouldReload", true)} />
+                <ReaderSettings saveButton />
                 <ThemeProvider>
                     <ThemeList selectOnly />
                 </ThemeProvider>

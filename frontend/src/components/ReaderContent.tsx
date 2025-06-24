@@ -1,6 +1,7 @@
 import { useReaderContext } from "@/context/reader"
-import { createEffect, createSignal, For, on, onCleanup, Show } from "solid-js"
+import { createEffect, createRenderEffect, createSignal, For, on, onCleanup, Show } from "solid-js"
 import { IconBookmarkFull } from "./icons"
+import { readerSettingsStore, setReaderSettingsStore } from "./ReaderSettings"
 
 function getBaseName(path: string) {
     const match = path.match(/(?:.*\/)?([^\/]+\.(?:png|jpe?g|svg|xhtml|html))$/i)
@@ -24,17 +25,9 @@ export default function ReaderContent() {
 
     let containerRef: HTMLDivElement | undefined
 
-    // The lastest value is always in the local storage
-    const [isPaginated, setIsPaginated] = createSignal(
-        localStorage.getItem("reader:paginated") === "true",
-    )
-    const [isVertical, setIsVertical] = createSignal(
-        localStorage.getItem("reader:vertical") === "true",
-    )
-
-    const [showFurigana, setShowFurigana] = createSignal(
-        localStorage.getItem("reader:showFurigana") === "true",
-    )
+    const isPaginated = () => readerSettingsStore.paginated
+    const isVertical = () => readerSettingsStore.vertical
+    const showFurigana = () => readerSettingsStore.showFurigana
 
     let shouldUpdateChars = false
 
@@ -344,30 +337,6 @@ export default function ReaderContent() {
         }),
     )
 
-    // Update furigana
-    createEffect(() => {
-        if (!showFurigana()) {
-            document.querySelectorAll("rt").forEach((rt) => (rt.style.display = "none"))
-        } else {
-            document.querySelectorAll("rt").forEach((rt) => rt.style.removeProperty("display"))
-        }
-    })
-
-    // Update local state when settings changes
-    // ref: `ReaderSettings.tsx`
-    createEffect(() => {
-        if (readerStore.shouldReload == true) {
-            setReaderStore("shouldReload", false)
-            setIsPaginated(localStorage.getItem("reader:paginated") === "true")
-            setIsVertical(localStorage.getItem("reader:vertical") === "true")
-
-            const newFurigana = localStorage.getItem("reader:showFurigana") === "true"
-            if (newFurigana !== showFurigana()) {
-                setShowFurigana((prev) => !prev)
-            }
-        }
-    })
-
     // update every time xhtml changes
     // This should be triggered when using paginated mode
     // or when changing the current xhtml
@@ -385,6 +354,20 @@ export default function ReaderContent() {
             updateChars(isPaginated(), isVertical())
         }),
     )
+
+    // Update furigana when section or furigana state changes
+    createRenderEffect(() => {
+        currSectionSignal()
+        showFurigana()
+
+        setTimeout(() => {
+            if (!showFurigana()) {
+                document.querySelectorAll("rt").forEach((rt) => (rt.style.visibility = "hidden"))
+            } else {
+                document.querySelectorAll("rt").forEach((rt) => rt.style.removeProperty("display"))
+            }
+        })
+    })
 
     return (
         <div class={mainClass()}>

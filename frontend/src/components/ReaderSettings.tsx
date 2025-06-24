@@ -1,6 +1,7 @@
-import { createSignal, createEffect, Show, onMount } from "solid-js"
+import { createEffect, Show, onMount } from "solid-js"
+import { createStore } from "solid-js/store"
 
-export interface ReaderSettings {
+export interface IReaderSettings {
     fontSize: number
     lineHeight: number | string
     verticalPadding: number
@@ -10,7 +11,7 @@ export interface ReaderSettings {
     showFurigana: boolean
 }
 
-function updateReaderStyle(settings: ReaderSettings) {
+function updateReaderStyle(settings: IReaderSettings) {
     const fixedFontSize = Math.max(1, settings.fontSize)
     document.documentElement.style.setProperty("--reader-font-size", `${fixedFontSize}px`)
     document.documentElement.style.setProperty("--reader-line-height", `${settings.lineHeight}`)
@@ -30,12 +31,8 @@ function updateReaderStyle(settings: ReaderSettings) {
     localStorage.setItem("reader:showFurigana", String(settings.showFurigana))
 }
 
-type Props = {
-    onSave?: (settings: ReaderSettings) => void
-}
-
-export default function ReaderSettings(props: Props) {
-    const [draftSettings, setDraftSettings] = createSignal<ReaderSettings>({
+function getInitialSettings(): IReaderSettings {
+    return {
         fontSize: Number(localStorage.getItem("reader:fontSize") ?? 20),
         lineHeight: localStorage.getItem("reader:lineHeight") ?? "1.5",
         verticalPadding: Number(localStorage.getItem("reader:verticalPadding") ?? 0),
@@ -43,24 +40,29 @@ export default function ReaderSettings(props: Props) {
         vertical: localStorage.getItem("reader:vertical") === "true",
         paginated: localStorage.getItem("reader:paginated") === "true",
         showFurigana: localStorage.getItem("reader:showFurigana") === "true",
-    })
+    }
+}
 
-    // On mount, sync state to localStorage and update styles
-    onMount(() => {
-        const settings = draftSettings()
-        localStorage.setItem("reader:vertical", String(settings.vertical))
-        localStorage.setItem("reader:paginated", String(settings.paginated))
-        updateReaderStyle(settings)
-    })
+export const [readerSettingsStore, setReaderSettingsStore] =
+    createStore<IReaderSettings>(getInitialSettings())
 
-    // Auto-save changes to localStorage and update styles if no onSave prop
+type Props = {
+    saveButton?: boolean
+}
+
+export default function ReaderSettings(props: Props) {
+    // Local draft state
+    const [draft, setDraft] = createStore<IReaderSettings>({ ...readerSettingsStore })
+
+    // Sync store to localStorage and styles on mount
+    onMount(() => updateReaderStyle(readerSettingsStore))
+
+    // If onSave is not set, sync draft to store and styles immediately
     createEffect(() => {
-        if (props.onSave) return
-
-        const settings = draftSettings()
-        localStorage.setItem("reader:vertical", String(settings.vertical))
-        localStorage.setItem("reader:paginated", String(settings.paginated))
-        updateReaderStyle(settings)
+        if (!props.saveButton) {
+            setReaderSettingsStore({ ...draft })
+            updateReaderStyle(draft)
+        }
     })
 
     return (
@@ -68,25 +70,15 @@ export default function ReaderSettings(props: Props) {
             <div>
                 <label class="block text-sm font-medium">Font Size (px)</label>
                 <input
-                    value={draftSettings().fontSize}
-                    onInput={(e) =>
-                        setDraftSettings((prev) => ({
-                            ...prev,
-                            fontSize: Number(e.currentTarget.value),
-                        }))
-                    }
+                    value={draft.fontSize}
+                    onInput={(e) => setDraft("fontSize", Number(e.currentTarget.value))}
                 />
             </div>
             <div>
                 <label class="block text-sm font-medium">Line Height (unitless)</label>
                 <input
-                    value={draftSettings().lineHeight}
-                    onInput={(e) =>
-                        setDraftSettings((prev) => ({
-                            ...prev,
-                            lineHeight: e.currentTarget.value,
-                        }))
-                    }
+                    value={draft.lineHeight}
+                    onInput={(e) => setDraft("lineHeight", e.currentTarget.value)}
                 />
             </div>
             <hr />
@@ -96,13 +88,8 @@ export default function ReaderSettings(props: Props) {
                     <input
                         id="vertical-checkbox"
                         type="checkbox"
-                        checked={draftSettings().vertical}
-                        onInput={(e) =>
-                            setDraftSettings((prev) => ({
-                                ...prev,
-                                vertical: e.currentTarget.checked,
-                            }))
-                        }
+                        checked={draft.vertical}
+                        onInput={(e) => setDraft("vertical", e.currentTarget.checked)}
                         class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
                     />
                     <label for="vertical-checkbox" class="text-sm font-medium">
@@ -113,13 +100,8 @@ export default function ReaderSettings(props: Props) {
                     <input
                         id="paginated-checkbox"
                         type="checkbox"
-                        checked={draftSettings().paginated}
-                        onInput={(e) =>
-                            setDraftSettings((prev) => ({
-                                ...prev,
-                                paginated: e.currentTarget.checked,
-                            }))
-                        }
+                        checked={draft.paginated}
+                        onInput={(e) => setDraft("paginated", e.currentTarget.checked)}
                         class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
                     />
                     <label for="paginated-checkbox" class="text-sm font-medium">
@@ -130,14 +112,8 @@ export default function ReaderSettings(props: Props) {
                     <input
                         id="furigana-checkbox"
                         type="checkbox"
-                        checked={draftSettings().showFurigana}
-                        onInput={(e) => {
-                            console.log(String(e.currentTarget.checked))
-                            setDraftSettings((prev) => ({
-                                ...prev,
-                                showFurigana: e.currentTarget.checked,
-                            }))
-                        }}
+                        checked={draft.showFurigana}
+                        onInput={(e) => setDraft("showFurigana", e.currentTarget.checked)}
                         class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
                     />
                     <label for="furigana-checkbox" class="text-sm font-medium">
@@ -147,45 +123,26 @@ export default function ReaderSettings(props: Props) {
                 <div>
                     <label class="block text-sm font-medium">Vertical Padding (%)</label>
                     <input
-                        value={draftSettings().verticalPadding}
-                        onInput={(e) =>
-                            setDraftSettings((prev) => ({
-                                ...prev,
-                                verticalPadding: Number(e.currentTarget.value),
-                            }))
-                        }
+                        value={draft.verticalPadding}
+                        onInput={(e) => setDraft("verticalPadding", Number(e.currentTarget.value))}
                     />
                 </div>
                 <div>
                     <label class="block text-sm font-medium">Horizontal Padding (%)</label>
                     <input
-                        value={draftSettings().horizontalPadding}
+                        value={draft.horizontalPadding}
                         onInput={(e) =>
-                            setDraftSettings((prev) => ({
-                                ...prev,
-                                horizontalPadding: Number(e.currentTarget.value),
-                            }))
+                            setDraft("horizontalPadding", Number(e.currentTarget.value))
                         }
                     />
                 </div>
             </div>
-            <Show when={props.onSave}>
+            <Show when={props.saveButton}>
                 <br />
                 <button
                     onClick={() => {
-                        const settings = draftSettings()
-
-                        const paddingChanged =
-                            settings.verticalPadding !==
-                                Number(localStorage.getItem("reader:verticalPadding") ?? 0) ||
-                            settings.horizontalPadding !==
-                                Number(localStorage.getItem("reader:horizontalPadding") ?? 5)
-
-                        localStorage.setItem("reader:vertical", String(settings.vertical))
-                        localStorage.setItem("reader:paginated", String(settings.paginated))
-                        updateReaderStyle(settings)
-
-                        props.onSave?.(settings.vertical, settings.paginated, paddingChanged)
+                        setReaderSettingsStore({ ...draft })
+                        updateReaderStyle(draft)
                     }}
                     class="button-theme cursor-pointer px-4 py-2 rounded-lg"
                 >
