@@ -35,8 +35,8 @@ function getInitialSettings(): IReaderSettings {
     return {
         fontSize: Number(localStorage.getItem("reader:fontSize") ?? 20),
         lineHeight: localStorage.getItem("reader:lineHeight") ?? "1.5",
-        verticalPadding: Number(localStorage.getItem("reader:verticalPadding") ?? 0),
-        horizontalPadding: Number(localStorage.getItem("reader:horizontalPadding") ?? 5),
+        verticalPadding: Number(localStorage.getItem("reader:verticalPadding") ?? 10),
+        horizontalPadding: Number(localStorage.getItem("reader:horizontalPadding") ?? 10),
         vertical: localStorage.getItem("reader:vertical") === "true",
         paginated: localStorage.getItem("reader:paginated") === "true",
         showFurigana: localStorage.getItem("reader:showFurigana") === "true",
