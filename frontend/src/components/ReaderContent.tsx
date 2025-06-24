@@ -284,8 +284,9 @@ export default function ReaderContent() {
                     if (e.key === "ArrowRight") flipPage(1)
                     else if (e.key === "ArrowLeft") flipPage(-1)
                 }
-                if (e.key === "ArrowDown") flipPage(1)
-                else if (e.key === "ArrowUp") flipPage(-1)
+
+                if (e.key === "ArrowDown" || e.key === "PageDown") flipPage(1)
+                else if (e.key === "ArrowUp" || e.key === "PageUp") flipPage(-1)
             }
 
             const handleResize = () => {
