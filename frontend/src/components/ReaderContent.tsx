@@ -35,17 +35,17 @@ export default function ReaderContent() {
     const mainClass = () =>
         isPaginated()
             ? isVertical()
-                ? "h-screen flex items-center"
-                : "h-screen flex center"
+                ? "h-[100dvh] overflow-y-hidden flex items-center"
+                : "h-[95dvh] flex center"
             : isVertical()
-              ? "h-[95vh] flex items-center"
+              ? "h-[95dvh] flex items-center"
               : ""
 
     const containerClass = () =>
         !isPaginated()
             ? isVertical()
                 ? "h-(--reader-vertical-padding) my-auto"
-                : "w-(--reader-horizontal-padding) mx-auto" // continous - (horizontal & vertical)
+                : "w-(--reader-horizontal-padding) mx-auto"
             : isVertical()
               ? "relative mx-auto w-(--reader-horizontal-padding) h-(--reader-vertical-padding) overflow-hidden snap-y snap-mandatory"
               : "relative mx-auto my-auto w-(--reader-horizontal-padding) h-(--reader-vertical-padding) overflow-x-hidden snap-x snap-mandatory"
@@ -242,6 +242,15 @@ export default function ReaderContent() {
         }
     })
 
+    const handleResize = () => {
+        setTimeout(() => {
+            if (!containerRef) return
+            containerRef.style.height = "0px"
+            containerRef.style.removeProperty("height")
+            document.querySelector(`p[index='${readerStore.book.currParagraph}']`)?.scrollIntoView()
+        }, 0)
+    }
+
     // Updates: isPaginated changes
     // Sets up pagination event listeners (touch, keyboard, scroll)
     // - When paginated: adds touch, keydown, and scroll listeners to container/document
@@ -268,9 +277,9 @@ export default function ReaderContent() {
                 const delta = e.changedTouches[0].clientX - startX
                 if (Math.abs(delta) > 50) {
                     if (isVertical()) {
-                        flipPage(delta < 0 ? 1 : -1)
-                    } else {
                         flipPage(delta < 0 ? -1 : 1)
+                    } else {
+                        flipPage(delta < 0 ? 1 : -1)
                     }
                 }
             }
@@ -287,16 +296,6 @@ export default function ReaderContent() {
 
                 if (e.key === "ArrowDown" || e.key === "PageDown") flipPage(1)
                 else if (e.key === "ArrowUp" || e.key === "PageUp") flipPage(-1)
-            }
-
-            const handleResize = () => {
-                setTimeout(() => {
-                    containerRef.style.height = "0px"
-                    containerRef.style.removeProperty("height")
-                    document
-                        .querySelector(`p[index='${readerStore.book.currParagraph}']`)
-                        ?.scrollIntoView()
-                }, 0)
             }
 
             const handleWheel = (e: WheelEvent) => (document.documentElement.scrollLeft -= e.deltaY)
@@ -373,8 +372,15 @@ export default function ReaderContent() {
         }),
     )
 
+    // Update: padding changed
+    createEffect(() => {
+        readerSettingsStore.verticalPadding
+        readerSettingsStore.horizontalPadding
+        handleResize()
+    })
+
     // Update: showFurigana changes
-    createRenderEffect(() => {
+    createEffect(() => {
         currSectionSignal()
         showFurigana()
 

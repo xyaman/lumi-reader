@@ -17,11 +17,11 @@ function updateReaderStyle(settings: IReaderSettings) {
     document.documentElement.style.setProperty("--reader-line-height", `${settings.lineHeight}`)
     document.documentElement.style.setProperty(
         "--reader-vertical-padding",
-        `${100 - settings.verticalPadding}vh`,
+        `${100 - settings.verticalPadding}%`,
     )
     document.documentElement.style.setProperty(
         "--reader-horizontal-padding",
-        `${100 - settings.horizontalPadding}vw`,
+        `${100 - settings.horizontalPadding}%`,
     )
 
     localStorage.setItem("reader:fontSize", String(settings.fontSize))
@@ -29,6 +29,9 @@ function updateReaderStyle(settings: IReaderSettings) {
     localStorage.setItem("reader:verticalPadding", String(settings.verticalPadding))
     localStorage.setItem("reader:horizontalPadding", String(settings.horizontalPadding))
     localStorage.setItem("reader:showFurigana", String(settings.showFurigana))
+
+    localStorage.setItem("reader:vertical", String(settings.vertical))
+    localStorage.setItem("reader:paginated", String(settings.paginated))
 }
 
 function getInitialSettings(): IReaderSettings {
