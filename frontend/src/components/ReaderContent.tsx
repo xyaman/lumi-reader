@@ -260,11 +260,19 @@ export default function ReaderContent() {
             }
 
             // Touch devices: left-right swipe
+            // vertical: left -> next page / right -> previous page
+            // horizontal: right -> next page / left -> previous page
             let startX = 0
             const handleTouchStart = (e: TouchEvent) => (startX = e.touches[0].clientX)
             const handleTouchEnd = (e: TouchEvent) => {
                 const delta = e.changedTouches[0].clientX - startX
-                if (Math.abs(delta) > 50) flipPage(delta < 0 ? 1 : -1)
+                if (Math.abs(delta) > 50) {
+                    if (isVertical()) {
+                        flipPage(delta < 0 ? 1 : -1)
+                    } else {
+                        flipPage(delta < 0 ? -1 : 1)
+                    }
+                }
             }
 
             // Keyboard handler: flip page with arrow keys
