@@ -1,7 +1,7 @@
 import { useReaderContext } from "@/context/reader"
-import { createEffect, createRenderEffect, createSignal, For, on, onCleanup, Show } from "solid-js"
+import { createEffect, createRenderEffect, For, on, onCleanup, Show } from "solid-js"
 import { IconBookmarkFull } from "./icons"
-import { readerSettingsStore, setReaderSettingsStore } from "./ReaderSettings"
+import { readerSettingsStore } from "./ReaderSettings"
 
 function getBaseName(path: string) {
     const match = path.match(/(?:.*\/)?([^\/]+\.(?:png|jpe?g|svg|xhtml|html))$/i)
@@ -242,6 +242,7 @@ export default function ReaderContent() {
         }
     })
 
+    // Updates: isPaginated changes
     // Sets up pagination event listeners (touch, keyboard, scroll)
     // - When paginated: adds touch, keydown, and scroll listeners to container/document
     // - When not paginated: adds scroll listener to document only
@@ -292,7 +293,7 @@ export default function ReaderContent() {
             const handleWheel = (e: WheelEvent) => (document.documentElement.scrollLeft -= e.deltaY)
 
             if (isPaginated()) {
-                // update last xhtml
+                // update last section
                 const newSection = readerStore.book.findSectionIndex(readerStore.book.currParagraph)
                 if (readerStore.currSection != newSection && newSection) {
                     setReaderStore("currSection", newSection)
@@ -305,6 +306,10 @@ export default function ReaderContent() {
                 containerRef.addEventListener("scroll", handleScroll)
                 window.addEventListener("resize", handleResize)
 
+                // iOS bouncing
+                document.documentElement.style.overscrollBehavior = "none"
+                document.body.style.overscrollBehavior = "none"
+
                 onCleanup(() => {
                     containerRef.removeEventListener("touchstart", handleTouchStart)
                     containerRef.removeEventListener("touchend", handleTouchEnd)
@@ -313,6 +318,10 @@ export default function ReaderContent() {
                     // scroll to containerRef
                     containerRef.removeEventListener("scroll", handleScroll)
                     window.removeEventListener("resize", handleResize)
+
+                    // iOS bouncing
+                    document.documentElement.style.removeProperty("overscrollBehavior")
+                    document.body.style.removeProperty("overscrollBehavior")
                 })
             } else {
                 setTimeout(() => {
@@ -337,7 +346,7 @@ export default function ReaderContent() {
         }),
     )
 
-    // update every time xhtml changes
+    // Update: currSection changes
     // This should be triggered when using paginated mode
     // or when changing the current xhtml
     const currSectionSignal = () => readerStore.currSection
@@ -355,7 +364,7 @@ export default function ReaderContent() {
         }),
     )
 
-    // Update furigana when section or furigana state changes
+    // Update: showFurigana changes
     createRenderEffect(() => {
         currSectionSignal()
         showFurigana()
