@@ -1,5 +1,5 @@
 import { useReaderContext } from "@/context/reader"
-import { createEffect, createRenderEffect, For, on, onCleanup, Show } from "solid-js"
+import { createEffect, For, on, onCleanup, Show } from "solid-js"
 import { IconBookmarkFull } from "./icons"
 import { readerSettingsStore } from "./ReaderSettings"
 
@@ -20,8 +20,6 @@ function getBaseName(path: string) {
  */
 export default function ReaderContent() {
     const { updateChars, readerStore, setReaderStore } = useReaderContext()
-
-    console.log(readerStore.book)
 
     let containerRef: HTMLDivElement | undefined
 
