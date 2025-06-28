@@ -102,17 +102,19 @@ export default function ReaderContent() {
         if (isStart && multiplier === -1) {
             if (readerStore.currSection === 0) return
             setReaderStore("currSection", readerStore.currSection - 1)
+            // Scroll to end of previous section (and go to the last paragraph)
             const nextId = readerStore.book.sections[readerStore.currSection].lastIndex - 1
-            // scroll into last item of the xhtml
             document.querySelector(`p[index="${nextId}"]`)?.scrollIntoView()
             return
         } else if (isEnd && multiplier === 1) {
             if (readerStore.currSection === readerStore.book.sections.length - 1) return
             setReaderStore("currSection", readerStore.currSection + 1)
-
-            // scroll into the first item of the xtml
-            const nextId = readerStore.book.sections[readerStore.currSection].lastIndex
-            document.querySelector(`p[index="${nextId}"]`)?.scrollIntoView()
+            // Scroll to beginning of next section
+            if (isVertical()) {
+                containerRef.scrollTo({ top: 0, behavior: "instant" })
+            } else {
+                containerRef.scrollTo({ left: 0, behavior: "instant" })
+            }
             return
         }
 
