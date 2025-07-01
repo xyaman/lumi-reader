@@ -1,9 +1,15 @@
 class Api::V1::AuthController < ApplicationController
-  before_action :authorize_request, only: [ :me, :logout ]
+  before_action :authorize_request, only: [ :me, :logout, :update_share ]
 
   # GET /me
   def me
-    render json: { id: current_user.id, username: current_user.username, email: current_user.email, status: :authorized }
+    render json: {
+      id: current_user.id,
+      username: current_user.username,
+      email: current_user.email,
+      share_reading_data: current_user.share_reading_data == true,
+      status: :authorized
+    }
   end
 
   # POST /register
@@ -44,6 +50,20 @@ class Api::V1::AuthController < ApplicationController
 
     users = User.find_by_username(params[:username])
     render json: users.select(:id, :username)
+  end
+
+  # PUT /update
+  def update_share
+    unless params.key?(:share_reading_data)
+      return render json: { error: "Missing share_reading_data param" }, status: :bad_request
+    end
+
+    current_user.share_reading_data = params[:share_reading_data]
+    if current_user.save
+      render json: { share_reading_data: current_user.share_reading_data }
+    else
+      render json: { error: "Failed to update" }, status: :unprocessable_entity
+    end
   end
 
 

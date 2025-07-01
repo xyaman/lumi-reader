@@ -21,7 +21,10 @@ Rails.application.routes.draw do
       get "search", to: "auth#search"
       post "register", to: "auth#register"
       post "login", to: "auth#login"
-      delete "logout", to: "auth#logout"
+      put "update", to: "auth#update_share"
+
+      post "user_status", to: "user_status#create"
+      get "user_status", to: "user_status#retrieve"
     end
   end
 

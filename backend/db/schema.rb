@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_06_30_125237) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_01_121409) do
   create_table "follows", force: :cascade do |t|
     t.integer "follower_id", null: false
     t.integer "followed_id", null: false
@@ -21,14 +21,27 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_30_125237) do
     t.index ["follower_id"], name: "index_follows_on_follower_id"
   end
 
+  create_table "user_daily_activities", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.date "date", null: false
+    t.integer "characters_read", default: 0
+    t.integer "reading_time", default: 0
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "date"], name: "index_user_daily_activities_on_user_id_and_date", unique: true
+    t.index ["user_id"], name: "index_user_daily_activities_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
-    t.string "email"
-    t.string "username"
-    t.string "password_digest"
+    t.string "email", null: false
+    t.string "username", null: false
+    t.string "password_digest", null: false
+    t.boolean "share_reading_data", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
 
   add_foreign_key "follows", "users", column: "followed_id"
   add_foreign_key "follows", "users", column: "follower_id"
+  add_foreign_key "user_daily_activities", "users"
 end
