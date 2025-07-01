@@ -22,7 +22,7 @@ interface IEpubManifest {
     /**
      * Xhtml (xml) contents (does not include navigation)
      */
-    xhtml: { lastIndex: number; content: string; name: string }[]
+    xhtml: { lastIndex: number; id: string; content: string; name: string }[]
 
     /**
      * Imgs of the book.
@@ -35,6 +35,8 @@ interface IEpubManifest {
      */
     css: string
 }
+
+type IEpubSpine = string[]
 
 export class EpubBook implements ReaderSource {
     localId!: number
@@ -121,12 +123,20 @@ export class EpubBook implements ReaderSource {
         const [manifest, totalChars] = await extractManifest(zip, pkgDocumentXml, basePath)
         book.totalChars = totalChars
         book.nav = manifest.nav
-        book.sections = manifest.xhtml
+        // spine: book.sections
         book.css = manifest.css
         book.images = manifest.imgs.map((img) => ({
             ...img,
             url: URL.createObjectURL(img.blob),
         }))
+
+        const spine = await extractSpine(pkgDocumentXml)
+        console.log(spine)
+        console.log(manifest.xhtml.map((x) => x.id))
+        // reorder book.sections to follow ids order in extractspine
+        book.sections = spine
+            .map((id) => manifest.xhtml.find((section) => section.id === id))
+            .filter(Boolean) as Section[]
 
         console.log(`Epub loaded in ${Date.now() - starttime}ms`)
 
@@ -269,6 +279,7 @@ async function extractManifest(
 
     let navHref = ""
     const xhtmlHref: string[] = []
+    const xhtmlIds: string[] = []
     const imgsHref: string[] = []
     const cssHref: string[] = []
 
@@ -287,6 +298,7 @@ async function extractManifest(
                 continue
             }
             xhtmlHref.push(href)
+            xhtmlIds.push(item["@_id"])
         } else if (type === "image/jpeg" || type === "image/png" || type === "image/svg+xml") {
             if ((item["@_id"] as string).includes("cover")) {
                 imgsHref.splice(0, 0, href)
@@ -317,7 +329,12 @@ async function extractManifest(
         const [content, id, charsCount] = parseBodyContent(realFilePath, c, currId, totalChars)
         currId = id
         totalChars = charsCount
-        manifest.xhtml.push({ lastIndex: id, content, name: getBaseName(realFilePath) })
+        manifest.xhtml.push({
+            lastIndex: id,
+            id: xhtmlIds[i],
+            content,
+            name: getBaseName(realFilePath),
+        })
     }
 
     // Css
@@ -330,6 +347,22 @@ async function extractManifest(
     }
 
     return [manifest, totalChars]
+}
+
+async function extractSpine(pkgDocumentXml: any): Promise<IEpubSpine> {
+    const items = pkgDocumentXml.package?.spine?.itemref
+    if (!items || !Array.isArray(items)) {
+        throw new Error("Package Document Item(s) not found. Not a valid epub file.")
+    }
+
+    const itemref = []
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i]
+        if (!item || typeof item !== "object") continue
+        if (item["@_idref"]) itemref.push(item["@_idref"])
+    }
+
+    return itemref
 }
 
 /**
