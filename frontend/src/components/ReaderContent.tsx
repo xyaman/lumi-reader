@@ -132,7 +132,7 @@ export default function ReaderContent() {
      * @param content -
      * @returns boolean true if value was present/removed, false otherwise
      */
-    const toggleBookmark = (id: number | string, name: string, content: string) => {
+    const toggleBookmark = (id: number | string, content: string) => {
         const idNum = Number(id)
         const idx = readerStore.book.bookmarks.findIndex((b) => b.paragraphId === idNum)
         if (idx !== -1) {
@@ -215,7 +215,7 @@ export default function ReaderContent() {
                 setTimeout(() => document.getElementById("bookmark-icon")?.remove(), 0)
 
                 const index = p.getAttribute("index")!
-                const removed = toggleBookmark(index, p.id, p.textContent!)
+                const removed = toggleBookmark(index, p.textContent!)
                 removed ? p.classList.remove(bgcolor) : p.classList.add(bgcolor)
                 readerStore.book.save()
 

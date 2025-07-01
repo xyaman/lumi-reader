@@ -8,7 +8,6 @@ function Profile() {
 
     const [user, setUser] = createSignal<{ id: string; username: string } | null>(null)
     const [shareReadingData, setShareReadingData] = createSignal<boolean | null>(null)
-    const [shareUserStatus, setShareUserStatus] = createSignal<boolean | null>(null)
     const [isFollowing, setIsFollowing] = createSignal<boolean | null>(null)
     const [loading, setLoading] = createSignal(false)
     const [error, setError] = createSignal<string | null>(null)
@@ -30,7 +29,6 @@ function Profile() {
             console.log("/me response:", data)
             setUser({ id: data.id, username: data.username })
             setShareReadingData(Boolean(data.share_reading_data))
-            setShareUserStatus(Boolean(data.share_user_status))
 
             if (data.id !== localId) {
                 const followRes = await fetch(`http://localhost:3000/following/${localId}`, {
@@ -70,36 +68,6 @@ function Profile() {
 
             const updated = await res.json()
             setShareReadingData(Boolean(updated.share_reading_data))
-        } catch (e: any) {
-            setError(e.message || "An error occurred")
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    async function toggleShareUserStatus() {
-        if (shareUserStatus() === null) return
-        setLoading(true)
-        setError(null)
-
-        try {
-            const newValue = !shareUserStatus()
-            const res = await fetch("http://localhost:3000/api/v1/update", {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include",
-                body: JSON.stringify({ share_user_status: newValue }),
-            })
-
-            if (!res.ok) {
-                const errData = await res.json()
-                throw new Error(errData.error || "Update failed")
-            }
-
-            const updated = await res.json()
-            setShareUserStatus(Boolean(updated.share_user_status))
         } catch (e: any) {
             setError(e.message || "An error occurred")
         } finally {
