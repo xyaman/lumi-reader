@@ -1,5 +1,10 @@
 class Api::V1::AuthController < ApplicationController
-  before_action :authorize_request, only: [ :logout ]
+  before_action :authorize_request, only: [ :me, :logout ]
+
+  # GET /me
+  def me
+    render json: { id: current_user.id, username: current_user.username, email: current_user.email, status: :authorized }
+  end
 
   # POST /register
   # Registers a new user and returns a JWT in a secure cookie

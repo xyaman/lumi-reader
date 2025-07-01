@@ -9,7 +9,7 @@ function Profile() {
         const username = localStorage.getItem("user:username")
         if (id && username) setUser({ id, username })
         try {
-            const res = await fetch("http://localhost:3000/current_user", {
+            const res = await fetch("http://localhost:3000/api/v1/me", {
                 credentials: "include",
             })
             const data = await res.json()
