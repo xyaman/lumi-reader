@@ -1,7 +1,7 @@
 import { createSignal, For, Show, onCleanup, createEffect, onMount } from "solid-js"
 import { IconFolderOpen, IconSettings, IconTrash, IconUpload } from "@/components/icons"
 import { EpubBook } from "@/lib/epub"
-import { ReaderSourceDB, ReaderSourceLightRecord } from "./lib/readerSourceDb"
+import { ReaderSourceDB, ReaderSourceLightRecord } from "./lib/db"
 
 const LS_SORT = "library:sortBy"
 const LS_DIR = "library:direction"

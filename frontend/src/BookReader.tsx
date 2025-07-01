@@ -6,7 +6,7 @@ import { EpubBook } from "@/lib/epub"
 import ReaderNavbar from "./components/ReaderNavbar"
 import { SettingsSidebar, ReaderLeftSidebar } from "./components/ReaderSidebar"
 import ReaderContent from "./components/ReaderContent"
-import { ReaderSourceDB } from "./lib/readerSourceDb"
+import { ReaderSourceDB } from "./lib/db"
 
 // CharacterCounter toggles visibility on click, always clickable
 function CharacterCounter() {
