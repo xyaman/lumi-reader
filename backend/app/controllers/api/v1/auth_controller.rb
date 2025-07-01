@@ -21,7 +21,7 @@ class Api::V1::AuthController < ApplicationController
     if user&.authenticate(params[:password])
       token = encode_token(user_id: user.id)
       set_jwt_cookie(token)
-      render json: { user: user.slice(:id, :email) }, status: :ok
+      render json: { user: user.slice(:id, :email, :username) }, status: :ok
     else
       render json: { error: "Invalid id or password" }, status: :unauthorized
     end
