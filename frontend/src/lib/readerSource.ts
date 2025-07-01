@@ -26,6 +26,11 @@ export interface ReaderSource {
     findSectionIndex(paragraphId: number): number | null | undefined
 
     /**
+     * Returns the section index for a given paragrah id.
+     */
+    findSectionIndexById(id: string): number | null | undefined
+
+    /**
      * Returns all images associated with the source.
      */
     getImages(): SourceImage[]
@@ -65,6 +70,11 @@ export type Bookmark = {
      * Paragraph index for the bookmark.
      */
     readonly paragraphId: number
+
+    /**
+     * Paragraph index for the bookmark.
+     */
+    readonly sectionName: string
 
     /**
      * Content of the bookmark.

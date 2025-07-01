@@ -84,7 +84,7 @@ export function ReaderProvider(props: { book: ReaderSource; children: JSX.Elemen
     }
 
     const bookmarkGoTo = (bookmark: Bookmark) => {
-        const sectionId = readerStore.book.findSectionIndex(bookmark.paragraphId)
+        const sectionId = readerStore.book.findSectionIndexById(bookmark.sectionName)
         if (readerStore.currSection !== sectionId && sectionId) {
             setReaderStore("currSection", sectionId)
         }

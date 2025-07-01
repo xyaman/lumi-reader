@@ -158,6 +158,18 @@ export class EpubBook implements ReaderSource {
         return null
     }
 
+    findSectionIndexById(name: string): number | null | undefined {
+        console.log("name", name)
+        console.log(this.sections)
+        for (let i = 0; i < this.sections.length; i++) {
+            if (name === this.sections[i].name) {
+                return i
+            }
+        }
+
+        return null
+    }
+
     getImages(): SourceImage[] {
         return this.images
     }
