@@ -6,9 +6,15 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
   get "current_user", to: "application#current_user"
 
-  get "/follow/:id", to: "follows#following"
+  # Routes for following/unfollowing users
+  # Require auth
+  post   "/follows/:id", to: "follows#create"
+  delete "/follows/:id", to: "follows#destroy"
+
+  # Routes for listing following and followers
+  # Don't require auth
+  get "/following/:id", to: "follows#following"
   get "/followers/:id", to: "follows#followers"
-  post "/follow/:id", to: "follows#create"
 
   namespace :api do
     namespace :v1 do
