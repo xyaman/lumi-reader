@@ -9,6 +9,14 @@ const LS_DIR = "library:direction"
 type Shelf = { id: number; name: string; bookIds: number[] }
 
 export default function BookLibrary() {
+    // user
+    const [user, setUser] = createSignal<{ id: string; username: string } | null>(null)
+    onMount(() => {
+        const id = localStorage.getItem("user:id")
+        const username = localStorage.getItem("user:username")
+        if (id && username) setUser({ id, username })
+    })
+
     const [books, setBooks] = createSignal<ReaderSourceLightRecord[]>([])
     const [covers, setCovers] = createSignal<Record<number, string>>({})
     const [shelves, setShelves] = createSignal<Shelf[]>([])
@@ -262,6 +270,20 @@ export default function BookLibrary() {
                     <a href="/settings" class="button-theme px-3 py-2 rounded-lg">
                         <IconSettings />
                     </a>
+                    {user() ? (
+                        <a href="/profile" class="button-theme px-3 py-2 rounded-lg">
+                            Profile
+                        </a>
+                    ) : (
+                        <>
+                            <a href="/login" class="button-theme px-3 py-2 rounded-lg">
+                                Login
+                            </a>
+                            <a href="/register" class="button-theme px-3 py-2 rounded-lg">
+                                Register
+                            </a>
+                        </>
+                    )}
                 </div>
             </nav>
 

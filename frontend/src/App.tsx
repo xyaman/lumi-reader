@@ -3,6 +3,9 @@ import BookLibrary from "@/BookLibrary"
 import BookReader from "@/BookReader"
 import Settings from "@/Settings"
 import { getSelectedTheme, setGlobalTheme } from "./theme"
+import Register from "./Register"
+import Login from "./Login"
+import Profile from "./Profile"
 
 function App() {
     const theme = getSelectedTheme()
@@ -13,6 +16,9 @@ function App() {
             <Route path="/" component={BookLibrary} />
             <Route path="/reader/:id?" component={BookReader} />
             <Route path="/settings" component={Settings} />
+            <Route path="/register" component={Register} />
+            <Route path="/login" component={Login} />
+            <Route path="/profile" component={Profile} />
         </Router>
     )
 }
