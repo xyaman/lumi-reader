@@ -131,13 +131,17 @@ export class EpubBook implements ReaderSource {
         }))
 
         const spine = await extractSpine(pkgDocumentXml)
-        console.log(spine)
-        console.log(manifest.xhtml.map((x) => x.id))
-        // reorder book.sections to follow ids order in extractspine
+
+        // reorder book.sections to follow ids order in extractSpine
         book.sections = spine
             .map((id) => manifest.xhtml.find((section) => section.id === id))
             .filter(Boolean) as Section[]
 
+        if (book.sections.length !== manifest.xhtml.length) {
+            console.log("xhtml and spine is different.", book.sections, manifest.xhtml)
+        } else {
+            console.log("Spine created correctly.")
+        }
         console.log(`Epub loaded in ${Date.now() - starttime}ms`)
 
         await book.save()
