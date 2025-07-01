@@ -8,7 +8,7 @@ class Api::V1::AuthController < ApplicationController
     if user.save
       token = encode_token(user_id: user.id)
       set_jwt_cookie(token)
-      render json: { user: user.slice(:id, :email, :nickname) }, status: :created
+      render json: { user: user.slice(:id, :email, :username) }, status: :created
     else
       render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
     end
@@ -35,16 +35,16 @@ class Api::V1::AuthController < ApplicationController
 
   # GET /search
   def search
-    return render json: { error: "Missing nickname param" } unless params[:nickname].present?
+    return render json: { error: "Missing username param" } unless params[:username].present?
 
-    users = User.find_by_nickname(params[:nickname])
-    render json: users.select(:id, :nickname)
+    users = User.find_by_username(params[:username])
+    render json: users.select(:id, :username)
   end
 
 
   private
   # Strong parameters for user registration
   def user_params
-    params.permit(:email, :nickname, :password, :password_confirmation)
+    params.permit(:email, :username, :password, :password_confirmation)
   end
 end
