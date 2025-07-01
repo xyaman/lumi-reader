@@ -42,7 +42,7 @@ class FollowsController < ApplicationController
   def following
     user = User.find_by(id: params[:id])
     if user then
-      render json: { followers: user.following }
+      render json: { following: user.following }
     else
       render json: { error: "User not found" }, status: :not_found
     end

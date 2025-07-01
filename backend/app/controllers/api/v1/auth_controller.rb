@@ -1,14 +1,20 @@
 class Api::V1::AuthController < ApplicationController
-  before_action :authorize_request, only: [ :me, :logout, :update_share ]
+  before_action :authorize_request, only: [ :logout, :update_share ]
 
   # GET /me
   def me
+    user = params[:id].present? ? User.find_by(id: params[:id]) : current_user
+
+    unless user
+      return render json: { error: "User not found" }, status: :not_found
+    end
+
     render json: {
-      id: current_user.id,
-      username: current_user.username,
-      email: current_user.email,
-      share_reading_data: current_user.share_reading_data == true,
-      status: :authorized
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      share_reading_data: user.share_reading_data == true,
+      status: (user == current_user ? :authorized : :public)
     }
   end
 
