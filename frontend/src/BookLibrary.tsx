@@ -11,10 +11,66 @@ type Shelf = { id: number; name: string; bookIds: number[] }
 export default function BookLibrary() {
     // user
     const [user, setUser] = createSignal<{ id: string; username: string } | null>(null)
+    const [followings, setFollowings] = createSignal<
+        {
+            id: string
+            username: string
+            status?: {
+                last_activity: string
+                last_book: string
+            }
+        }[]
+    >([])
+    const [visibleCount, setVisibleCount] = createSignal(10) // initial visible batch
+
+    const loadFollowings = async () => {
+        if (!user()) return []
+
+        const res = await fetch(`http://localhost:3000/following/${user()!.id}`, {
+            credentials: "include",
+        })
+        const data = await res.json()
+
+        const usersWithStatus = await Promise.all(
+            data.following.map(async (f: any) => {
+                try {
+                    const statusRes = await fetch(
+                        `http://localhost:3000/api/v1/user_status?user_id=${f.id}`,
+                        {
+                            credentials: "include",
+                        },
+                    )
+                    const status = await statusRes.json()
+                    return { ...f, status }
+                } catch (e) {
+                    console.error("Failed to fetch status for", f.id, e)
+                    return { ...f, status: null }
+                }
+            }),
+        )
+
+        setFollowings(usersWithStatus)
+    }
+
     onMount(() => {
         const id = localStorage.getItem("user:id")
         const username = localStorage.getItem("user:username")
         if (id && username) setUser({ id, username })
+        loadFollowings()
+    })
+
+    onMount(() => {
+        const onScroll = () => {
+            const el = document.getElementById("followings-scroll")
+            if (!el) return
+            if (el.scrollTop + el.clientHeight >= el.scrollHeight - 50) {
+                setVisibleCount((v) => v + 5) // load more when near bottom
+            }
+        }
+
+        const el = document.getElementById("followings-scroll")
+        el?.addEventListener("scroll", onScroll)
+        onCleanup(() => el?.removeEventListener("scroll", onScroll))
     })
 
     const [books, setBooks] = createSignal<ReaderSourceLightRecord[]>([])
@@ -308,7 +364,7 @@ export default function BookLibrary() {
                 </aside>
 
                 {/* Main */}
-                <div class="flex-1 flex flex-col">
+                <div class="flex-1 flex flex-col md:flex-row">
                     <main class="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
                         <div class="flex flex-wrap items-center gap-2 mb-4">
                             <label class="text-sm font-medium">Sort by:</label>
@@ -391,6 +447,28 @@ export default function BookLibrary() {
                             </For>
                         </div>
                     </main>
+                    {/* Right sidebar (only if logged in) */}
+                    <Show when={user()}>
+                        <aside class="navbar-theme hidden md:flex border-l p-4 flex-col w-48 lg:w-64">
+                            <h2 class="text-md font-semibold mb-2">Followings Reading</h2>
+                            <div id="followings-scroll" class="overflow-y-auto flex-1 space-y-3">
+                                <For each={followings().slice(0, visibleCount())}>
+                                    {(f) => (
+                                        <div class="p-2 border rounded-md text-sm">
+                                            <p class="font-medium truncate">{f.username}</p>
+                                            <Show when={f.status}>
+                                                <div class="text-xs text-gray-500 mt-1">
+                                                    ⏱ Last Active: {f.status!.last_activity}
+                                                    <br />
+                                                    📚 Last Book: {f.status!.last_book}
+                                                </div>
+                                            </Show>
+                                        </div>
+                                    )}
+                                </For>
+                            </div>
+                        </aside>
+                    </Show>
                 </div>
             </div>
 
