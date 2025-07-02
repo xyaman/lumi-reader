@@ -123,27 +123,14 @@ export class EpubBook implements ReaderSource {
         const [manifest, totalChars] = await extractManifest(zip, pkgDocumentXml, basePath)
         book.totalChars = totalChars
         book.nav = manifest.nav
-        // spine: book.sections
+        book.sections = manifest.xhtml
         book.css = manifest.css
         book.images = manifest.imgs.map((img) => ({
             ...img,
             url: URL.createObjectURL(img.blob),
         }))
 
-        const spine = await extractSpine(pkgDocumentXml)
-
-        // reorder book.sections to follow ids order in extractSpine
-        book.sections = spine
-            .map((id) => manifest.xhtml.find((section) => section.id === id))
-            .filter(Boolean) as Section[]
-
-        if (book.sections.length !== manifest.xhtml.length) {
-            console.log("xhtml and spine is different.", book.sections, manifest.xhtml)
-        } else {
-            console.log("Spine created correctly.")
-        }
         console.log(`Epub loaded in ${Date.now() - starttime}ms`)
-
         await book.save()
         return book
     }
@@ -325,12 +312,17 @@ async function extractManifest(
             cssHref.push(href)
         }
     }
+    let xhtmlFiles = xhtmlIds.map((id, i) => ({ id, href: xhtmlHref[i] }))
+    const spineOrder = extractSpine(pkgDocumentXml)
+    if (spineOrder) {
+        xhtmlFiles = spineOrder
+            .map((id) => xhtmlFiles.find((x) => x.id === id))
+            .filter(Boolean) as { id: string; href: string }[]
+    }
 
     const [navContent, xhtmlContent, cssContent, imgs] = await Promise.all([
         zip.file(getFilePath(basePath, navHref))?.async("text"),
-        Promise.all(
-            xhtmlHref.map((xhtml) => zip.file(getFilePath(basePath, xhtml))?.async("text")!),
-        ),
+        Promise.all(xhtmlFiles.map((f) => zip.file(getFilePath(basePath, f.href))?.async("text")!)),
         Promise.all(cssHref.map((css) => zip.file(getFilePath(basePath, css))?.async("text")!)),
         Promise.all(imgsHref.map((img) => zip.file(getFilePath(basePath, img))?.async("blob")!)),
     ])
@@ -341,13 +333,13 @@ async function extractManifest(
     // paragraphs + character counts
     let currId = 0
     for (const [i, c] of xhtmlContent.entries()) {
-        const realFilePath = getFilePath(basePath, xhtmlHref[i])
+        const realFilePath = getFilePath(basePath, xhtmlFiles[i].href)
         const [content, id, charsCount] = parseBodyContent(realFilePath, c, currId, totalChars)
         currId = id
         totalChars = charsCount
         manifest.xhtml.push({
             lastIndex: id,
-            id: xhtmlIds[i],
+            id: xhtmlFiles[i].id,
             content,
             name: getBaseName(realFilePath),
         })
@@ -365,7 +357,7 @@ async function extractManifest(
     return [manifest, totalChars]
 }
 
-async function extractSpine(pkgDocumentXml: any): Promise<IEpubSpine> {
+function extractSpine(pkgDocumentXml: any): IEpubSpine {
     const items = pkgDocumentXml.package?.spine?.itemref
     if (!items || !Array.isArray(items)) {
         throw new Error("Package Document Item(s) not found. Not a valid epub file.")
