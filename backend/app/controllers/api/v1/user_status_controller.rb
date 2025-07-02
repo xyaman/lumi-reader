@@ -19,7 +19,7 @@ class Api::V1::UserStatusController < ApplicationController
      render json: { status: "Ok" }, status: :created
   end
 
-  # GET /api/v1/user_status&user_id
+  # GET /api/v1/user_status?user_id=...
   # Returns cached data or null if expired/not set
   # Require auth
   def retrieve
@@ -36,6 +36,36 @@ class Api::V1::UserStatusController < ApplicationController
       last_activity: Rails.cache.read(cache_key(user.id, "last_activity")),
       last_book: Rails.cache.read(cache_key(user.id, "last_book"))
     }
+  end
+
+  # GET /api/v1/user_status/batch?user_ids[]=1&user_ids[]=2
+  # Returns status for specific user IDs
+  # Requires authorization
+  def batch
+    ids = params[:user_ids]
+
+    # Validate input (only accept numbers)
+    unless ids.is_a?(Array) && ids.all? { |id| id.to_s =~ /^\d+$/ }
+      return render json: { error: "Invalid user_ids param" }, status: :bad_request
+    end
+
+    # Limit to 10 users
+    if ids.size > 10
+      return render json: { error: "Too many user_ids (max. 10)" }, status: :bad_request
+    end
+
+    user_ids = ids.map(&:to_i)
+    users = User.where(id: user_ids, share_reading_data: true)
+
+    results = users.map do |user|
+      {
+        user_id: user.id,
+        last_activity: Rails.cache.read(cache_key(user.id, "last_activity")),
+        last_book: Rails.cache.read(cache_key(user.id, "last_book"))
+      }
+    end
+
+    render json: results
   end
 
   private

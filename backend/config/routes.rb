@@ -25,6 +25,7 @@ Rails.application.routes.draw do
 
       post "user_status", to: "user_status#create"
       get "user_status", to: "user_status#retrieve"
+      get "user_status/batch", to: "user_status#batch"
     end
   end
 
