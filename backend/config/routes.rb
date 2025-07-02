@@ -5,6 +5,8 @@ Rails.application.routes.draw do
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
 
+  get "csrf" => "app", to: "application#csrf"
+
   # Routes for following/unfollowing users
   # Require auth
   post   "/follows/:id", to: "follows#create"
@@ -17,6 +19,13 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
+      resource :session, only: [ :create, :show, :destroy ]
+      resource :user, only: [ :create ]
+    end
+  end
+
+  namespace :api do
+    namespace :v0 do
       get "me", to: "auth#me"
       get "search", to: "auth#search"
       post "register", to: "auth#register"
