@@ -52,8 +52,8 @@ export function ReaderProvider(props: { book: ReaderSource; children: JSX.Elemen
     })
 
     const updateChars = (isPaginated: boolean, isVertical: boolean) => {
-        let lastIndex = 0
-        let currChars = 0
+        let lastIndex = props.book.currParagraph
+        let currChars = props.book.currChars
         const pTags = document.querySelectorAll("p[index]")
         for (let i = 0; i < pTags.length; i++) {
             const rect = pTags[i].getBoundingClientRect()
