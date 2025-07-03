@@ -29,7 +29,7 @@ async function getCsrfCookie(): Promise<string | null> {
         return null
     }
 
-    return getCsrfCookie()
+    return getCookie("CSRF-TOKEN")
 }
 
 interface IRegisterBody {
