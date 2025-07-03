@@ -1,4 +1,4 @@
-class Api::V1::ReadingController < ApplicationController
+class V1::ReadingController < ApplicationController
   # Ensure user is authenticated before allowing creation of reading records
   before_action :authorize_request, only: [ :create ]
 

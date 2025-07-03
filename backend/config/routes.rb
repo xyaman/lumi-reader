@@ -17,25 +17,21 @@ Rails.application.routes.draw do
   get "/following/:id", to: "follows#following"
   get "/followers/:id", to: "follows#followers"
 
-  namespace :api do
-    namespace :v1 do
-      resource :session, only: [ :create, :show, :destroy ]
-      resource :user, only: [ :create ]
-    end
+  namespace :v1 do
+    resource :session, only: [ :create, :show, :destroy ]
+    resource :user, only: [ :create ]
   end
 
-  namespace :api do
-    namespace :v0 do
-      get "me", to: "auth#me"
-      get "search", to: "auth#search"
-      post "register", to: "auth#register"
-      post "login", to: "auth#login"
-      put "update", to: "auth#update_share"
+  namespace :v0 do
+    get "me", to: "auth#me"
+    get "search", to: "auth#search"
+    post "register", to: "auth#register"
+    post "login", to: "auth#login"
+    put "update", to: "auth#update_share"
 
-      post "user_status", to: "user_status#create"
-      get "user_status", to: "user_status#retrieve"
-      get "user_status/batch", to: "user_status#batch"
-    end
+    post "user_status", to: "user_status#create"
+    get "user_status", to: "user_status#retrieve"
+    get "user_status/batch", to: "user_status#batch"
   end
 
   # Defines the root path route ("/")

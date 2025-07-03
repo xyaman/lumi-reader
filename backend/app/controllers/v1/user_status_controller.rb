@@ -1,4 +1,4 @@
-class Api::V1::UserStatusController < ApplicationController
+class V1::UserStatusController < ApplicationController
   before_action :authorize_request
 
   # POST /api/v1/user_status

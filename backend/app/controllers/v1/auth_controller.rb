@@ -1,4 +1,4 @@
-class Api::V1::AuthController < ApplicationController
+class V1::AuthController < ApplicationController
   before_action :authorize_request, only: [ :logout, :update_share ]
 
   # GET /me

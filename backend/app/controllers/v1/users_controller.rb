@@ -1,4 +1,4 @@
-class Api::V1::UsersController < ApplicationController
+class V1::UsersController < ApplicationController
   allow_unauthenticated_access only: %i[ create ]
   wrap_parameters :user, include: [:password, :password_confirmation]
 
