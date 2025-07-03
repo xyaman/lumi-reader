@@ -1,43 +1,33 @@
-import { createSignal, onMount } from "solid-js"
+import { Show, createSignal, onMount } from "solid-js"
 import { useParams } from "@solidjs/router"
 import Navbar from "./components/Navbar"
+import api from "./lib/api"
 
 function Profile() {
     const params = useParams()
-    const viewedId = () => params.id || null
+    const viewedId = () => Number(params.id ?? currentId)
 
-    const [user, setUser] = createSignal<{ id: string; username: string } | null>(null)
-    const [shareReadingData, setShareReadingData] = createSignal<boolean | null>(null)
+    const [user, setUser] = createSignal<{ id: number; username: string } | null>(null)
+    const [shareReadingData, setShareReadingData] = createSignal<boolean>(true)
     const [isFollowing, setIsFollowing] = createSignal<boolean | null>(null)
     const [loading, setLoading] = createSignal(false)
     const [error, setError] = createSignal<string | null>(null)
 
-    const isOwnProfile = () => viewedId() === null
+    const currentId = Number(localStorage.getItem("user:id"))
+    const isOwnProfile = () => viewedId() === currentId
 
     onMount(async () => {
-        const localId = localStorage.getItem("user:id")
-
         try {
-            const query = viewedId() ? `?id=${viewedId()}` : ""
-            const res = await fetch(`http://localhost:3000/api/v1/me${query}`, {
-                credentials: "include",
-            })
+            const data = await api.fetchProfileInfo(Number(params.id || currentId))
 
-            if (!res.ok) throw new Error("Failed to fetch profile")
+            console.log("profile info:", data)
+            setUser({ id: data.user.id, username: data.user.username })
+            setShareReadingData(Boolean(data.user.share_reading_data))
 
-            const data = await res.json()
-            console.log("/me response:", data)
-            setUser({ id: data.id, username: data.username })
-            setShareReadingData(Boolean(data.share_reading_data))
-
-            if (data.id !== localId) {
-                const followRes = await fetch(`http://localhost:3000/following/${localId}`, {
-                    credentials: "include",
-                })
-                const followData = await followRes.json()
-                console.log(followData)
-                const followingIds = followData.following.map((u: any) => String(u.id))
-                setIsFollowing(followingIds.includes(String(data.id)))
+            if (data.user.id !== currentId) {
+                const follows = await api.fetchUserFollows(data.user.id)
+                const followingIds = follows.following.map((u: any) => String(u.id))
+                setIsFollowing(followingIds.includes(String(data.user.id)))
             }
         } catch (e: any) {
             console.error(e)
@@ -51,25 +41,25 @@ function Profile() {
         setError(null)
 
         try {
-            const newValue = !shareReadingData()
-            const res = await fetch("http://localhost:3000/api/v1/update", {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include",
-                body: JSON.stringify({ share_reading_data: newValue }),
-            })
-
-            if (!res.ok) {
-                const errData = await res.json()
-                throw new Error(errData.error || "Update failed")
-            }
-
-            const updated = await res.json()
-            setShareReadingData(Boolean(updated.share_reading_data))
-        } catch (e: any) {
-            setError(e.message || "An error occurred")
+            //     const newValue = !shareReadingData()
+            //     const res = await fetch("http://localhost:3000/api/v1/update", {
+            //         method: "PUT",
+            //         headers: {
+            //             "Content-Type": "application/json",
+            //         },
+            //         credentials: "include",
+            //         body: JSON.stringify({ share_reading_data: newValue }),
+            //     })
+            //
+            //     if (!res.ok) {
+            //         const errData = await res.json()
+            //         throw new Error(errData.error || "Update failed")
+            //     }
+            //
+            //     const updated = await res.json()
+            //     setShareReadingData(Boolean(updated.share_reading_data))
+            // } catch (e: any) {
+            // setError(e.message || "An error occurred")
         } finally {
             setLoading(false)
         }
@@ -81,18 +71,18 @@ function Profile() {
         setError(null)
 
         try {
-            const method = isFollowing() ? "DELETE" : "POST"
-            const res = await fetch(`http://localhost:3000/follows/${user()!.id}`, {
-                method,
-                credentials: "include",
-            })
-
-            if (!res.ok) {
-                const err = await res.json()
-                throw new Error(err.error || "Follow action failed")
-            }
-
-            setIsFollowing(!isFollowing())
+            // const method = isFollowing() ? "DELETE" : "POST"
+            // const res = await fetch(`http://localhost:3000/follows/${user()!.id}`, {
+            //     method,
+            //     credentials: "include",
+            // })
+            //
+            // if (!res.ok) {
+            //     const err = await res.json()
+            //     throw new Error(err.error || "Follow action failed")
+            // }
+            //
+            // setIsFollowing(!isFollowing())
         } catch (e: any) {
             setError(e.message || "An error occurred")
         } finally {
@@ -112,7 +102,12 @@ function Profile() {
                             Profile
                         </h2>
 
-                        {user() ? (
+                        <Show
+                            when={user()}
+                            fallback={
+                                <p class="text-[var(--base08)] text-center">No user info found.</p>
+                            }
+                        >
                             <div class="space-y-4">
                                 <div>
                                     <span class="font-semibold text-[var(--base0D)]">ID:</span>
@@ -125,7 +120,31 @@ function Profile() {
                                     <span class="ml-2">{user()!.username}</span>
                                 </div>
 
-                                {isOwnProfile() ? (
+                                <Show
+                                    when={isOwnProfile()}
+                                    fallback={
+                                        <Show
+                                            when={isFollowing() !== null}
+                                            fallback={
+                                                <p class="text-gray-500">
+                                                    Loading follow status...
+                                                </p>
+                                            }
+                                        >
+                                            <button
+                                                class="mt-4 px-4 py-2 bg-purple-600 text-white rounded disabled:opacity-50"
+                                                disabled={loading()}
+                                                onClick={toggleFollow}
+                                            >
+                                                {loading()
+                                                    ? "Processing..."
+                                                    : isFollowing()
+                                                      ? "Unfollow"
+                                                      : "Follow"}
+                                            </button>
+                                        </Show>
+                                    }
+                                >
                                     <>
                                         <div>
                                             <span class="font-semibold text-[var(--base0D)]">
@@ -151,27 +170,13 @@ function Profile() {
                                                   : "Enable Sharing"}
                                         </button>
                                     </>
-                                ) : isFollowing() !== null ? (
-                                    <button
-                                        class="mt-4 px-4 py-2 bg-purple-600 text-white rounded disabled:opacity-50"
-                                        disabled={loading()}
-                                        onClick={toggleFollow}
-                                    >
-                                        {loading()
-                                            ? "Processing..."
-                                            : isFollowing()
-                                              ? "Unfollow"
-                                              : "Follow"}
-                                    </button>
-                                ) : (
-                                    <p class="text-gray-500">Loading follow status...</p>
-                                )}
+                                </Show>
 
-                                {error() && <p class="text-red-600 mt-2">{error()}</p>}
+                                <Show when={error()}>
+                                    <p class="text-red-600 mt-2">{error()}</p>
+                                </Show>
                             </div>
-                        ) : (
-                            <p class="text-[var(--base08)] text-center">No user info found.</p>
-                        )}
+                        </Show>
                     </div>
                 </div>
             </div>

@@ -28,7 +28,7 @@ function Register() {
                 password_confirmation: confirm(),
             }
             const res = await api.register(body)
-            localStorage.setItem("user:id", res.user.id)
+            localStorage.setItem("user:id", String(res.user.id))
             localStorage.setItem("user:username", res.user.username)
             navigate("/profile")
         } catch (e: unknown) {

@@ -1,6 +1,7 @@
 import { createSignal } from "solid-js"
 import Navbar from "./components/Navbar"
 import { useNavigate } from "@solidjs/router"
+import api from "./lib/api"
 
 function Login() {
     const [email, setEmail] = createSignal("")
@@ -14,28 +15,21 @@ function Login() {
         // TODO: Implement login logic
         setError("")
 
-        const api = "http://localhost:3000/api/v1/login"
-
         try {
-            const res = await fetch(api, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    email: email(),
-                    password: password(),
-                }),
-                credentials: "include",
-            })
-            const data = await res.json()
-            if (res.ok) {
-                localStorage.setItem("user:id", data.user.id)
-                localStorage.setItem("user:username", data.user.username)
-                navigate("/profile")
-            } else {
-                setError(data.errors?.join(", ") || "Registration failed")
+            const body = {
+                email: email(),
+                password: password(),
             }
-        } catch {
-            setError("Network error")
+            const data = await api.login(body)
+            localStorage.setItem("user:id", String(data.user.id))
+            localStorage.setItem("user:username", data.user.username)
+            navigate("/profile")
+        } catch (e: unknown) {
+            if (typeof e === "string") {
+                setError(e)
+            } else if (e instanceof Error) {
+                setError(e.message)
+            }
         }
     }
 
