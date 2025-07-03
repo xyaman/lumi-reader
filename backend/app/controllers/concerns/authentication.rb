@@ -14,7 +14,10 @@ module Authentication
   private
   # @return [bool] the current session or nil if not authenticated
   def authenticated?
-    !!resume_session
+    unless resume_session
+      head :unauthorized
+      false
+    end
   end
 
   # @return [Session, nil] the current session after resuming or finding by cookie
