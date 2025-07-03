@@ -1,8 +1,9 @@
 class V1::UsersController < ApplicationController
   allow_unauthenticated_access only: %i[ create ]
-  wrap_parameters :user, include: [:password, :password_confirmation]
+  wrap_parameters :user, include: [ :password, :password_confirmation ]
 
   # @oas_include
+  # @tags User
   # @summary Create a User
   # @no_auth
   # @request_body The user to be created [!Hash{user: Hash{email: String, username: String, password: String, password_confirmation: String }}]

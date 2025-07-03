@@ -2,6 +2,13 @@ class V1::SessionsController < ApplicationController
   allow_unauthenticated_access only: %i[ create ]
   rate_limit to: 10, within: 3.minutes, only: :create
 
+  # @oas_include
+  # @tags Session
+  # @summary Log in a User (create session)
+  # @no_auth
+  # @request_body User credentials [Hash{email: String, password: String}]
+  # @response Logged in successfully(200) [Hash{status: String}]
+  # @response Invalid credentials(401) [Hash{error: String}]
   def create
     user = User.authenticate_by(params.permit(:email, :password))
     if user
@@ -12,6 +19,11 @@ class V1::SessionsController < ApplicationController
     end
   end
 
+  # @oas_include
+  # @tags Session
+  # @summary Get current logged-in User
+  # @response User info(200) [Hash{user: Hash{id: Integer, email: String, username: String}}]
+  # @response Not logged in(401) [Hash{user: nil, error: String}]
   def show
     if Current.session&.user
       user = Current.session.user
@@ -21,6 +33,10 @@ class V1::SessionsController < ApplicationController
     end
   end
 
+  # @oas_include
+  # @tags Session
+  # @summary Log out current User (destroy session)
+  # @response No content(204) []
   def destroy
     terminate_session
     head :no_content

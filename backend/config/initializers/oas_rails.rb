@@ -11,13 +11,14 @@ OasRails.configure do |config|
   config.info.contact.name = "xyaman"
 
   # Servers Information. For more details follow: https://spec.openapis.org/oas/latest.html#server-object
-  config.servers = [{ url: "http://localhost:3000", description: "Local" }]
+  config.servers = [ { url: "http://localhost:3000", description: "Local" } ]
 
   # Tag Information. For more details follow: https://spec.openapis.org/oas/latest.html#tag-object
   # config.tags = [{ name: "Users", description: "Manage the `amazing` Users table." }]
 
   # Optional Settings (Uncomment to use)
   config.include_mode = :explicit
+  config.rapidoc_theme = "night"
 
   # Extract default tags of operations from namespace or controller. Can be set to :namespace or :controller
   # config.default_tags_from = :namespace
@@ -48,12 +49,12 @@ OasRails.configure do |config|
 
   # Whether to authenticate all routes by default
   # Default is true; set to false if you don"t want all routes to include security schemas by default
-  # config.authenticate_all_routes_by_default = true
+  config.authenticate_all_routes_by_default = true
 
   # Default security schema used for authentication
   # Choose a predefined security schema
   # [:api_key_cookie, :api_key_header, :api_key_query, :basic, :bearer, :bearer_jwt, :mutual_tls]
-  # config.security_schema = :bearer
+  config.security_schema = :api_key_cookie
 
   # Custom security schemas
   # You can uncomment and modify to use custom security schemas
