@@ -1,13 +1,17 @@
 # README
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+# API Docs
 
-Things you may want to cover:
+Generate docs with
+```bash
+RAILS_ENV=test rails rswag
+```
+Docs will be available in `https://localhost:3000/api-docs`
 
-* Ruby version
+* Ruby version: `ruby 3.4.4`
+* Rails version: `Rails 8.0.2`
 
-* System dependencies
+* ENV variables
 
 * Configuration
 
@@ -20,5 +24,3 @@ Things you may want to cover:
 * Services (job queues, cache servers, search engines, etc.)
 
 * Deployment instructions
-
-* ...

@@ -34,6 +34,10 @@ Rails.application.routes.draw do
     get "user_status/batch", to: "user_status#batch"
   end
 
+  if Rails.env.development?
+    mount OasRails::Engine => '/api-docs'
+  end
+
   # Defines the root path route ("/")
   # root "posts#index"
 end
