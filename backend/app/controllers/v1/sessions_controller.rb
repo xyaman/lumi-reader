@@ -29,6 +29,7 @@ class V1::SessionsController < ApplicationController
       user = Current.session.user
       render json: { user: user.slice(:id, :email, :username) }, status: :ok
     else
+      # this shouldn't happen. `allow_unauthenticated_access` should block
       render json: { user: nil, error: "Not logged in" }, status: :unauthorized
     end
   end
