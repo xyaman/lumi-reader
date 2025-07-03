@@ -1,6 +1,7 @@
 import { createSignal } from "solid-js"
 import Navbar from "./components/Navbar"
 import { useNavigate } from "@solidjs/router"
+import api from "./lib/api"
 
 function Register() {
     const [email, setEmail] = createSignal("")
@@ -19,29 +20,23 @@ function Register() {
         }
         setError("")
 
-        const api = "http://localhost:3000/api/v1/register"
-
         try {
-            const res = await fetch(api, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    email: email(),
-                    password: password(),
-                    username: username(),
-                }),
-                credentials: "include",
-            })
-            const data = await res.json()
-            if (res.ok) {
-                localStorage.setItem("user:id", data.user.id)
-                localStorage.setItem("user:username", data.user.username)
-                navigate("/profile")
-            } else {
-                setError(data.errors?.join(", ") || "Registration failed")
+            const body = {
+                email: email(),
+                username: username(),
+                password: password(),
+                password_confirmation: confirm(),
             }
-        } catch {
-            setError("Network error")
+            const res = await api.register(body)
+            localStorage.setItem("user:id", res.user.id)
+            localStorage.setItem("user:username", res.user.username)
+            navigate("/profile")
+        } catch (e: unknown) {
+            if (typeof e === "string") {
+                setError(e)
+            } else if (e instanceof Error) {
+                setError(e.message)
+            }
         }
     }
 
@@ -92,14 +87,9 @@ function Register() {
                                 />
                             </div>
                             {error() && <p class="text-[var(--base08)] text-sm mt-2">{error()}</p>}
-                            <div>
-                                <button
-                                    type="submit"
-                                    class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded bg-[var(--base0D)] text-[var(--base00)] hover:bg-[var(--base0C)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--base0D)]"
-                                >
-                                    Register
-                                </button>
-                            </div>
+                            <button class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded bg-[var(--base0D)] text-[var(--base00)] hover:bg-[var(--base0C)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--base0D)]">
+                                Register
+                            </button>
                         </form>
                     </div>
                 </div>
