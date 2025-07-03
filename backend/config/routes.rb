@@ -7,19 +7,14 @@ Rails.application.routes.draw do
 
   get "csrf" => "app", to: "application#csrf"
 
-  # Routes for following/unfollowing users
-  # Require auth
-  post   "/follows/:id", to: "follows#create"
-  delete "/follows/:id", to: "follows#destroy"
-
-  # Routes for listing following and followers
-  # Don't require auth
-  get "/following/:id", to: "follows#following"
-  get "/followers/:id", to: "follows#followers"
-
   namespace :v1 do
     resource :session, only: [ :create, :show, :destroy ]
-    resource :user, only: [ :create ]
+
+    resources :users, only: [ :create, :show ] do
+      resources :follows, only: [ :create, :destroy ]
+      get "following", to: "follows#following"
+      get "followers", to: "follows#followers"
+    end
   end
 
   namespace :v0 do
@@ -35,7 +30,7 @@ Rails.application.routes.draw do
   end
 
   if Rails.env.development?
-    mount OasRails::Engine => '/api-docs'
+    mount OasRails::Engine => "/api-docs"
   end
 
   # Defines the root path route ("/")
