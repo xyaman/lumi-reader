@@ -22,14 +22,14 @@ class V1::UsersController < ApplicationController
   # @oas_include
   # @tags Users
   # @summary Show a User
-  # @response User found(200) [Hash{user: Hash{id: Integer, email: String, username: String}}]
+  # @response User found(200) [Hash{user: Hash{id: Integer, email: String, username: String, share_reading_data: Boolean}}]
   # @response User not found(404) [Hash{error: String}]
   #
   # Returns the user with the given ID.
   def show
     user = User.find_by(id: params[:id])
     if user
-      render json: { user: user.slice(:id, :email, :username) }, status: :ok
+      render json: { user: user.slice(:id, :email, :username, :share_reading_data) }, status: :ok
     else
       render json: { error: "User not found" }, status: :not_found
     end
