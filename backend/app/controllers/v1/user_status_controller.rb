@@ -16,7 +16,7 @@ class V1::UserStatusController < ApplicationController
     Rails.cache.write(cache_key(current_user.id, "last_activity"), last_activity, expires_in: 24.hours)
     Rails.cache.write(cache_key(current_user.id, "last_book"), last_book, expires_in: 24.hours)
 
-     render json: { status: "Ok" }, status: :created
+    render json: { status: "Ok" }, status: :created
   end
 
   # GET /api/v1/user_status?user_id=...

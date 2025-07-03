@@ -5,8 +5,9 @@ class ApplicationController < ActionController::API
 
   protect_from_forgery with: :exception
   before_action :set_csrf_cookie
+  allow_unauthenticated_access only: %i[ csrf ]
 
-  # GET /csfr
+  # GET /csrf
   def csrf
     head :ok
   end
