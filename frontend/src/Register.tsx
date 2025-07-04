@@ -46,7 +46,7 @@ function Register() {
 
     return (
         <div class="min-h-screen bg-[var(--base00)] text-[var(--base05)] flex flex-col">
-            <Navbar>
+            <Navbar fixed>
                 <A href="/" class="text-[var(--base0D)] hover:underline font-medium text-sm">
                     ← Back to Home
                 </A>

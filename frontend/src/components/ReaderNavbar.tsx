@@ -32,7 +32,7 @@ export default function ReaderNavbar() {
                 class="fixed top-0 left-0 right-0 h-12 z-10 bg-transparent cursor-pointer"
             />
             <Show when={readerStore.navOpen}>
-                <Navbar>
+                <Navbar fixed>
                     <Navbar.Left>
                         <button
                             class="cursor-pointer"

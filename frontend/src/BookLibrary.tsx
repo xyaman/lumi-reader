@@ -2,6 +2,8 @@ import { createSignal, For, Show, onCleanup, createEffect, onMount } from "solid
 import { IconFolderOpen, IconSettings, IconTrash, IconUpload } from "@/components/icons"
 import { EpubBook } from "@/lib/epub"
 import { ReaderSourceDB, ReaderSourceLightRecord } from "./lib/db"
+import Navbar from "./components/Navbar"
+import { A } from "@solidjs/router"
 
 const LS_SORT = "library:sortBy"
 const LS_DIR = "library:direction"
@@ -287,11 +289,10 @@ export default function BookLibrary() {
     return (
         <div class="body-theme h-dvh flex flex-col">
             {/* Navbar */}
-            <nav class="navbar-theme border-b shadow px-4 py-3 flex justify-between items-center">
-                <div class="flex items-center gap-2">
-                    {/* Sidebar burger button */}
+            <Navbar>
+                <Navbar.Left>
                     <button
-                        class="md:hidden mr-2 p-2 rounded-lg button-theme"
+                        class="md:hidden p-2 rounded-lg button-theme"
                         onClick={() => setSidebarOpen(true)}
                     >
                         <span class="sr-only">Open sidebar</span>
@@ -309,12 +310,19 @@ export default function BookLibrary() {
                             />
                         </svg>
                     </button>
-                    <h1 class="text-xl font-bold">lumireader</h1>
-                </div>
-                <div class="flex gap-2 items-center">
+
+                    <A
+                        href="/"
+                        class="text-xl font-bold text-[var(--base07)] hover:text-[var(--base0D)] transition-colors"
+                    >
+                        lumireader
+                    </A>
+                </Navbar.Left>
+
+                <Navbar.Right>
                     <label class="button-theme relative px-3 py-2 rounded-lg cursor-pointer">
                         <IconUpload />
-                        <span class="sr-only">Upload epub</span>
+                        <span class="sr-only">Upload EPUB</span>
                         <input
                             type="file"
                             accept=".epub"
@@ -323,25 +331,30 @@ export default function BookLibrary() {
                             class="absolute inset-0 opacity-0"
                         />
                     </label>
-                    <a href="/settings" class="button-theme px-3 py-2 rounded-lg">
+
+                    <A href="/settings" class="button-theme px-3 py-2 rounded-lg">
                         <IconSettings />
-                    </a>
-                    {user() ? (
-                        <a href="/profile" class="button-theme px-3 py-2 rounded-lg">
+                    </A>
+
+                    <Show
+                        when={user()}
+                        fallback={
+                            <>
+                                <A href="/login" class="button-theme px-3 py-2 rounded-lg">
+                                    Login
+                                </A>
+                                <A href="/register" class="button-theme px-3 py-2 rounded-lg">
+                                    Register
+                                </A>
+                            </>
+                        }
+                    >
+                        <A href="/profile" class="button-theme px-3 py-2 rounded-lg">
                             Profile
-                        </a>
-                    ) : (
-                        <>
-                            <a href="/login" class="button-theme px-3 py-2 rounded-lg">
-                                Login
-                            </a>
-                            <a href="/register" class="button-theme px-3 py-2 rounded-lg">
-                                Register
-                            </a>
-                        </>
-                    )}
-                </div>
-            </nav>
+                        </A>
+                    </Show>
+                </Navbar.Right>
+            </Navbar>
 
             {/* Sidebar (mobile overlay) */}
             <Show when={sidebarOpen()}>
