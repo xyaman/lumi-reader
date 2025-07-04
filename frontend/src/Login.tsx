@@ -1,7 +1,7 @@
-import { createSignal } from "solid-js"
-import Navbar from "./components/Navbar"
-import { useNavigate } from "@solidjs/router"
+import { createSignal, Show } from "solid-js"
+import { A, useNavigate } from "@solidjs/router"
 import api from "./lib/api"
+import Navbar from "./components/Navbar"
 
 function Login() {
     const [email, setEmail] = createSignal("")
@@ -12,7 +12,6 @@ function Login() {
 
     const handleSubmit = async (e: Event) => {
         e.preventDefault()
-        // TODO: Implement login logic
         setError("")
 
         try {
@@ -20,6 +19,7 @@ function Login() {
                 email: email(),
                 password: password(),
             }
+
             const data = await api.login(body)
             localStorage.setItem("user:id", String(data.user.id))
             localStorage.setItem("user:username", data.user.username)
@@ -34,49 +34,60 @@ function Login() {
     }
 
     return (
-        <>
+        <div class="min-h-screen bg-[var(--base00)] text-[var(--base05)] flex flex-col">
             <Navbar>
-                <Navbar.Left>Login</Navbar.Left>
+                <A href="/" class="text-[var(--base0D)] hover:underline font-medium text-sm">
+                    ← Back to Home
+                </A>
             </Navbar>
-            <div class="h-screen m-aubg-[var(--base00)] text-[var(--base05)]">
-                <div class="h-full flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-                    <div class="w-full max-w-md space-y-8 bg-[var(--base01)] p-8 rounded shadow">
-                        <h2 class="mt-2 text-center text-3xl font-extrabold text-[var(--base07)]">
+
+            <div class="flex-1 flex items-center justify-center px-4">
+                <div class="w-full max-w-md px-6 py-8 bg-[var(--base01)] rounded-2xl shadow-lg transition-all duration-300 transform animate-fade-in">
+                    <h2 class="text-3xl font-bold text-center text-[var(--base07)] mb-6">
+                        Welcome Back
+                    </h2>
+
+                    <form class="space-y-4" onSubmit={handleSubmit}>
+                        <input
+                            class="w-full px-4 py-2 border border-[var(--base03)] bg-[var(--base00)] text-[var(--base05)] placeholder-[var(--base04)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--base0D)] transition-all duration-150"
+                            type="email"
+                            placeholder="Email address"
+                            value={email()}
+                            onInput={(e) => setEmail(e.currentTarget.value)}
+                            required
+                        />
+                        <input
+                            class="w-full px-4 py-2 border border-[var(--base03)] bg-[var(--base00)] text-[var(--base05)] placeholder-[var(--base04)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--base0D)] transition-all duration-150"
+                            type="password"
+                            placeholder="Password"
+                            value={password()}
+                            onInput={(e) => setPassword(e.currentTarget.value)}
+                            required
+                        />
+
+                        <Show when={error()}>
+                            <p class="text-sm text-[var(--base08)] transition-opacity duration-300 animate-fade-in">
+                                {error()}
+                            </p>
+                        </Show>
+
+                        <button
+                            type="submit"
+                            class="w-full py-2 px-4 bg-[var(--base0D)] text-[var(--base00)] rounded-md hover:bg-[var(--base0C)] font-semibold transition-all duration-200"
+                        >
                             Login
-                        </h2>
-                        <form class="mt-8 space-y-6" onSubmit={handleSubmit}>
-                            <div class="rounded-md shadow-sm -space-y-px">
-                                <input
-                                    class="appearance-none rounded-none relative block w-full px-3 py-2 border border-[var(--base03)] placeholder-[var(--base04)] bg-[var(--base00)] text-[var(--base05)] focus:outline-none focus:ring-[var(--base0D)] focus:border-[var(--base0D)] focus:z-10 sm:text-sm"
-                                    type="email"
-                                    placeholder="Email address"
-                                    value={email()}
-                                    onInput={(e) => setEmail(e.currentTarget.value)}
-                                    required
-                                />
-                                <input
-                                    class="appearance-none rounded-none relative block w-full px-3 py-2 border border-[var(--base03)] placeholder-[var(--base04)] bg-[var(--base00)] text-[var(--base05)] focus:outline-none focus:ring-[var(--base0D)] focus:border-[var(--base0D)] focus:z-10 sm:text-sm mt-4"
-                                    type="password"
-                                    placeholder="Password"
-                                    value={password()}
-                                    onInput={(e) => setPassword(e.currentTarget.value)}
-                                    required
-                                />
-                            </div>
-                            {error() && <p class="text-[var(--base08)] text-sm mt-2">{error()}</p>}
-                            <div>
-                                <button
-                                    type="submit"
-                                    class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded bg-[var(--base0D)] text-[var(--base00)] hover:bg-[var(--base0C)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--base0D)]"
-                                >
-                                    Login
-                                </button>
-                            </div>
-                        </form>
+                        </button>
+                    </form>
+
+                    <div class="mt-4 text-center text-sm text-[var(--base04)]">
+                        Don’t have an account?{" "}
+                        <A href="/register" class="text-[var(--base0D)] hover:underline">
+                            Sign up
+                        </A>
                     </div>
                 </div>
             </div>
-        </>
+        </div>
     )
 }
 
