@@ -2,8 +2,10 @@ import { createSignal, Show } from "solid-js"
 import { A, useNavigate } from "@solidjs/router"
 import api from "./lib/api"
 import Navbar from "./components/Navbar"
+import { useAuthContext } from "./context/auth"
 
 function Register() {
+    const { fetchCurrentUser } = useAuthContext()
     const [email, setEmail] = createSignal("")
     const [username, setUsername] = createSignal("")
     const [password, setPassword] = createSignal("")
@@ -29,11 +31,8 @@ function Register() {
 
                 password_confirmation: confirm(),
             }
-
-            const res = await api.register(body)
-
-            localStorage.setItem("user:id", String(res.user.id))
-            localStorage.setItem("user:username", res.user.username)
+            await api.register(body)
+            await fetchCurrentUser()
             navigate("/profile")
         } catch (e: unknown) {
             if (typeof e === "string") {

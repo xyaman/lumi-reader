@@ -4,6 +4,7 @@ import { EpubBook } from "@/lib/epub"
 import { ReaderSourceDB, ReaderSourceLightRecord } from "./lib/db"
 import Navbar from "./components/Navbar"
 import { A } from "@solidjs/router"
+import { useAuthContext } from "./context/auth"
 
 const LS_SORT = "library:sortBy"
 const LS_DIR = "library:direction"
@@ -11,8 +12,9 @@ const LS_DIR = "library:direction"
 type Shelf = { id: number; name: string; bookIds: number[] }
 
 export default function BookLibrary() {
-    // user
-    const [user, setUser] = createSignal<{ id: string; username: string } | null>(null)
+    const { authStore } = useAuthContext()
+    const user = () => authStore.user
+
     const [followings, setFollowings] = createSignal<
         {
             id: string
@@ -55,9 +57,6 @@ export default function BookLibrary() {
     }
 
     onMount(() => {
-        const id = localStorage.getItem("user:id")
-        const username = localStorage.getItem("user:username")
-        if (id && username) setUser({ id, username })
         loadFollowings()
     })
 

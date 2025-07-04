@@ -1,11 +1,19 @@
 import { Show, createSignal, onMount } from "solid-js"
-import { useParams } from "@solidjs/router"
+import { useNavigate, useParams } from "@solidjs/router"
 import Navbar from "./components/Navbar"
 import api from "./lib/api"
+import { useAuthContext } from "./context/auth"
 
 function Profile() {
+    const { authStore } = useAuthContext()
+    const navigate = useNavigate()
     const params = useParams()
-    const viewedId = () => Number(params.id ?? currentId)
+
+    if (!params.id && !authStore.user) {
+        navigate("/login")
+    }
+
+    const viewedId = () => Number(params.id ?? authStore.user!.id)
 
     const [user, setUser] = createSignal<{ id: number; username: string } | null>(null)
     const [shareReadingData, setShareReadingData] = createSignal<boolean>(true)
@@ -13,18 +21,16 @@ function Profile() {
     const [loading, setLoading] = createSignal(false)
     const [error, setError] = createSignal<string | null>(null)
 
-    const currentId = Number(localStorage.getItem("user:id"))
-    const isOwnProfile = () => viewedId() === currentId
+    const isOwnProfile = () => viewedId() === authStore.user?.id
 
     onMount(async () => {
         try {
-            const data = await api.fetchProfileInfo(Number(params.id || currentId))
+            const data = await api.fetchProfileInfo(viewedId())
 
-            console.log("profile info:", data)
             setUser({ id: data.user.id, username: data.user.username })
             setShareReadingData(Boolean(data.user.share_reading_data))
 
-            if (data.user.id !== currentId) {
+            if (data.user.id !== viewedId()) {
                 const follows = await api.fetchUserFollows(data.user.id)
                 const followingIds = follows.following.map((u: any) => String(u.id))
                 setIsFollowing(followingIds.includes(String(data.user.id)))

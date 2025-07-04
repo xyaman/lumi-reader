@@ -162,6 +162,44 @@ async function fetchProfileInfo(userId: number): Promise<IProfileInfoResponse> {
     return data
 }
 
+interface ISesssionInfoResponse {
+    user: {
+        id: number
+        email: string
+        username: string
+        share_reading_data: boolean
+    }
+}
+
+/**
+ * Fetches the current session information for the authenticated user.
+ * @returns {Promise<ISesssionInfoResponse | null>} The session info if authenticated, or null if not logged in (401/403).
+ * @throws {Error} If the network request fails or the response is not OK (except 401/403).
+ */
+async function fetchSessionInfo(): Promise<ISesssionInfoResponse | null> {
+    const url = `${API_URL}/${API_VERSION}/session`
+
+    let res: Response
+    try {
+        res = await fetch(url, {
+            method: "GET",
+            credentials: "include",
+        })
+    } catch {
+        throw new Error("Network error")
+    }
+
+    if (res.status === 401 || res.status === 403) {
+        return null
+    }
+
+    const data = await res.json()
+    if (!res.ok) {
+        throw new Error(data?.error ? data.error : `Fetch session failed: ${res.statusText}`)
+    }
+    return data
+}
+
 interface IFollowResponse {
     following: Array<{
         id: number
@@ -223,4 +261,5 @@ export default {
     fetchProfileInfo,
     fetchUserFollows,
     fetchUserFollowers,
+    fetchSessionInfo,
 }

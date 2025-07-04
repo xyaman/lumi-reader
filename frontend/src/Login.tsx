@@ -2,6 +2,7 @@ import { createSignal, Show } from "solid-js"
 import { A, useNavigate } from "@solidjs/router"
 import api from "./lib/api"
 import Navbar from "./components/Navbar"
+import { useAuthContext } from "./context/auth"
 
 function Login() {
     const [email, setEmail] = createSignal("")
@@ -9,6 +10,7 @@ function Login() {
     const [error, setError] = createSignal("")
 
     const navigate = useNavigate()
+    const { fetchCurrentUser } = useAuthContext()
 
     const handleSubmit = async (e: Event) => {
         e.preventDefault()
@@ -20,9 +22,8 @@ function Login() {
                 password: password(),
             }
 
-            const data = await api.login(body)
-            localStorage.setItem("user:id", String(data.user.id))
-            localStorage.setItem("user:username", data.user.username)
+            await api.login(body)
+            await fetchCurrentUser()
             navigate("/profile")
         } catch (e: unknown) {
             if (typeof e === "string") {

@@ -6,20 +6,23 @@ import { getSelectedTheme, setGlobalTheme } from "./theme"
 import Register from "./Register"
 import Login from "./Login"
 import Profile from "./Profile"
+import { AuthProvider } from "./context/auth"
 
 function App() {
     const theme = getSelectedTheme()
     setGlobalTheme(theme)
 
     return (
-        <Router>
-            <Route path="/" component={BookLibrary} />
-            <Route path="/reader/:id?" component={BookReader} />
-            <Route path="/settings" component={Settings} />
-            <Route path="/register" component={Register} />
-            <Route path="/login" component={Login} />
-            <Route path="/profile/:id?" component={Profile} />
-        </Router>
+        <AuthProvider>
+            <Router>
+                <Route path="/" component={BookLibrary} />
+                <Route path="/reader/:id?" component={BookReader} />
+                <Route path="/settings" component={Settings} />
+                <Route path="/register" component={Register} />
+                <Route path="/login" component={Login} />
+                <Route path="/profile/:id?" component={Profile} />
+            </Router>
+        </AuthProvider>
     )
 }
 
