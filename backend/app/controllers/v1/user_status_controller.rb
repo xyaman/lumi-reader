@@ -1,28 +1,29 @@
 class V1::UserStatusController < ApplicationController
-  before_action :authorize_request
+  # @oas_include
+  # @tags Session, UserStatus
+  # @summary Creates or updates the current user's status
+  # @response Success(200) [Hash{status: String}]
+  def update
+    user = Current.user
 
-  # POST /api/v1/user_status
-  # BODY: { last_activity: timestamp, last_book: title }
-  # Requires authorize_request
-  def create
     last_activity = params[:last_activity]
-    last_book = params[:last_book]
+    timestamp = Time.current.to_i
 
-    if last_activity.blank? || last_book.blank?
-      return render json: { error: "Both last_activity and last_book are required." }, status: :bad_request
+    if last_activity.blank?
+      return render json: { error: "last_activity is required." }, status: :bad_request
     end
 
     # Store raw hashes in cache with 24h expiration
-    Rails.cache.write(cache_key(current_user.id, "last_activity"), last_activity, expires_in: 24.hours)
-    Rails.cache.write(cache_key(current_user.id, "last_book"), last_book, expires_in: 24.hours)
+    Rails.cache.write(cache_key(user.id, "timestamp"), timestamp, expires_in: 24.hours)
+    Rails.cache.write(cache_key(user.id, "last_activity"), last_activity, expires_in: 24.hours)
 
     render json: { status: "Ok" }, status: :created
   end
 
-  # GET /api/v1/user_status?user_id=...
-  # Returns cached data or null if expired/not set
-  # Require auth
-  def retrieve
+  # @oas_include
+  # @tags UserStatus
+  # @summary Retrieves a user's status
+  def show
     user = User.find_by(id: params[:user_id])
     unless user
       return render json: { error: "Invalid user id" }, status: :bad_request
@@ -33,16 +34,18 @@ class V1::UserStatusController < ApplicationController
     end
 
     render json: {
-      last_activity: Rails.cache.read(cache_key(user.id, "last_activity")),
-      last_book: Rails.cache.read(cache_key(user.id, "last_book"))
+      timestamp: Rails.cache.read(cache_key(user.id, "timestamp")),
+      last_activity: Rails.cache.read(cache_key(user.id, "last_activity"))
     }
   end
 
-  # GET /api/v1/user_status/batch?user_ids[]=1&user_ids[]=2
-  # Returns status for specific user IDs
-  # Requires authorization
+  # @oas_include
+  # @tags UserStatus
+  # @summary Retrieves status for multiple users
+  # @response Success(200) [Hash{ results: Array<Hash{ user_id: Integer, timestamp: Integer, last_activity: String}>}]
   def batch
     ids = params[:user_ids]
+    puts ids
 
     # Validate input (only accept numbers)
     unless ids.is_a?(Array) && ids.all? { |id| id.to_s =~ /^\d+$/ }
@@ -60,12 +63,12 @@ class V1::UserStatusController < ApplicationController
     results = users.map do |user|
       {
         user_id: user.id,
-        last_activity: Rails.cache.read(cache_key(user.id, "last_activity")),
-        last_book: Rails.cache.read(cache_key(user.id, "last_book"))
+        timestamp: Rails.cache.read(cache_key(user.id, "timestamp")),
+        last_activity: Rails.cache.read(cache_key(user.id, "last_activity"))
       }
     end
 
-    render json: results
+    render json: { results: results }
   end
 
   private

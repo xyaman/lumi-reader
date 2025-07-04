@@ -5,16 +5,22 @@ Rails.application.routes.draw do
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
 
-  get "csrf" => "app", to: "application#csrf"
+  get "csrf", to: "application#csrf"
 
   namespace :v1 do
-    resource :session, only: [ :create, :show, :destroy ]
+    resource :session, only: [ :create, :show, :destroy ] do
+      # note (oas-rails bug): if I don't add the controller name, oas-rails can't find the route
+      resource :user_status, only: [ :update ], controller: "user_status"
+    end
 
     resources :users, only: [ :create, :show ] do
+      resource :status, only: [ :show ], controller: "user_status"
       resources :follows, only: [ :create, :destroy ]
       get "following", to: "follows#following"
       get "followers", to: "follows#followers"
     end
+
+    get "user_status/batch", to: "user_status#batch"
   end
 
   namespace :v0 do
@@ -23,10 +29,6 @@ Rails.application.routes.draw do
     post "register", to: "auth#register"
     post "login", to: "auth#login"
     put "update", to: "auth#update_share"
-
-    post "user_status", to: "user_status#create"
-    get "user_status", to: "user_status#retrieve"
-    get "user_status/batch", to: "user_status#batch"
   end
 
   if Rails.env.development?
