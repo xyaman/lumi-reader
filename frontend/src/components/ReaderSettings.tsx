@@ -1,15 +1,10 @@
+import {
+    IReaderSettings,
+    readerSettingsStore,
+    setReaderSettingsStore,
+} from "@/stores/readerSettings"
 import { createEffect, Show, onMount } from "solid-js"
 import { createStore } from "solid-js/store"
-
-export interface IReaderSettings {
-    fontSize: number
-    lineHeight: number | string
-    verticalPadding: number
-    horizontalPadding: number
-    vertical: boolean
-    paginated: boolean
-    showFurigana: boolean
-}
 
 function updateReaderStyle(settings: IReaderSettings) {
     const fixedFontSize = Math.max(1, settings.fontSize)
@@ -33,21 +28,6 @@ function updateReaderStyle(settings: IReaderSettings) {
     localStorage.setItem("reader:vertical", String(settings.vertical))
     localStorage.setItem("reader:paginated", String(settings.paginated))
 }
-
-function getInitialSettings(): IReaderSettings {
-    return {
-        fontSize: Number(localStorage.getItem("reader:fontSize") ?? 20),
-        lineHeight: localStorage.getItem("reader:lineHeight") ?? "1.5",
-        verticalPadding: Number(localStorage.getItem("reader:verticalPadding") ?? 10),
-        horizontalPadding: Number(localStorage.getItem("reader:horizontalPadding") ?? 10),
-        vertical: localStorage.getItem("reader:vertical") === "true",
-        paginated: localStorage.getItem("reader:paginated") === "true",
-        showFurigana: localStorage.getItem("reader:showFurigana") === "true",
-    }
-}
-
-export const [readerSettingsStore, setReaderSettingsStore] =
-    createStore<IReaderSettings>(getInitialSettings())
 
 type Props = {
     saveButton?: boolean

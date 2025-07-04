@@ -1,7 +1,7 @@
 import { useReaderContext } from "@/context/reader"
 import { createEffect, For, on, onCleanup, Show } from "solid-js"
 import { IconBookmarkFull } from "./icons"
-import { readerSettingsStore } from "./ReaderSettings"
+import { readerSettingsStore } from "@/stores/readerSettings"
 
 function getBaseName(path: string) {
     const match = path.match(/(?:.*\/)?([^\/]+\.(?:png|jpe?g|svg|xhtml|html))$/i)
