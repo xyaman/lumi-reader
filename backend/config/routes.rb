@@ -16,6 +16,7 @@ Rails.application.routes.draw do
 
     # email confirmation
     get "users_confirm", to: "users#confirm"
+    get "users/search", to: "users#search"
 
     resources :users, only: [ :create, :show ] do
       resource :status, only: [ :show ], controller: "user_status"

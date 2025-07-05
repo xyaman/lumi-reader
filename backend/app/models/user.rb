@@ -16,8 +16,9 @@ class User < ApplicationRecord
 
   has_one_attached :avatar
 
+  # Class method
   def self.find_by_username(query)
-    where("LOWER(username) LIKE ?", "%#{sanitize_sql_like(query.downcase)}%").limit(20)
+    where("LOWER(username) LIKE ?", "%#{sanitize_sql_like(query.downcase)}%")
   end
 
   # email confirmation

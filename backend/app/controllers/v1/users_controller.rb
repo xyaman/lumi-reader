@@ -1,5 +1,5 @@
 class V1::UsersController < ApplicationController
-  allow_unauthenticated_access only: %i[ create confirm ]
+  allow_unauthenticated_access only: %i[ create confirm search ]
   wrap_parameters :user, include: [ :password, :password_confirmation ]
 
   # @oas_include
@@ -103,6 +103,38 @@ class V1::UsersController < ApplicationController
       end
     end
   end
+
+  # @oas_include
+  # @tags Users
+  # @summary Search users by username
+  # @parameter q(query) [!String] required The username query string
+  # @parameter page(query) [Integer] optional Page number
+  # @parameter items(query) [Integer] optional Items per page
+  # @response List of users with pagination(200) [Hash{ users: Array<Hash{id: Integer, username: String}>, pagy: Hash{ page: Integer, items: Integer, pages: Integer, count: Integer } }]
+  def search
+    if params[:q].present?
+      users_scope = User.find_by_username(params[:q])
+      pagy, users = pagy(users_scope, items: params[:items] || 20)
+
+      users_json = users.map do |user|
+        {
+          id: user.id,
+          username: user.username,
+          avatar_url: user.avatar.attached? ? url_for(user.avatar) : nil
+        }
+      end
+
+      render json: {
+        users: users_json,
+        page: pagy.page,
+        pages: pagy.pages,
+        count: pagy.count
+      }, status: :ok
+    else
+      render json: { error: "Query parameter 'q' is required." }, status: :bad_request
+    end
+  end
+
 
   private
   def user_params

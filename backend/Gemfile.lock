@@ -184,6 +184,7 @@ GEM
       easy_talk_two (~> 1.1.2)
       oas_core (~> 1.0.0)
     ostruct (0.6.2)
+    pagy (9.3.4)
     parallel (1.27.0)
     parser (3.3.8.0)
       ast (~> 2.4.1)
@@ -355,6 +356,7 @@ DEPENDENCIES
   dotenv-rails
   kamal
   oas_rails
+  pagy (~> 9.3)
   puma (>= 5.0)
   rack-cors
   rails (~> 8.0.2)
