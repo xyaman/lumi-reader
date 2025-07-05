@@ -5,6 +5,8 @@ import { ReaderSourceDB, ReaderSourceLightRecord } from "./lib/db"
 import Navbar from "./components/Navbar"
 import { A } from "@solidjs/router"
 import { useAuthContext } from "./context/auth"
+import api from "@/lib/api"
+import { timeAgo } from "@/lib/utils"
 
 const LS_SORT = "library:sortBy"
 const LS_DIR = "library:direction"
@@ -21,37 +23,44 @@ export default function BookLibrary() {
             username: string
             status?: {
                 last_activity: string
-                last_book: string
+                timestamp: number
             }
         }[]
     >([])
     const [visibleCount, setVisibleCount] = createSignal(10) // initial visible batch
 
     const loadFollowings = async () => {
-        if (!user()) return []
+        const currUser = user()
+        if (!currUser) return []
 
-        const res = await fetch(`http://localhost:3000/following/${user()!.id}`, {
-            credentials: "include",
-        })
-        const data = await res.json()
+        const res = await api.fetchUserFollows(currUser.id)
+        const followingList = res.following
 
-        const usersWithStatus = await Promise.all(
-            data.following.map(async (f: any) => {
-                try {
-                    const statusRes = await fetch(
-                        `http://localhost:3000/api/v1/user_status?user_id=${f.id}`,
+        // Collect user IDs
+        const userIds = followingList.map((f: any) => f.id)
+        let statusBatch: Record<number, any> = {}
+
+        if (userIds.length > 0) {
+            try {
+                const statusRes = await api.fetchUserStatusBatch(userIds)
+                statusBatch = Object.fromEntries(
+                    statusRes.results.map((s: any) => [
+                        s.user_id,
                         {
-                            credentials: "include",
+                            last_activity: s.last_activity,
+                            timestamp: timeAgo(s.timestamp),
                         },
-                    )
-                    const status = await statusRes.json()
-                    return { ...f, status }
-                } catch (e) {
-                    console.error("Failed to fetch status for", f.id, e)
-                    return { ...f, status: null }
-                }
-            }),
-        )
+                    ]),
+                )
+            } catch (e) {
+                console.error("Failed to fetch user status batch", e)
+            }
+        }
+
+        const usersWithStatus = followingList.map((f: any) => ({
+            ...f,
+            status: statusBatch[f.id] || null,
+        }))
 
         setFollowings(usersWithStatus)
     }
@@ -470,9 +479,9 @@ export default function BookLibrary() {
                                             <p class="font-medium truncate">{f.username}</p>
                                             <Show when={f.status}>
                                                 <div class="text-xs text-gray-500 mt-1">
-                                                    ⏱ Last Active: {f.status!.last_activity}
+                                                    Last Activity: {f.status!.last_activity}
                                                     <br />
-                                                    📚 Last Book: {f.status!.last_book}
+                                                    Last Active: {f.status!.timestamp}
                                                 </div>
                                             </Show>
                                         </div>

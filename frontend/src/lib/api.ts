@@ -200,6 +200,34 @@ async function fetchSessionInfo(): Promise<ISesssionInfoResponse | null> {
     return data
 }
 
+async function follow(userId: number): Promise<void> {
+    const url = `${API_URL}/${API_VERSION}/users/${userId}/follows/`
+
+    const cookie = await getCsrfCookie()
+    if (!cookie) {
+        throw new Error("Can't validate the connection")
+    }
+
+    let res: Response
+    try {
+        res = await fetch(url, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "X-CSRF-TOKEN": cookie,
+            },
+        })
+    } catch {
+        throw new Error("Network error")
+    }
+
+    const data = await res.json()
+    if (!res.ok) {
+        throw new Error(data?.error ? data.error : `Create follow failed: ${res.statusText}`)
+    }
+    return data
+}
+
 interface IFollowResponse {
     following: Array<{
         id: number
@@ -214,6 +242,12 @@ interface IFollowerResponse {
     }>
 }
 
+/**
+ * Fetches the list of users that the specified user is following.
+ * @param {number} userId - The ID of the user.
+ * @returns {Promise<IFollowResponse>} The list of following users.
+ * @throws {Error} If the network request fails or the response is not OK.
+ */
 async function fetchUserFollows(userId: number): Promise<IFollowResponse> {
     const url = `${API_URL}/${API_VERSION}/users/${userId}/following/`
 
@@ -235,6 +269,12 @@ async function fetchUserFollows(userId: number): Promise<IFollowResponse> {
     return data
 }
 
+/**
+ * Fetches the list of followers for the specified user.
+ * @param {number} userId - The ID of the user.
+ * @returns {Promise<IFollowerResponse>} The list of followers.
+ * @throws {Error} If the network request fails or the response is not OK.
+ */
 async function fetchUserFollowers(userId: number): Promise<IFollowerResponse> {
     const url = `${API_URL}/${API_VERSION}/users/${userId}/followers/`
 
@@ -255,11 +295,65 @@ async function fetchUserFollowers(userId: number): Promise<IFollowerResponse> {
     return data
 }
 
+async function fetchUserStatus(userId: number): Promise<IFollowerResponse> {
+    const url = `${API_URL}/${API_VERSION}/users/${userId}/followers/`
+
+    let res: Response
+    try {
+        res = await fetch(url, {
+            method: "GET",
+            credentials: "include",
+        })
+    } catch {
+        throw new Error("Network error")
+    }
+
+    const data = await res.json()
+    if (!res.ok) {
+        throw new Error(data?.error ? data.error : `User followers fetch failed: ${res.statusText}`)
+    }
+    return data
+}
+
+interface IUserStatusBatchResponse {
+    results: Array<{
+        user_id: number
+        timestamp: number
+        last_activity: number
+    }>
+}
+
+async function fetchUserStatusBatch(userIds: number[]): Promise<IUserStatusBatchResponse> {
+    const params = new URLSearchParams()
+    userIds.forEach((id) => params.append("user_ids[]", id.toString()))
+    const url = `${API_URL}/${API_VERSION}/user_status/batch?${params.toString()}`
+
+    let res: Response
+    try {
+        res = await fetch(url, {
+            method: "GET",
+            credentials: "include",
+        })
+    } catch {
+        throw new Error("Network error")
+    }
+
+    const data = await res.json()
+    if (!res.ok) {
+        throw new Error(
+            data?.error ? data.error : `User Status batch fetch failed: ${res.statusText}`,
+        )
+    }
+    return data
+}
+
 export default {
     register,
     login,
     fetchProfileInfo,
+    follow,
     fetchUserFollows,
     fetchUserFollowers,
     fetchSessionInfo,
+    fetchUserStatusBatch,
 }

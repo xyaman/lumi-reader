@@ -44,3 +44,20 @@ export function parseCss(cssText: string) {
 
     return rules
 }
+
+export function timeAgo(unixTimestamp: number | null): string {
+    if (!unixTimestamp) return ""
+
+    const now = Date.now()
+    // seconds to miliseconds
+    const inputTime = unixTimestamp * 1000
+    const diffMs = now - inputTime
+    const diffMins = Math.floor(diffMs / 60000)
+
+    if (diffMins < 60) {
+        return `${diffMins} mins ago`
+    } else {
+        const diffHours = Math.floor(diffMins / 60)
+        return `Last ${diffHours} hour${diffHours > 1 ? "s" : ""} ago`
+    }
+}
