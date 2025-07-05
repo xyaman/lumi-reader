@@ -7,7 +7,6 @@ class V1::FollowsController < ApplicationController
   # @tags Follows
   # @summary List users that the specified user is following
   # @response Success(200) [Hash{following: Array<User>}]
-  # @response User not found(404) [Hash{error: String}]
   def following
     render json: { following: @user.following }
   end
@@ -31,7 +30,7 @@ class V1::FollowsController < ApplicationController
   def create
     if Current.user.id == @user.id
       render json: { error: "Can't follow oneself" }, status: :unprocessable_entity
-    elsif Current.user.following.exists?(@user)
+    elsif Current.user.following.exists?(@user.id)
       render json: { error: "Already following" }, status: :unprocessable_entity
     else
       Current.user.following << @user
