@@ -30,7 +30,7 @@ function Profile() {
             setUser({ id: data.user.id, username: data.user.username })
             setShareReadingData(Boolean(data.user.share_reading_data))
 
-            if (data.user.id !== viewedId()) {
+            if (!isOwnProfile()) {
                 const follows = await api.fetchUserFollows(data.user.id)
                 const followingIds = follows.following.map((u: any) => String(u.id))
                 setIsFollowing(followingIds.includes(String(data.user.id)))
@@ -77,18 +77,11 @@ function Profile() {
         setError(null)
 
         try {
-            // const method = isFollowing() ? "DELETE" : "POST"
-            // const res = await fetch(`http://localhost:3000/follows/${user()!.id}`, {
-            //     method,
-            //     credentials: "include",
-            // })
-            //
-            // if (!res.ok) {
-            //     const err = await res.json()
-            //     throw new Error(err.error || "Follow action failed")
-            // }
-            //
-            // setIsFollowing(!isFollowing())
+            if (isFollowing()) throw new Error()
+
+            await api.follow(viewedId())
+
+            setIsFollowing(!isFollowing())
         } catch (e: any) {
             setError(e.message || "An error occurred")
         } finally {
