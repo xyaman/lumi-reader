@@ -17,4 +17,19 @@ class User < ApplicationRecord
   def self.find_by_username(query)
     where("LOWER(username) LIKE ?", "%#{sanitize_sql_like(query.downcase)}%").limit(20)
   end
+
+  # email confirmation
+  def confirmed?
+    confirmed_at.present?
+  end
+
+  def confirm!
+    update_columns(confirmed_at: Time.current, confirmation_token: nil)
+  end
+
+  def generate_confirmation_token
+    self.confirmation_token = SecureRandom.urlsafe_base64
+    self.confirmation_sent_at = Time.current
+    self.save!
+  end
 end

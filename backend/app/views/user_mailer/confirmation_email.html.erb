@@ -1,0 +1,16 @@
+<h1>Welcome to Lumi Reader!</h1>
+<p>
+  Hi <%= @user.username %>,<br>
+  Thank you for signing up. Please confirm your email address to activate your account.
+</p>
+<p>
+  <%= link_to "Confirm my account", @confirmation_url, class: "button" %>
+</p>
+<p>
+  If you’re unable to click the button above, copy and paste this URL into your browser:<br>
+  <a href="<%= @confirmation_url %>"><%= @confirmation_url %></a>
+</p>
+<hr>
+<p style="color: #888; font-size: 0.9em;">
+  This is an automated message; please do not respond.
+</p>

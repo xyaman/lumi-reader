@@ -12,8 +12,12 @@ class V1::SessionsController < ApplicationController
   def create
     user = User.authenticate_by(params.permit(:email, :password))
     if user
-      start_new_session_for user
-      render json: { user: user.slice(:id, :email, :username, :share_reading_data) }, status: :ok
+      if user.confirmed?
+        start_new_session_for user
+        render json: { user: user.slice(:id, :email, :username, :share_reading_data) }, status: :ok
+      else
+        render json: { error: "Please confirm your email before logging in." }, status: :unauthorized
+      end
     else
       render json: { error: "Invalid id or password" }, status: :unauthorized
     end

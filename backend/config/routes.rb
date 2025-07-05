@@ -4,7 +4,6 @@ Rails.application.routes.draw do
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
-
   get "csrf", to: "application#csrf"
 
   namespace :v1 do
@@ -12,6 +11,9 @@ Rails.application.routes.draw do
       # note (oas-rails bug): if I don't add the controller name, oas-rails can't find the route
       resource :user_status, only: [ :update ], controller: "user_status"
     end
+
+    # email confirmation
+    get "users_confirm", to: "users#confirm"
 
     resources :users, only: [ :create, :show ] do
       resource :status, only: [ :show ], controller: "user_status"
@@ -21,14 +23,6 @@ Rails.application.routes.draw do
     end
 
     get "user_status/batch", to: "user_status#batch"
-  end
-
-  namespace :v0 do
-    get "me", to: "auth#me"
-    get "search", to: "auth#search"
-    post "register", to: "auth#register"
-    post "login", to: "auth#login"
-    put "update", to: "auth#update_share"
   end
 
   if Rails.env.development?

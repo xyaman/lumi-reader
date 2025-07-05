@@ -42,4 +42,6 @@ group :development, :test do
 
   # API Docs
   gem "oas_rails"
+
+  gem "dotenv-rails"
 end

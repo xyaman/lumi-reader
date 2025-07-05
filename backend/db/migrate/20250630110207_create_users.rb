@@ -4,7 +4,13 @@ class CreateUsers < ActiveRecord::Migration[8.0]
       t.string :email, null: false
       t.string :username, null: false
       t.string :password_digest, null: false
+      t.string :description
       t.boolean :share_reading_data, default: true, null: false
+
+      # registration mail
+      t.string :confirmation_token
+      t.datetime :confirmed_at
+      t.datetime :confirmation_sent_at
 
       # TODO: Counter cache columns
       # t.integer :followers_count, default: 0, null: false
@@ -13,5 +19,6 @@ class CreateUsers < ActiveRecord::Migration[8.0]
       t.timestamps
     end
     add_index :users, :email, unique: true
+    add_index :users, :confirmation_token, unique: true
   end
 end
