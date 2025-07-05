@@ -52,9 +52,10 @@ class V1::UserStatusController < ApplicationController
       return render json: { error: "Invalid user_ids param" }, status: :bad_request
     end
 
-    # Limit to 10 users
-    if ids.size > 10
-      return render json: { error: "Too many user_ids (max. 10)" }, status: :bad_request
+    # Limit to 30 users
+    # TODO: Add pagination
+    if ids.size > 30
+      return render json: { error: "Too many user_ids (max. 30)" }, status: :bad_request
     end
 
     user_ids = ids.map(&:to_i)
