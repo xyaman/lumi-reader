@@ -10,6 +10,8 @@ Rails.application.routes.draw do
     resource :session, only: [ :create, :show, :destroy ] do
       # note (oas-rails bug): if I don't add the controller name, oas-rails can't find the route
       resource :user_status, only: [ :update ], controller: "user_status"
+
+      patch "avatar", to: "users#update_avatar"
     end
 
     # email confirmation

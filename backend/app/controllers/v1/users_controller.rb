@@ -21,6 +21,31 @@ class V1::UsersController < ApplicationController
 
   # @oas_include
   # @tags Users
+  # @summary Update a user's avatar
+  # @request_body Avatar image file to upload [!Multipart{avatar: File}]
+  # @response Avatar updated successfully(200) [Hash{message: String}]
+  # @response User not found(404) [Hash{error: String}]
+  # @response Missing avatar file(422) [Hash{error: String}]
+  def update_avatar
+    user = Current.user
+
+    if params[:avatar].present?
+      if params[:avatar].size > 2.megabytes
+        return render json: { error: "Avatar is too big (max 2MB)." }, status: :unprocessable_entity
+      end
+
+      # automatically removes from the storage the previous one
+      user.avatar.attach(params[:avatar])
+      avatar_url = url_for(user.avatar)
+
+      render json: { avatar_url: avatar_url }, status: :ok
+    else
+      render json: { error: "Missing avatar file." }, status: :unprocessable_entity
+    end
+  end
+
+  # @oas_include
+  # @tags Users
   # @summary Show a User
   # @response User found(200) [Hash{user: Hash{id: Integer, email: String, username: String, share_reading_data: Boolean, following_count: Integer, followers_count: Integer}}]
   # @response User not found(404) [Hash{error: String}]
@@ -34,6 +59,7 @@ class V1::UsersController < ApplicationController
       followers_count = user.followers.count
 
       json_user = user.slice(:id, :email, :username, :share_reading_data)
+      json_user[:avatar_url] = user.avatar.attached? ? url_for(user.avatar) : nil
       json_user.merge!(following_count: following_count, followers_count: followers_count)
 
       render json: { user: json_user }, status: :ok

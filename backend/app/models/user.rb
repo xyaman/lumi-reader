@@ -14,6 +14,8 @@ class User < ApplicationRecord
   has_many :follower_relationships, foreign_key: :followed_id, class_name: "Follow", dependent: :destroy
   has_many :followers, through: :follower_relationships, source: :follower
 
+  has_one_attached :avatar
+
   def self.find_by_username(query)
     where("LOWER(username) LIKE ?", "%#{sanitize_sql_like(query.downcase)}%").limit(20)
   end
