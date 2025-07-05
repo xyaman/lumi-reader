@@ -6,18 +6,18 @@ class V1::FollowsController < ApplicationController
   # @oas_include
   # @tags Follows
   # @summary List users that the specified user is following
-  # @response Success(200) [Hash{following: Array<User>}]
+  # @response Success(200) [Hash{following: Array<Hash{id: Integer, username: String, email: String}}}]
   def following
-    render json: { following: @user.following }
+    render json: { following: @user.following.as_json(except: [ :password_digest ]) }
   end
 
   # @oas_include
   # @tags Follows
   # @summary List users that follow the specified user
-  # @response Success(200) [Hash{followers: Array<User>}]
+  # @response Success(200) [Hash{followers: Array<Hash{id: Integer, username: String, email: String}}}]
   # @response User not found(404) [Hash{error: String}]
   def followers
-    render json: { followers: @user.followers }
+    render json: { followers: @user.followers.as_json(except: [ :password_digest ]) }
   end
 
   # @oas_include
