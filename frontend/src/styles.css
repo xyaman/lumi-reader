@@ -86,6 +86,24 @@ body {
   background-color: var(--base0D);
 }
 
+/* Scrollbar: Webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  background: var(--base01);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--base03);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--base04);
+}
+
+/* Scrollbar: Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--base03) var(--base01);
+}
 
 .sidebar-theme {
   background-color: var(--base01);      /* Sidebar background */
