@@ -23,7 +23,7 @@ export default function ThemeSettings() {
 
     return (
         <>
-            <Navbar>
+            <Navbar fixed>
                 <Navbar.Left>
                     <button class="md:hidden mr-4" onClick={() => setShowSidebar((prev) => !prev)}>
                         <IconToc />
