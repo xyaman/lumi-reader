@@ -295,9 +295,9 @@ export default function BookLibrary() {
 
     // --- Render ---
     return (
-        <div class="body-theme h-dvh flex flex-col">
+        <div class="body-theme flex flex-col min-h-screen">
             {/* Navbar */}
-            <Navbar>
+            <Navbar fixed>
                 <Navbar.Left>
                     <button
                         class="md:hidden p-2 rounded-lg button-theme"
@@ -364,173 +364,181 @@ export default function BookLibrary() {
                 </Navbar.Right>
             </Navbar>
 
-            {/* Sidebar (mobile overlay) */}
-            <Show when={sidebarOpen()}>
-                <aside
-                    class="fixed inset-0 z-40 bg-black/40 transition-opacity md:hidden"
-                    onClick={() => setSidebarOpen(false)}
-                >
-                    <div class="navbar-theme w-64 h-full p-4" onClick={(e) => e.stopPropagation()}>
-                        <SidebarContent />
-                    </div>
-                </aside>
-            </Show>
-
-            {/* Main layout */}
-            <div class="flex flex-1 flex-col md:flex-row">
-                {/* Sidebar (desktop) */}
-
-                <aside class="navbar-theme hidden md:flex border-r p-4 flex-col gap-4 md:w-48 lg:w-64">
-                    <SidebarContent />
-                </aside>
-
-                {/* Main */}
-                <div class="flex-1 flex flex-col md:flex-row">
-                    <main class="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
-                        <div class="flex flex-wrap items-center gap-2 mb-4">
-                            <label class="text-sm font-medium">Sort by:</label>
-                            <select
-                                class="button-theme px-2 py-1 rounded border"
-                                value={sort()}
-                                onInput={(e) => setSort(e.currentTarget.value as any)}
-                            >
-                                <option value="lastModifiedDate">Last Updated</option>
-                                <option value="creationDate">Date Added</option>
-                            </select>
-                            <button
-                                class="button-theme px-2 py-1 rounded border"
-                                onClick={() => setDir((d) => (d === "asc" ? "desc" : "asc"))}
-                            >
-                                {dir() === "asc" ? "↑" : "↓"}
-                            </button>
+            <div class="flex flex-1 min-h-0 mt-14">
+                {/* Sidebar (mobile overlay) */}
+                <Show when={sidebarOpen()}>
+                    <aside
+                        class="fixed inset-0 z-40 bg-black/40 transition-opacity md:hidden"
+                        onClick={() => setSidebarOpen(false)}
+                    >
+                        <div
+                            class="navbar-theme w-64 h-full p-4"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <SidebarContent />
                         </div>
+                    </aside>
+                </Show>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-5 mx-6 sm:mx-0">
-                            <For
-                                each={
-                                    activeShelf() === null
-                                        ? books()
-                                        : books().filter((b) =>
-                                              shelves()
-                                                  .find((s) => s.id === activeShelf())
-                                                  ?.bookIds.includes(b.localId),
-                                          )
-                                }
-                            >
-                                {(b) => (
-                                    <div class="relative group">
-                                        <a href={`/reader/${b.localId}`} class="block">
-                                            <div class="card-theme rounded-lg shadow-md hover:shadow-lg overflow-hidden">
-                                                <img
-                                                    src={covers()[b.localId]}
-                                                    alt={b.title}
-                                                    class="aspect-[3/4] w-full object-cover"
-                                                />
-                                                <button
-                                                    class="absolute cursor-pointer top-2 right-11 w-8 h-8 opacity-0 group-hover:opacity-100 bg-(--base02) hover:bg-(--base03) rounded-full p-1 shadow flex items-center justify-center transition-colors"
-                                                    onClick={(e) => {
-                                                        e.preventDefault()
-                                                        setSelectedBook(b)
-                                                    }}
-                                                >
-                                                    <IconFolderOpen />
-                                                </button>
-                                                <button
-                                                    class="absolute cursor-pointer top-2 right-2 w-8 h-8 opacity-0 group-hover:opacity-100 bg-(--base01) hover:bg-(--base03) hover:ring-2 hover:ring-(--base08) rounded-full p-1 shadow flex items-center justify-center transition-all"
-                                                    onClick={(e) => {
-                                                        e.preventDefault()
-                                                        ReaderSourceDB.deleteBook(b.localId).then(
-                                                            () => {
+                {/* Main layout */}
+                <div class="flex flex-1 flex-col md:flex-row">
+                    {/* Sidebar (desktop) */}
+
+                    <aside class="navbar-theme hidden md:flex border-r p-4 flex-col gap-4 md:w-48 lg:w-64 overflow-y-auto max-h-[calc(100vh-3.5rem)]">
+                        <SidebarContent />
+                    </aside>
+
+                    {/* Main */}
+                    <div class="flex-1 flex flex-col md:flex-row">
+                        <main class="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 max-h-[calc(100vh-3.5rem)]">
+                            <div class="flex flex-wrap items-center gap-2 mb-4">
+                                <label class="text-sm font-medium">Sort by:</label>
+                                <select
+                                    class="button-theme px-2 py-1 rounded border"
+                                    value={sort()}
+                                    onInput={(e) => setSort(e.currentTarget.value as any)}
+                                >
+                                    <option value="lastModifiedDate">Last Updated</option>
+                                    <option value="creationDate">Date Added</option>
+                                </select>
+                                <button
+                                    class="button-theme px-2 py-1 rounded border"
+                                    onClick={() => setDir((d) => (d === "asc" ? "desc" : "asc"))}
+                                >
+                                    {dir() === "asc" ? "↑" : "↓"}
+                                </button>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-5 mx-6 sm:mx-0">
+                                <For
+                                    each={
+                                        activeShelf() === null
+                                            ? books()
+                                            : books().filter((b) =>
+                                                  shelves()
+                                                      .find((s) => s.id === activeShelf())
+                                                      ?.bookIds.includes(b.localId),
+                                              )
+                                    }
+                                >
+                                    {(b) => (
+                                        <div class="relative group">
+                                            <a href={`/reader/${b.localId}`} class="block">
+                                                <div class="card-theme rounded-lg shadow-md hover:shadow-lg overflow-hidden">
+                                                    <img
+                                                        src={covers()[b.localId]}
+                                                        alt={b.title}
+                                                        class="aspect-[3/4] w-full object-cover"
+                                                    />
+                                                    <button
+                                                        class="absolute cursor-pointer top-2 right-11 w-8 h-8 opacity-0 group-hover:opacity-100 bg-(--base02) hover:bg-(--base03) rounded-full p-1 shadow flex items-center justify-center transition-colors"
+                                                        onClick={(e) => {
+                                                            e.preventDefault()
+                                                            setSelectedBook(b)
+                                                        }}
+                                                    >
+                                                        <IconFolderOpen />
+                                                    </button>
+                                                    <button
+                                                        class="absolute cursor-pointer top-2 right-2 w-8 h-8 opacity-0 group-hover:opacity-100 bg-(--base01) hover:bg-(--base03) hover:ring-2 hover:ring-(--base08) rounded-full p-1 shadow flex items-center justify-center transition-all"
+                                                        onClick={(e) => {
+                                                            e.preventDefault()
+                                                            ReaderSourceDB.deleteBook(
+                                                                b.localId,
+                                                            ).then(() => {
                                                                 setBooks((prev) =>
                                                                     prev.filter(
                                                                         (i) =>
                                                                             i.localId !== b.localId,
                                                                     ),
                                                                 )
-                                                            },
-                                                        )
-                                                    }}
-                                                >
-                                                    <IconTrash />
-                                                </button>
-                                                <div class="px-3 py-2">
-                                                    <p class="text-sm truncate">{b.title}</p>
-                                                    <progress
-                                                        class="progress-theme w-full h-2 rounded"
-                                                        value={b.currChars}
-                                                        max={b.totalChars}
-                                                    />
+                                                            })
+                                                        }}
+                                                    >
+                                                        <IconTrash />
+                                                    </button>
+                                                    <div class="px-3 py-2">
+                                                        <p class="text-sm truncate">{b.title}</p>
+                                                        <progress
+                                                            class="progress-theme w-full h-2 rounded"
+                                                            value={b.currChars}
+                                                            max={b.totalChars}
+                                                        />
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </a>
-                                    </div>
-                                )}
-                            </For>
-                        </div>
-                    </main>
-                    {/* Right sidebar (only if logged in) */}
-                    <Show when={user()}>
-                        <aside class="navbar-theme hidden md:flex border-l p-4 flex-col w-48 lg:w-64">
-                            <h2 class="text-md font-semibold mb-2">Followings Reading</h2>
-                            <div id="followings-scroll" class="overflow-y-auto flex-1 space-y-3">
-                                <For each={followings().slice(0, visibleCount())}>
-                                    {(f) => (
-                                        <div class="p-2 border rounded-md text-sm">
-                                            <p class="font-medium truncate">{f.username}</p>
-                                            <Show when={f.status}>
-                                                <div class="text-xs text-gray-500 mt-1">
-                                                    Last Activity: {f.status!.last_activity}
-                                                    <br />
-                                                    Last Active: {f.status!.timestamp}
-                                                </div>
-                                            </Show>
+                                            </a>
                                         </div>
                                     )}
                                 </For>
                             </div>
-                        </aside>
-                    </Show>
-                </div>
-            </div>
-
-            {/* Shelf Modal */}
-            <Show when={selectedBook()}>
-                <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-                    <div class="bg-white dark:bg-zinc-900 rounded-xl p-6 shadow-xl w-full max-w-md">
-                        <h3 class="text-xl font-semibold mb-4 text-zinc-800 dark:text-white">
-                            Add to shelves
-                        </h3>
-                        <div class="space-y-2 max-h-[300px] overflow-y-auto">
-                            <For each={shelves()}>
-                                {(s) => {
-                                    const inShelf = s.bookIds.includes(selectedBook()!.localId)
-                                    return (
-                                        <button
-                                            class="w-full px-4 py-2 rounded button-theme flex justify-between items-center"
-                                            onClick={() => toggleBookInShelf(s.id)}
-                                        >
-                                            <span>
-                                                {inShelf ? "✓" : "+"} {s.name}
-                                            </span>
-                                            <span class="text-xs">
-                                                {inShelf ? "Remove" : "Add"}
-                                            </span>
-                                        </button>
-                                    )
-                                }}
-                            </For>
-                        </div>
-                        <div class="mt-6 text-right">
-                            <button
-                                class="button-theme px-4 py-2"
-                                onClick={() => setSelectedBook(null)}
-                            >
-                                Close
-                            </button>
-                        </div>
+                        </main>
+                        {/* Right sidebar (only if logged in) */}
+                        <Show when={user()}>
+                            <aside class="navbar-theme hidden md:flex border-l p-4 flex-col w-48 lg:w-64 overflow-y-auto max-h-[calc(100vh-3.5rem)]">
+                                <h2 class="text-md font-semibold mb-2">Followings Reading</h2>
+                                <div
+                                    id="followings-scroll"
+                                    class="overflow-y-auto flex-1 space-y-3"
+                                >
+                                    <For each={followings().slice(0, visibleCount())}>
+                                        {(f) => (
+                                            <div class="p-2 border rounded-md text-sm">
+                                                <p class="font-medium truncate">{f.username}</p>
+                                                <Show when={f.status}>
+                                                    <div class="text-xs text-gray-500 mt-1">
+                                                        Last Activity: {f.status!.last_activity}
+                                                        <br />
+                                                        Last Active: {f.status!.timestamp}
+                                                    </div>
+                                                </Show>
+                                            </div>
+                                        )}
+                                    </For>
+                                </div>
+                            </aside>
+                        </Show>
                     </div>
                 </div>
-            </Show>
+
+                {/* Shelf Modal */}
+                <Show when={selectedBook()}>
+                    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+                        <div class="bg-white dark:bg-zinc-900 rounded-xl p-6 shadow-xl w-full max-w-md">
+                            <h3 class="text-xl font-semibold mb-4 text-zinc-800 dark:text-white">
+                                Add to shelves
+                            </h3>
+                            <div class="space-y-2 max-h-[300px] overflow-y-auto">
+                                <For each={shelves()}>
+                                    {(s) => {
+                                        const inShelf = s.bookIds.includes(selectedBook()!.localId)
+                                        return (
+                                            <button
+                                                class="w-full px-4 py-2 rounded button-theme flex justify-between items-center"
+                                                onClick={() => toggleBookInShelf(s.id)}
+                                            >
+                                                <span>
+                                                    {inShelf ? "✓" : "+"} {s.name}
+                                                </span>
+                                                <span class="text-xs">
+                                                    {inShelf ? "Remove" : "Add"}
+                                                </span>
+                                            </button>
+                                        )
+                                    }}
+                                </For>
+                            </div>
+                            <div class="mt-6 text-right">
+                                <button
+                                    class="button-theme px-4 py-2"
+                                    onClick={() => setSelectedBook(null)}
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </Show>
+            </div>
         </div>
     )
 }
