@@ -9,7 +9,20 @@ class V1::FollowsController < ApplicationController
     @user = User.find_by(id: params[:user_id])
     return render_user_not_found unless @user
 
-    render json: { following: @user.following.as_json(except: [ :password_digest ]) }
+
+
+    # TODO: improve the query?
+    following = @user.following.map do |u|
+      avatar_url = u.avatar.attached? ? url_for(u.avatar) : nil
+      {
+        id: u.id,
+        username: u.username,
+        email: u.email,
+        avatar_url: avatar_url
+      }
+    end
+
+    render json: { following: following }
   end
 
   # @oas_include
@@ -21,7 +34,18 @@ class V1::FollowsController < ApplicationController
     @user = User.find_by(id: params[:user_id])
     return render_user_not_found unless @user
 
-    render json: { followers: @user.followers.as_json(except: [ :password_digest ]) }
+    # TODO: improve the query?
+    followers = @user.followers.map do |u|
+      avatar_url = u.avatar.attached? ? url_for(u.avatar) : nil
+      {
+        id: u.id,
+        username: u.username,
+        email: u.email,
+        avatar_url: avatar_url
+      }
+    end
+
+    render json: { followers: followers }
   end
 
   # @oas_include
