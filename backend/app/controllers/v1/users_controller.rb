@@ -1,5 +1,5 @@
 class V1::UsersController < ApplicationController
-  allow_unauthenticated_access only: %i[ create confirm search ]
+  allow_unauthenticated_access only: %i[ create confirm search show ]
   wrap_parameters :user, include: [ :password, :password_confirmation ]
 
   # @oas_include
