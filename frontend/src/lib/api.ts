@@ -137,9 +137,8 @@ async function logout(): Promise<void> {
         throw new Error("Can't validate the connection")
     }
 
-    let res: Response
     try {
-        res = await fetch(url, {
+        await fetch(url, {
             method: "DELETE",
             credentials: "include",
             headers: {
@@ -521,4 +520,5 @@ export default {
     fetchUserFollowers,
     fetchSessionInfo,
     fetchUserStatusBatch,
+    fetchUserStatus,
 }

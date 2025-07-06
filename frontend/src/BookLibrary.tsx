@@ -351,11 +351,7 @@ export default function BookLibrary() {
     return (
         <div class="body-theme flex flex-col min-h-screen">
             {/* Navbar */}
-            <BookLibraryNavbar
-                onSidebarOpen={() => setSidebarOpen(true)}
-                handleUpload={handleUpload}
-                user={user}
-            />
+            <BookLibraryNavbar handleUpload={handleUpload} user={user} />
 
             <div class="flex flex-1 min-h-0 mt-14">
                 {/* Sidebar (mobile overlay) */}
