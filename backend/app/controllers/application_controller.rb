@@ -14,6 +14,11 @@ class ApplicationController < ActionController::API
   end
 
   def set_csrf_cookie
-    cookies["CSRF-TOKEN"] = form_authenticity_token
+    cookies["CSRF-TOKEN"] = {
+      value: form_authenticity_token,
+      same_site: :lax,
+      secure: Rails.env.production?,
+      domain: Rails.env.production? ? ".lumireader.app" : nil
+    }
   end
 end

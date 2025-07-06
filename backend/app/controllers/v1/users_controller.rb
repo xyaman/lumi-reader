@@ -126,12 +126,12 @@ class V1::UsersController < ApplicationController
       end
     else
       if user&.confirmed?
-        redirect_to "#{login_url}?status=already_confirmed"
+        redirect_to "#{login_url}?status=already_confirmed", allow_other_host: true
       elsif user
         user.confirm!
-        redirect_to "#{login_url}?status=confirmed"
+        redirect_to "#{login_url}?status=confirmed", allow_other_host: true
       else
-        redirect_to "#{login_url}?status=invalid_token"
+        redirect_to "#{login_url}?status=invalid_token", allow_other_host: true
       end
     end
   end
