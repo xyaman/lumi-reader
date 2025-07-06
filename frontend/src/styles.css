@@ -8,6 +8,20 @@
   }
 }
 
+@layer components {
+    .button {
+       @apply rounded-lg shadow-md bg-(--base00) hover:bg-(--base01) border border-(--base03) text-(--base05) p-1
+    }
+
+    .button-alt {
+       @apply rounded-lg shadow-md bg-(--base01) hover:bg-(--base00) border border-(--base03) text-(--base05) p-1
+    }
+
+    .body-alt {
+        @apply bg-(--base01)
+    }
+}
+
 html,
 body {
   margin: 0;
@@ -33,17 +47,6 @@ body {
 }
 
 /* == Buttons == */
-.button-theme {
-  background-color: var(--base00);
-  color: var(--base05);
-  border: 1px solid
-  transition: background-color 0.2s ease;
-}
-
-.button-theme:hover {
-  background-color: var(--base02);
-}
-
 .button-theme-alt {
   background-color: var(--base01);
   color: var(--base05);
@@ -116,7 +119,9 @@ body {
 }
 
 /* TODO: find a less expensive way? */
+#reader-content
 *:has(> img),
+#reader-content
 *:has(> svg) {
   text-align: center !important;
 }
