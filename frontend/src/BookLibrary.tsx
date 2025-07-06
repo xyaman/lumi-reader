@@ -11,6 +11,60 @@ import { timeAgo } from "@/lib/utils"
 const LS_SORT = "library:sortBy"
 const LS_DIR = "library:direction"
 
+type BookLibraryNavbarProps = {
+    handleUpload: (e: Event) => void
+    user: () => any
+}
+
+function BookLibraryNavbar(props: BookLibraryNavbarProps) {
+    const { handleUpload, user } = props
+    return (
+        <Navbar fixed title="lumireader">
+            <Navbar.Left>
+                <A
+                    href="/"
+                    class="text-xl font-bold text-[var(--base07)] hover:text-[var(--base0D)] transition-colors"
+                >
+                    lumireader
+                </A>
+            </Navbar.Left>
+            <Navbar.Right>
+                <label class="button relative px-3 py-2 rounded-lg cursor-pointer">
+                    <IconUpload />
+                    <span class="sr-only">Upload EPUB</span>
+                    <input
+                        type="file"
+                        accept=".epub"
+                        multiple
+                        onInput={handleUpload}
+                        class="absolute inset-0 opacity-0"
+                    />
+                </label>
+                <A href="/settings" class="button px-3 py-2 rounded-lg">
+                    <IconSettings />
+                </A>
+                <Show
+                    when={user()}
+                    fallback={
+                        <>
+                            <A href="/login" class="button-theme px-3 py-2 rounded-lg">
+                                Login
+                            </A>
+                            <A href="/register" class="button-theme px-3 py-2 rounded-lg">
+                                Register
+                            </A>
+                        </>
+                    }
+                >
+                    <A href="/profile" class="button px-3 py-2 rounded-lg">
+                        Profile
+                    </A>
+                </Show>
+            </Navbar.Right>
+        </Navbar>
+    )
+}
+
 type Shelf = { id: number; name: string; bookIds: number[] }
 
 export default function BookLibrary() {
@@ -297,72 +351,11 @@ export default function BookLibrary() {
     return (
         <div class="body-theme flex flex-col min-h-screen">
             {/* Navbar */}
-            <Navbar fixed>
-                <Navbar.Left>
-                    <button
-                        class="md:hidden p-2 rounded-lg button-theme"
-                        onClick={() => setSidebarOpen(true)}
-                    >
-                        <span class="sr-only">Open sidebar</span>
-                        <svg
-                            width="24"
-                            height="24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M4 6h16M4 12h16M4 18h16"
-                            />
-                        </svg>
-                    </button>
-
-                    <A
-                        href="/"
-                        class="text-xl font-bold text-[var(--base07)] hover:text-[var(--base0D)] transition-colors"
-                    >
-                        lumireader
-                    </A>
-                </Navbar.Left>
-
-                <Navbar.Right>
-                    <label class="button-theme relative px-3 py-2 rounded-lg cursor-pointer">
-                        <IconUpload />
-                        <span class="sr-only">Upload EPUB</span>
-                        <input
-                            type="file"
-                            accept=".epub"
-                            multiple
-                            onInput={handleUpload}
-                            class="absolute inset-0 opacity-0"
-                        />
-                    </label>
-
-                    <A href="/settings" class="button-theme px-3 py-2 rounded-lg">
-                        <IconSettings />
-                    </A>
-
-                    <Show
-                        when={user()}
-                        fallback={
-                            <>
-                                <A href="/login" class="button-theme px-3 py-2 rounded-lg">
-                                    Login
-                                </A>
-                                <A href="/register" class="button-theme px-3 py-2 rounded-lg">
-                                    Register
-                                </A>
-                            </>
-                        }
-                    >
-                        <A href="/profile" class="button-theme px-3 py-2 rounded-lg">
-                            Profile
-                        </A>
-                    </Show>
-                </Navbar.Right>
-            </Navbar>
+            <BookLibraryNavbar
+                onSidebarOpen={() => setSidebarOpen(true)}
+                handleUpload={handleUpload}
+                user={user}
+            />
 
             <div class="flex flex-1 min-h-0 mt-14">
                 {/* Sidebar (mobile overlay) */}
