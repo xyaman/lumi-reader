@@ -10,7 +10,7 @@ function Register() {
     createEffect(() => {
         if (authStore.user) {
             const navigate = useNavigate()
-            navigate("/profile")
+            navigate("/profile", { replace: true })
         }
         fetchCurrentUser()
     })
@@ -123,7 +123,7 @@ function Register() {
 
                             <button
                                 type="submit"
-                                class="w-full py-2 px-4 bg-[var(--base0D)] text-[var(--base00)] rounded-md hover:bg-[var(--base0C)] font-semibold transition-all duration-200"
+                                class="button w-full py-2 px-4 font-semibold transition-all duration-200"
                             >
                                 Register
                             </button>
