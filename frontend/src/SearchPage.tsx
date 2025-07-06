@@ -1,4 +1,4 @@
-import { createSignal, createResource, Show } from "solid-js"
+import { createSignal, createResource, Show, onMount } from "solid-js"
 import { useNavigate } from "@solidjs/router"
 import UserList, { SimpleUser } from "@/components/UserList"
 import api from "./lib/api"
@@ -8,6 +8,11 @@ export default function UserListPage() {
     const navigate = useNavigate()
     const [query, setQuery] = createSignal("")
     const [searchTerm, setSearchTerm] = createSignal("")
+
+    let inputRef: HTMLInputElement | undefined
+    onMount(() => {
+        inputRef?.focus()
+    })
 
     // Fetch users only when searchTerm changes (on Enter)
     const [users] = createResource(searchTerm, async (q) => {
@@ -45,6 +50,7 @@ export default function UserListPage() {
                 {/* Search Input */}
                 <div class="mb-4">
                     <input
+                        ref={inputRef}
                         type="text"
                         placeholder="Search users..."
                         class="w-full p-2 rounded border"
