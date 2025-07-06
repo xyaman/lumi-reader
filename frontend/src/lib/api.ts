@@ -506,6 +506,40 @@ async function fetchUserStatusBatch(userIds: number[]): Promise<IUserStatusBatch
     return data
 }
 
+interface IUsersQueryResponse {
+    users: {
+        id: number
+        username: string
+        avatar_url: string
+    }[]
+    pagy: {
+        page: number
+        items: number
+        pages: number
+        count: number
+    }
+}
+
+async function fetchUsersByQuery(query: string): Promise<IUsersQueryResponse> {
+    const url = `${API_URL}/${API_VERSION}/users/search?q=${query}`
+
+    let res: Response
+    try {
+        res = await fetch(url, {
+            method: "GET",
+            credentials: "include",
+        })
+    } catch {
+        throw new Error("Network error")
+    }
+
+    const data = await res.json()
+    if (!res.ok) {
+        throw new Error(data?.error ? data.error : `User search fetch failed: ${res.statusText}`)
+    }
+    return data
+}
+
 export default {
     register,
     login,
@@ -521,4 +555,5 @@ export default {
     fetchSessionInfo,
     fetchUserStatusBatch,
     fetchUserStatus,
+    fetchUsersByQuery,
 }
