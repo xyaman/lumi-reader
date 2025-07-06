@@ -1,7 +1,7 @@
-import { A, useParams } from "@solidjs/router"
+import { A, useNavigate, useParams } from "@solidjs/router"
 import Navbar from "./components/Navbar"
 import { IconExit, IconSettings } from "./components/icons"
-import { createResource, Match, Show, Switch } from "solid-js"
+import { createEffect, createResource, Match, Show, Switch } from "solid-js"
 import api, { IProfileInfoResponse } from "./lib/api"
 import { useAuthContext } from "./context/auth"
 import Spinner from "./components/Spiner"
@@ -106,11 +106,17 @@ function UserCard(props: UserCardProps) {
 
 function Profile() {
     const params = useParams()
-    const { authStore } = useAuthContext()
+    const navigate = useNavigate()
+    const { authStore, logout: localLogout } = useAuthContext()
 
     // --- Identity / Context ---
     const userId = () => Number(params.id ?? authStore.user?.id)
     const isOwnProfile = () => authStore.user?.id === userId()
+    createEffect(() => {
+        if (Number.isNaN(userId()) || userId() === 0) {
+            navigate("/login", { replace: true })
+        }
+    })
 
     // --- User Resource ---
     const [user, { mutate: mutateUser }] = createResource(async () => {
@@ -195,9 +201,11 @@ function Profile() {
         setDescStore("loading", false)
     }
 
-    // --- Logout (TODO) ---
+    // --- Logout ---
     const logout = () => {
-        // implement logout logic here
+        api.logout()
+        localLogout()
+        navigate("/login")
     }
 
     // --- Render ---

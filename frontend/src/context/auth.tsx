@@ -7,6 +7,7 @@ const AUTH_STORE_KEY = "auth:userinfo"
 interface IAuthContext {
     authStore: IAuthStore
     fetchCurrentUser: () => Promise<void>
+    logout: () => void
 }
 const AuthContext = createContext<IAuthContext>()
 
@@ -27,7 +28,7 @@ async function fetchCurrentUser() {
                 id: res.user.id,
                 email: res.user.email,
                 username: res.user.username,
-                share_reading_data: res.user.share_reading_data,
+                share_reading_data: res.user.share_status,
                 avatar_url: "",
             }
             setAuthStore({ user, status: UserStatus.authenticated })
@@ -37,6 +38,10 @@ async function fetchCurrentUser() {
     } catch {
         setAuthStore("status", UserStatus.offline)
     }
+}
+
+function logout() {
+    setAuthStore({ user: null, status: UserStatus.unauthenticated })
 }
 
 /**
@@ -87,7 +92,7 @@ export function AuthProvider(props: { children: JSX.Element }) {
     })
 
     return (
-        <AuthContext.Provider value={{ authStore, fetchCurrentUser }}>
+        <AuthContext.Provider value={{ authStore, fetchCurrentUser, logout }}>
             {props.children}
         </AuthContext.Provider>
     )

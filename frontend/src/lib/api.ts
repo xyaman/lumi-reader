@@ -129,6 +129,28 @@ async function login(body: ILoginBody): Promise<ILoginResponse> {
     return data
 }
 
+async function logout(): Promise<void> {
+    const url = `${API_URL}/${API_VERSION}/session`
+    const cookie = await getCsrfCookie()
+
+    if (!cookie) {
+        throw new Error("Can't validate the connection")
+    }
+
+    let res: Response
+    try {
+        res = await fetch(url, {
+            method: "DELETE",
+            credentials: "include",
+            headers: {
+                "X-CSRF-TOKEN": cookie,
+            },
+        })
+    } catch {
+        throw new Error("Network error")
+    }
+}
+
 export interface IProfileInfoResponse {
     user: {
         id: number
@@ -488,6 +510,7 @@ async function fetchUserStatusBatch(userIds: number[]): Promise<IUserStatusBatch
 export default {
     register,
     login,
+    logout,
     updateAvatar,
     updateDescription,
     updateShareStatus,
