@@ -15,6 +15,7 @@ type UserCardProps = {
     onButtonClick?: (() => Promise<void>) | (() => void)
     isEditing?: boolean
     onToggleShareStatus?: () => void
+    onAvatarChange?: (file: File) => void
 }
 
 function UserCard(props: UserCardProps) {
@@ -22,11 +23,34 @@ function UserCard(props: UserCardProps) {
 
     return (
         <div class="flex flex-col items-center md:items-start space-y-3">
-            <img
-                class="mx-auto w-36 h-36 rounded-full object-cover border border-(--base03)"
-                src={user().avatar_url}
-                alt="User avatar"
-            />
+            <div class="relative w-36 h-36 mx-auto">
+                <img
+                    class="w-full h-full rounded-full object-cover border border-(--base03)"
+                    src={user().avatar_url}
+                    alt="User avatar"
+                />
+                <Show when={props.isOwnProfile}>
+                    <label class="button absolute bottom-0 right-0 text-xs px-2 py-1 rounded cursor-pointer">
+                        Change
+                        <input
+                            type="file"
+                            accept="image/*"
+                            class="hidden"
+                            onChange={(e) => {
+                                const file = e.currentTarget.files?.[0]
+                                if (file && props.onAvatarChange) {
+                                    if (file.size / 1000000 > 2) {
+                                        alert("Max file size: 2MB")
+                                        return
+                                    }
+
+                                    props.onAvatarChange(file)
+                                }
+                            }}
+                        />
+                    </label>
+                </Show>
+            </div>
             <p class="text-3xl font-semibold">{user().username}</p>
             <button
                 class="button-alt w-full py-1 text-sm"
@@ -34,7 +58,11 @@ function UserCard(props: UserCardProps) {
                 onClick={props.onButtonClick}
                 disabled={props.isEditing}
             >
-                {props.isOwnProfile ? "Edit profile" : props.isFollowing ? "Unfollow" : "Follow"}
+                {props.isOwnProfile
+                    ? "Edit description"
+                    : props.isFollowing
+                      ? "Unfollow"
+                      : "Follow"}
             </button>
             <Show when={props.isOwnProfile}>
                 <div class="w-full flex items-center justify-between gap-2 text-xs font-medium">
@@ -78,12 +106,41 @@ function UserCard(props: UserCardProps) {
 
 function Profile() {
     const params = useParams()
-    const logout = () => {}
-
     const { authStore } = useAuthContext()
+
+    // --- Identity / Context ---
     const userId = () => Number(params.id ?? authStore.user?.id)
     const isOwnProfile = () => authStore.user?.id === userId()
 
+    // --- User Resource ---
+    const [user, { mutate: mutateUser }] = createResource(async () => {
+        const data = await api.fetchProfileInfo(userId())
+        return data.user
+    })
+
+    // --- Follow Status ---
+    const [isFollowing, { mutate: setIsFollowing }] = createResource(
+        () => (!isOwnProfile() && authStore.user ? true : null),
+        async () => {
+            const res = await api.fetchUserFollowers(userId())
+            return res.followers.some((u) => u.id === authStore.user?.id)
+        },
+    )
+
+    const toggleFollow = async () => {
+        if (!userId() || isOwnProfile()) return
+        if (isFollowing()) {
+            await api.unfollow(userId())
+            setIsFollowing(false)
+            mutateUser((u) => u && { ...u, followers_count: u.followers_count - 1 })
+        } else {
+            await api.follow(userId())
+            setIsFollowing(true)
+            mutateUser((u) => u && { ...u, followers_count: u.followers_count + 1 })
+        }
+    }
+
+    // --- Share Status ---
     const toggleShareStatus = async () => {
         if (!user()) return
         try {
@@ -92,7 +149,18 @@ function Profile() {
         } catch {}
     }
 
-    // Editing
+    // --- Avatar Change ---
+    const changeAvatar = async (file: File) => {
+        try {
+            const avatar_url = (await api.updateAvatar(file)).avatar_url
+            mutateUser((u) => u && { ...u, avatar_url })
+        } catch (e) {
+            console.error("Failed to upload avatar", e)
+            alert("Failed to upload avatar.")
+        }
+    }
+
+    // --- Description Editing ---
     const [descStore, setDescStore] = createStore({
         editing: false,
         value: "",
@@ -121,43 +189,18 @@ function Profile() {
             await api.updateDescription(descStore.value)
             mutateUser((u) => u && { ...u, description: descStore.value })
             setDescStore("editing", false)
-        } catch (e) {
+        } catch {
             setDescStore("error", "Failed to update description.")
         }
         setDescStore("loading", false)
     }
 
-    const [user, { mutate: mutateUser }] = createResource(async () => {
-        const data = await api.fetchProfileInfo(userId())
-        return data.user
-    })
-
-    const [isFollowing, { mutate: setIsFollowing }] = createResource(
-        () => {
-            if (!isOwnProfile() && authStore.user) {
-                return true
-            }
-            return null
-        },
-        async () => {
-            const res = await api.fetchUserFollowers(userId())
-            return res.followers.some((u) => u.id === authStore.user?.id)
-        },
-    )
-
-    const toggleFollow = async () => {
-        if (!userId() || isOwnProfile()) return
-        if (isFollowing()) {
-            await api.unfollow(userId())
-            setIsFollowing(false)
-            mutateUser((u) => u && { ...u, followers_count: u.followers_count - 1 })
-        } else {
-            await api.follow(userId())
-            setIsFollowing(true)
-            mutateUser((u) => u && { ...u, followers_count: u.followers_count + 1 })
-        }
+    // --- Logout (TODO) ---
+    const logout = () => {
+        // implement logout logic here
     }
 
+    // --- Render ---
     return (
         <>
             <Navbar>
@@ -182,11 +225,12 @@ function Profile() {
                     </button>
                 </Navbar.Right>
             </Navbar>
+
             <div>
                 <Switch>
                     <Match when={user.loading}>
                         <div class="flex items-center justify-center min-h-[50vh]">
-                            <Spinner size={48} base16Color={"--base05"} />
+                            <Spinner size={48} base16Color="--base05" />
                         </div>
                     </Match>
                     <Match when={user.error}>
@@ -202,6 +246,7 @@ function Profile() {
                                     isEditing={descStore.editing}
                                     onButtonClick={isOwnProfile() ? startEditDesc : toggleFollow}
                                     onToggleShareStatus={toggleShareStatus}
+                                    onAvatarChange={changeAvatar}
                                 />
                             </aside>
                             <main class="md:col-span-2 space-y-6 mt-6 md:mt-0">
@@ -209,7 +254,7 @@ function Profile() {
                                     <Show
                                         when={descStore.editing}
                                         fallback={
-                                            <p>{user()!.description ?? "[No description]"}</p>
+                                            <p>{user()?.description ?? "[No description]"}</p>
                                         }
                                     >
                                         <>
@@ -245,7 +290,6 @@ function Profile() {
                                     </Show>
                                 </section>
 
-                                {/* Activity */}
                                 <section>
                                     <h2 class="text-lg font-semibold mb-2">Reading activity</h2>
                                     <p class="text-sm font-light">No activity...</p>
