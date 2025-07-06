@@ -29,7 +29,7 @@ class V1::UserStatusController < ApplicationController
       return render json: { error: "Invalid user id" }, status: :bad_request
     end
 
-    unless user.share_reading_data
+    unless user.share_status
       return render json: { last_activity: nil, last_book: nil }
     end
 
@@ -59,7 +59,7 @@ class V1::UserStatusController < ApplicationController
     end
 
     user_ids = ids.map(&:to_i)
-    users = User.where(id: user_ids, share_reading_data: true)
+    users = User.where(id: user_ids, share_status: true)
 
     results = users.map do |user|
       {

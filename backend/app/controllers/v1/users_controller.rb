@@ -52,7 +52,6 @@ class V1::UsersController < ApplicationController
   # @response Validation failed(422) [Hash{errors: Array<String>}]
   def update_description
     user = Current.user
-    puts params.inspect
     if user.update(description: params[:description])
       puts user.description
       render json: { message: "Description updated successfully.", description: user.description }, status: :ok
@@ -63,8 +62,24 @@ class V1::UsersController < ApplicationController
 
   # @oas_include
   # @tags Users
+  # @summary Update a user's status
+  # @request_body The new status [Hash{share_status: Boolean}]
+  # @response Description updated successfully(200) [Hash{message: String, share_status: Boolean}]
+  # @response Validation failed(422) [Hash{errors: Array<String>}]
+  def update_share_status
+    user = Current.user
+    if user.update(share_status: params[:share_status])
+      puts user.description
+      render json: { message: "Share status updated successfully.", share_status: user.share_status }, status: :ok
+    else
+      render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
+  # @oas_include
+  # @tags Users
   # @summary Show a User
-  # @response User found(200) [Hash{user: Hash{id: Integer, email: String, username: String, description: String, share_reading_data: Boolean, following_count: Integer, followers_count: Integer}}]
+  # @response User found(200) [Hash{user: Hash{id: Integer, email: String, username: String, description: String, share_status: Boolean, following_count: Integer, followers_count: Integer}}]
   # @response User not found(404) [Hash{error: String}]
   #
   # Returns the user with the given ID.
@@ -75,7 +90,7 @@ class V1::UsersController < ApplicationController
       following_count = user.following.count
       followers_count = user.followers.count
 
-      json_user = user.slice(:id, :email, :username, :description, :share_reading_data)
+      json_user = user.slice(:id, :email, :username, :description, :share_status)
       json_user[:avatar_url] = user.avatar.attached? ? url_for(user.avatar) : nil
       json_user.merge!(following_count: following_count, followers_count: followers_count)
 

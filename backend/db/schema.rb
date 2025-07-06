@@ -74,7 +74,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_05_130929) do
     t.string "username", null: false
     t.string "password_digest", null: false
     t.string "description"
-    t.boolean "share_reading_data", default: true, null: false
+    t.boolean "share_status", default: true, null: false
     t.string "confirmation_token"
     t.datetime "confirmed_at"
     t.datetime "confirmation_sent_at"

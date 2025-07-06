@@ -15,6 +15,7 @@ Rails.application.routes.draw do
 
       patch "avatar", to: "users#update_avatar"
       patch "description", to: "users#update_description"
+      patch "status", to: "users#update_share_status"
     end
 
     # email confirmation

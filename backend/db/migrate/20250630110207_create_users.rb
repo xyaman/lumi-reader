@@ -5,7 +5,7 @@ class CreateUsers < ActiveRecord::Migration[8.0]
       t.string :username, null: false
       t.string :password_digest, null: false
       t.string :description
-      t.boolean :share_reading_data, default: true, null: false
+      t.boolean :share_status, default: true, null: false
 
       # registration mail
       t.string :confirmation_token
