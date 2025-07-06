@@ -32,14 +32,14 @@ async function getCsrfCookie(): Promise<string | null> {
     return getCookie("CSRF-TOKEN")
 }
 
-interface IRegisterBody {
+export interface IRegisterBody {
     email: string
     username: string
     password: string
     password_confirmation: string
 }
 
-interface IRegisterResponse {
+export interface IRegisterResponse {
     user: {
         id: number
         email: string
@@ -85,12 +85,12 @@ async function register(body: IRegisterBody): Promise<IRegisterResponse> {
     return data
 }
 
-interface ILoginBody {
+export interface ILoginBody {
     email: string
     password: string
 }
 
-interface ILoginResponse {
+export interface ILoginResponse {
     user: {
         id: number
         email: string
@@ -129,11 +129,15 @@ async function login(body: ILoginBody): Promise<ILoginResponse> {
     return data
 }
 
-interface IProfileInfoResponse {
+export interface IProfileInfoResponse {
     user: {
         id: number
+        avatar_url: string
         username: string
+        description: string
         share_reading_data: boolean
+        following_count: number
+        followers_count: number
     }
 }
 
@@ -162,7 +166,78 @@ async function fetchProfileInfo(userId: number): Promise<IProfileInfoResponse> {
     return data
 }
 
-interface ISesssionInfoResponse {
+export interface IUpdateAvatarResponse {
+    avatar_url: string
+}
+
+async function updateAvatar(file: File): Promise<IUpdateAvatarResponse> {
+    const url = `${API_URL}/${API_VERSION}/session/avatar`
+
+    const cookie = await getCsrfCookie()
+    if (!cookie) {
+        throw new Error("Can't validate the connection")
+    }
+
+    const formData = new FormData()
+    formData.append("avatar", file)
+
+    let res: Response
+    try {
+        res = await fetch(url, {
+            method: "PATCH",
+            credentials: "include",
+            headers: {
+                "X-CSRF-TOKEN": cookie,
+            },
+            body: formData,
+        })
+    } catch {
+        throw new Error("Network error")
+    }
+
+    const data = await res.json()
+    if (!res.ok) {
+        throw new Error(data?.error ? data.error : `Create follow failed: ${res.statusText}`)
+    }
+    return data
+}
+
+export interface IUpdateDescriptionResponse {
+    message: string
+    description: string
+}
+
+async function updateDescription(description: string): Promise<IUpdateDescriptionResponse> {
+    const url = `${API_URL}/${API_VERSION}/session/description`
+
+    const cookie = await getCsrfCookie()
+    if (!cookie) {
+        throw new Error("Can't validate the connection")
+    }
+
+    let res: Response
+    try {
+        res = await fetch(url, {
+            method: "PATCH",
+            credentials: "include",
+            headers: {
+                "X-CSRF-TOKEN": cookie,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ description }),
+        })
+    } catch {
+        throw new Error("Network error")
+    }
+
+    const data = await res.json()
+    if (!res.ok) {
+        throw new Error(data?.error ? data.error : `Update description failed: ${res.statusText}`)
+    }
+    return data
+}
+
+export interface ISesssionInfoResponse {
     user: {
         id: number
         email: string
@@ -201,7 +276,7 @@ async function fetchSessionInfo(): Promise<ISesssionInfoResponse | null> {
 }
 
 async function follow(userId: number): Promise<void> {
-    const url = `${API_URL}/${API_VERSION}/users/${userId}/follows/`
+    const url = `${API_URL}/${API_VERSION}/session/follows/${userId}`
 
     const cookie = await getCsrfCookie()
     if (!cookie) {
@@ -211,7 +286,7 @@ async function follow(userId: number): Promise<void> {
     let res: Response
     try {
         res = await fetch(url, {
-            method: "POST",
+            method: "PUT",
             credentials: "include",
             headers: {
                 "X-CSRF-TOKEN": cookie,
@@ -228,14 +303,42 @@ async function follow(userId: number): Promise<void> {
     return data
 }
 
-interface IFollowResponse {
+async function unfollow(userId: number): Promise<void> {
+    const url = `${API_URL}/${API_VERSION}/session/follows/${userId}`
+
+    const cookie = await getCsrfCookie()
+    if (!cookie) {
+        throw new Error("Can't validate the connection")
+    }
+
+    let res: Response
+    try {
+        res = await fetch(url, {
+            method: "DELETE",
+            credentials: "include",
+            headers: {
+                "X-CSRF-TOKEN": cookie,
+            },
+        })
+    } catch {
+        throw new Error("Network error")
+    }
+
+    const data = await res.json()
+    if (!res.ok) {
+        throw new Error(data?.error ? data.error : `Delete follow failed: ${res.statusText}`)
+    }
+    return data
+}
+
+export interface IFollowResponse {
     following: Array<{
         id: number
         username: string
     }>
 }
 
-interface IFollowerResponse {
+export interface IFollowerResponse {
     followers: Array<{
         id: number
         username: string
@@ -315,7 +418,7 @@ async function fetchUserStatus(userId: number): Promise<IFollowerResponse> {
     return data
 }
 
-interface IUserStatusBatchResponse {
+export interface IUserStatusBatchResponse {
     results: Array<{
         user_id: number
         timestamp: number
@@ -350,8 +453,11 @@ async function fetchUserStatusBatch(userIds: number[]): Promise<IUserStatusBatch
 export default {
     register,
     login,
+    updateAvatar,
+    updateDescription,
     fetchProfileInfo,
     follow,
+    unfollow,
     fetchUserFollows,
     fetchUserFollowers,
     fetchSessionInfo,

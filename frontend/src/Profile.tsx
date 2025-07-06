@@ -1,206 +1,219 @@
-import { Show, createSignal, onMount } from "solid-js"
-import { useNavigate, useParams, A } from "@solidjs/router"
+import { A, useParams } from "@solidjs/router"
 import Navbar from "./components/Navbar"
-import api from "./lib/api"
+import { IconExit, IconSettings } from "./components/icons"
+import { createResource, Match, Show, Switch } from "solid-js"
+import api, { IProfileInfoResponse } from "./lib/api"
 import { useAuthContext } from "./context/auth"
-import { IconSettings, IconExit } from "@/components/icons"
+import Spinner from "./components/Spiner"
+import { createStore } from "solid-js/store"
+
+type User = IProfileInfoResponse["user"]
+type UserCardProps = {
+    user: User
+    isOwnProfile: boolean
+    isFollowing?: boolean
+    onButtonClick?: (() => Promise<void>) | (() => void)
+    isEditing?: boolean
+}
+
+function UserCard(props: UserCardProps) {
+    const user = () => props.user
+
+    return (
+        <div class="flex flex-col items-center md:items-start space-y-3">
+            <img
+                class="mx-auto w-36 h-36 rounded-full object-cover border border-(--base03)"
+                src={user().avatar_url}
+                alt="User avatar"
+            />
+            <p class="text-3xl font-semibold">{user().username}</p>
+            <button
+                class="button-alt w-full py-1 text-sm"
+                classList={{ "opacity-50 cursor-not-allowed": props.isEditing }}
+                onClick={props.onButtonClick}
+                disabled={props.isEditing}
+            >
+                {props.isOwnProfile ? "Edit profile" : props.isFollowing ? "Unfollow" : "Follow"}
+            </button>
+            <p class="text-sm">
+                <span>{user().followers_count}</span> followers ·{" "}
+                <span>{user().following_count}</span> following
+            </p>
+        </div>
+    )
+}
 
 function Profile() {
-    const { authStore } = useAuthContext()
-    const navigate = useNavigate()
     const params = useParams()
     const logout = () => {}
 
-    const [user, setUser] = createSignal<{ id: number; username: string } | null>(null)
-    const [shareReadingData, setShareReadingData] = createSignal<boolean>(true)
-    const [isFollowing, setIsFollowing] = createSignal<boolean | null>(null)
-    const [loading, setLoading] = createSignal(false)
-    const [error, setError] = createSignal<string | null>(null)
-    const [search, setSearch] = createSignal("")
+    const { authStore } = useAuthContext()
+    const userId = () => Number(params.id ?? authStore.user?.id)
+    const isOwnProfile = () => authStore.user?.id === userId()
 
-    const viewedId = () => Number(params.id ?? authStore.user?.id)
-    const isOwnProfile = () => viewedId() === authStore.user?.id
-
-    if (!params.id && !authStore.user) {
-        navigate("/login")
-    }
-
-    onMount(async () => {
-        try {
-            const data = await api.fetchProfileInfo(viewedId())
-            setUser({ id: data.user.id, username: data.user.username })
-            setShareReadingData(Boolean(data.user.share_reading_data))
-
-            if (!isOwnProfile()) {
-                const follows = await api.fetchUserFollows(data.user.id)
-                const followingIds = follows.following.map((u: any) => String(u.id))
-                setIsFollowing(followingIds.includes(String(data.user.id)))
-            }
-        } catch (e: any) {
-            console.error(e)
-            setError("Failed to load profile")
-        }
+    // Editing
+    const [descStore, setDescStore] = createStore({
+        editing: false,
+        value: "",
+        loading: false,
+        error: null as string | null,
     })
 
-    async function toggleShareReading() {
-        setLoading(true)
-        setError(null)
-        try {
-            // const newValue = !shareReadingData()
-            // await api.updateSettings({ share_reading_data: newValue })
-            // setShareReadingData(newValue)
-        } catch (e: any) {
-            setError(e.message || "An error occurred")
-        } finally {
-            setLoading(false)
-        }
+    const startEditDesc = () => {
+        setDescStore({
+            editing: true,
+            value: user()?.description ?? "",
+            loading: false,
+            error: null,
+        })
     }
 
-    async function toggleFollow() {
-        if (!user()) return
-        setLoading(true)
-        setError(null)
-
-        try {
-            if (isFollowing()) throw new Error("Already following")
-            await api.follow(viewedId())
-            setIsFollowing(!isFollowing())
-        } catch (e: any) {
-            setError(e.message || "An error occurred")
-        } finally {
-            setLoading(false)
-        }
+    const cancelEditDesc = () => {
+        setDescStore("editing", false)
+        setDescStore("error", null)
     }
 
-    function handleSearchSubmit(e: Event) {
-        e.preventDefault()
-        if (search().trim()) {
-            navigate(`/users?query=${encodeURIComponent(search())}`)
+    const saveDesc = async () => {
+        setDescStore("loading", true)
+        setDescStore("error", null)
+        try {
+            await api.updateDescription(descStore.value)
+            mutateUser((u) => u && { ...u, description: descStore.value })
+            setDescStore("editing", false)
+        } catch (e) {
+            setDescStore("error", "Failed to update description.")
+        }
+        setDescStore("loading", false)
+    }
+
+    const [user, { mutate: mutateUser }] = createResource(async () => {
+        const data = await api.fetchProfileInfo(userId())
+        return data.user
+    })
+
+    const [isFollowing, { mutate: setIsFollowing }] = createResource(
+        () => {
+            if (!isOwnProfile() && authStore.user) {
+                return true
+            }
+            return null
+        },
+        async () => {
+            const res = await api.fetchUserFollowers(userId())
+            return res.followers.some((u) => u.id === authStore.user?.id)
+        },
+    )
+
+    const toggleFollow = async () => {
+        if (!userId() || isOwnProfile()) return
+        if (isFollowing()) {
+            await api.unfollow(userId())
+            setIsFollowing(false)
+            mutateUser((u) => u && { ...u, followers_count: u.followers_count - 1 })
+        } else {
+            await api.follow(userId())
+            setIsFollowing(true)
+            mutateUser((u) => u && { ...u, followers_count: u.followers_count + 1 })
         }
     }
 
     return (
-        <div class="min-h-screen bg-[var(--base00)] text-[var(--base05)] flex flex-col">
-            {/* Navbar */}
-            <Navbar fixed>
+        <>
+            <Navbar>
                 <Navbar.Left>
                     <A
                         href="/"
-                        class="text-xl font-bold text-[var(--base07)] hover:text-[var(--base0D)] transition-colors"
+                        class="text-xl font-bold hover:text-[var(--base0D)] transition-colors"
                     >
                         ← lumireader
                     </A>
-
-                    <form onSubmit={handleSearchSubmit} class="flex items-center gap-2">
-                        <input
-                            type="text"
-                            class="px-3 py-1 rounded-md bg-[var(--base01)] border border-[var(--base03)] text-[var(--base05)] placeholder-[var(--base04)] focus:outline-none focus:ring-2 focus:ring-[var(--base0D)]"
-                            placeholder="Search users..."
-                            value={search()}
-                            onInput={(e) => setSearch(e.currentTarget.value)}
-                        />
-                        <button
-                            type="submit"
-                            class="px-3 py-1 rounded-md bg-[var(--base0D)] text-[var(--base00)] font-medium hover:bg-[var(--base0C)] transition"
-                        >
-                            Search
-                        </button>
-                    </form>
                 </Navbar.Left>
-
                 <Navbar.Right>
-                    <A href="/settings" class="button-theme px-3 py-2 rounded-lg">
+                    <A href="/settings" class="button px-3 py-2 rounded-lg">
                         <IconSettings />
                     </A>
                     <button
                         onClick={logout}
-                        class="button-theme px-3 py-2 rounded-lg flex items-center gap-1"
+                        class="button px-3 py-2 rounded-lg flex items-center gap-1"
                     >
                         <IconExit />
                         <span class="hidden sm:inline">Logout</span>
                     </button>
                 </Navbar.Right>
             </Navbar>
-
-            {/* Profile Content */}
-            <div class="flex-1 flex items-center justify-center px-4 mt-8">
-                <div class="w-full max-w-md space-y-6 bg-[var(--base01)] p-6 rounded-2xl shadow-lg">
-                    <h2 class="text-3xl font-bold text-center text-[var(--base07)]">Profile</h2>
-
-                    <Show
-                        when={user()}
-                        fallback={
-                            <p class="text-[var(--base08)] text-center">No user info found.</p>
-                        }
-                    >
-                        <div class="space-y-4">
-                            <div>
-                                <span class="font-semibold text-[var(--base0D)]">ID:</span>
-                                <span class="ml-2">{user()!.id}</span>
-                            </div>
-                            <div>
-                                <span class="font-semibold text-[var(--base0D)]">Username:</span>
-                                <span class="ml-2">{user()!.username}</span>
-                            </div>
-
-                            <Show
-                                when={isOwnProfile()}
-                                fallback={
+            <div>
+                <Switch>
+                    <Match when={user.loading}>
+                        <div class="flex items-center justify-center min-h-[50vh]">
+                            <Spinner size={48} base16Color={"--base05"} />
+                        </div>
+                    </Match>
+                    <Match when={user.error}>
+                        <h1>Error when fetching: {user.error}</h1>
+                    </Match>
+                    <Match when={user()}>
+                        <div class="max-w-6xl mx-auto p-4 grid grid-cols-1 md:grid-cols-3 md:gap-6">
+                            <aside class="md:col-span-1 space-y-4">
+                                <UserCard
+                                    user={user()!}
+                                    isOwnProfile={isOwnProfile()}
+                                    isFollowing={isFollowing()}
+                                    isEditing={descStore.editing}
+                                    onButtonClick={isOwnProfile() ? startEditDesc : toggleFollow}
+                                />
+                            </aside>
+                            <main class="md:col-span-2 space-y-6 mt-6 md:mt-0">
+                                <section class="p-4 body-alt rounded-md">
                                     <Show
-                                        when={isFollowing() !== null}
+                                        when={descStore.editing}
                                         fallback={
-                                            <p class="text-gray-500">Loading follow status...</p>
+                                            <p>{user()!.description ?? "[No description]"}</p>
                                         }
                                     >
-                                        <button
-                                            class="mt-4 px-4 py-2 bg-purple-600 text-white rounded disabled:opacity-50"
-                                            disabled={loading()}
-                                            onClick={toggleFollow}
-                                        >
-                                            {loading()
-                                                ? "Processing..."
-                                                : isFollowing()
-                                                  ? "Unfollow"
-                                                  : "Follow"}
-                                        </button>
+                                        <>
+                                            <textarea
+                                                class="w-full p-2 border rounded"
+                                                rows={3}
+                                                value={descStore.value}
+                                                onInput={(e) =>
+                                                    setDescStore("value", e.currentTarget.value)
+                                                }
+                                                disabled={descStore.loading}
+                                            />
+                                            <div class="mt-2 flex gap-2">
+                                                <button
+                                                    class="button text-sm"
+                                                    onClick={saveDesc}
+                                                    disabled={descStore.loading}
+                                                >
+                                                    {descStore.loading ? "Saving..." : "Save"}
+                                                </button>
+                                                <button
+                                                    class="button text-sm"
+                                                    onClick={cancelEditDesc}
+                                                    disabled={descStore.loading}
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                            <Show when={descStore.error}>
+                                                <p class="text-red-500">{descStore.error}</p>
+                                            </Show>
+                                        </>
                                     </Show>
-                                }
-                            >
-                                <>
-                                    <div>
-                                        <span class="font-semibold text-[var(--base0D)]">
-                                            Share Reading Data:
-                                        </span>
-                                        <span class="ml-2">
-                                            {shareReadingData() === null
-                                                ? "Loading..."
-                                                : shareReadingData()
-                                                  ? "Yes"
-                                                  : "No"}
-                                        </span>
-                                    </div>
-                                    <button
-                                        class="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
-                                        disabled={loading()}
-                                        onClick={toggleShareReading}
-                                    >
-                                        {loading()
-                                            ? "Updating..."
-                                            : shareReadingData()
-                                              ? "Disable Sharing"
-                                              : "Enable Sharing"}
-                                    </button>
-                                </>
-                            </Show>
+                                </section>
 
-                            <Show when={error()}>
-                                <p class="text-red-600 mt-2">{error()}</p>
-                            </Show>
+                                {/* Activity */}
+                                <section>
+                                    <h2 class="text-lg font-semibold mb-2">Reading activity</h2>
+                                    <p class="text-sm font-light">No activity...</p>
+                                </section>
+                            </main>
                         </div>
-                    </Show>
-                </div>
+                    </Match>
+                </Switch>
             </div>
-        </div>
+        </>
     )
 }
 
