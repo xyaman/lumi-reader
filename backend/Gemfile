@@ -30,7 +30,10 @@ gem "thruster", require: false
 gem "rack-cors"
 
 # Metrics
+gem "yabeda"
 gem "yabeda-rails"
+gem "yabeda-puma-plugin"
+gem "yabeda-prometheus-mmap"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
