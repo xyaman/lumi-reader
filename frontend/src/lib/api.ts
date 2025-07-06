@@ -95,7 +95,7 @@ export interface ILoginResponse {
         id: number
         email: string
         username: string
-        share_reading_data: boolean
+        share_status: boolean
     }
 }
 
@@ -135,7 +135,7 @@ export interface IProfileInfoResponse {
         avatar_url: string
         username: string
         description: string
-        share_reading_data: boolean
+        share_status: boolean
         following_count: number
         followers_count: number
     }
@@ -237,12 +237,47 @@ async function updateDescription(description: string): Promise<IUpdateDescriptio
     return data
 }
 
+export interface IUpdateShareStatus {
+    message: string
+    description: string
+}
+
+async function updateShareStatus(status: boolean): Promise<IUpdateDescriptionResponse> {
+    const url = `${API_URL}/${API_VERSION}/session/status`
+
+    const cookie = await getCsrfCookie()
+    if (!cookie) {
+        throw new Error("Can't validate the connection")
+    }
+
+    let res: Response
+    try {
+        res = await fetch(url, {
+            method: "PATCH",
+            credentials: "include",
+            headers: {
+                "X-CSRF-TOKEN": cookie,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ share_status: status }),
+        })
+    } catch {
+        throw new Error("Network error")
+    }
+
+    const data = await res.json()
+    if (!res.ok) {
+        throw new Error(data?.error ? data.error : `Update status failed: ${res.statusText}`)
+    }
+    return data
+}
+
 export interface ISesssionInfoResponse {
     user: {
         id: number
         email: string
         username: string
-        share_reading_data: boolean
+        share_status: boolean
     }
 }
 
@@ -455,6 +490,7 @@ export default {
     login,
     updateAvatar,
     updateDescription,
+    updateShareStatus,
     fetchProfileInfo,
     follow,
     unfollow,

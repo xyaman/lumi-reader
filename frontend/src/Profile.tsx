@@ -14,6 +14,7 @@ type UserCardProps = {
     isFollowing?: boolean
     onButtonClick?: (() => Promise<void>) | (() => void)
     isEditing?: boolean
+    onToggleShareStatus?: () => void
 }
 
 function UserCard(props: UserCardProps) {
@@ -35,6 +36,38 @@ function UserCard(props: UserCardProps) {
             >
                 {props.isOwnProfile ? "Edit profile" : props.isFollowing ? "Unfollow" : "Follow"}
             </button>
+            <Show when={props.isOwnProfile}>
+                <div class="w-full flex items-center justify-between gap-2 text-xs font-medium">
+                    <span
+                        class={`flex items-center gap-1 ${
+                            user().share_status ? "text-(--base0B)" : "text-(--base03)"
+                        }`}
+                    >
+                        {user().share_status ? "Status: Sharing" : "Status: Not sharing"}
+                        {user().share_status ? (
+                            <svg width="14" height="14" fill="currentColor">
+                                <circle cx="7" cy="7" r="6" />
+                            </svg>
+                        ) : (
+                            <svg
+                                width="14"
+                                height="14"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <circle cx="7" cy="7" r="6" />
+                            </svg>
+                        )}
+                    </span>
+                    <button
+                        class="button-alt px-2 py-1 text-xs"
+                        onClick={props.onToggleShareStatus}
+                    >
+                        {user().share_status ? "Hide" : "Share"}
+                    </button>
+                </div>
+            </Show>
             <p class="text-sm">
                 <span>{user().followers_count}</span> followers ·{" "}
                 <span>{user().following_count}</span> following
@@ -50,6 +83,14 @@ function Profile() {
     const { authStore } = useAuthContext()
     const userId = () => Number(params.id ?? authStore.user?.id)
     const isOwnProfile = () => authStore.user?.id === userId()
+
+    const toggleShareStatus = async () => {
+        if (!user()) return
+        try {
+            await api.updateShareStatus(!user()?.share_status)
+            mutateUser((u) => u && { ...u, share_status: !u.share_status })
+        } catch {}
+    }
 
     // Editing
     const [descStore, setDescStore] = createStore({
@@ -160,6 +201,7 @@ function Profile() {
                                     isFollowing={isFollowing()}
                                     isEditing={descStore.editing}
                                     onButtonClick={isOwnProfile() ? startEditDesc : toggleFollow}
+                                    onToggleShareStatus={toggleShareStatus}
                                 />
                             </aside>
                             <main class="md:col-span-2 space-y-6 mt-6 md:mt-0">
