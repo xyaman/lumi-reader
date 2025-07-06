@@ -46,8 +46,25 @@ class V1::UsersController < ApplicationController
 
   # @oas_include
   # @tags Users
+  # @summary Update a user's description
+  # @request_body The new description [Hash{description: String}]
+  # @response Description updated successfully(200) [Hash{message: String, description: String}]
+  # @response Validation failed(422) [Hash{errors: Array<String>}]
+  def update_description
+    user = Current.user
+    puts params.inspect
+    if user.update(description: params[:description])
+      puts user.description
+      render json: { message: "Description updated successfully.", description: user.description }, status: :ok
+    else
+      render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
+  # @oas_include
+  # @tags Users
   # @summary Show a User
-  # @response User found(200) [Hash{user: Hash{id: Integer, email: String, username: String, share_reading_data: Boolean, following_count: Integer, followers_count: Integer}}]
+  # @response User found(200) [Hash{user: Hash{id: Integer, email: String, username: String, description: String, share_reading_data: Boolean, following_count: Integer, followers_count: Integer}}]
   # @response User not found(404) [Hash{error: String}]
   #
   # Returns the user with the given ID.
@@ -58,7 +75,7 @@ class V1::UsersController < ApplicationController
       following_count = user.following.count
       followers_count = user.followers.count
 
-      json_user = user.slice(:id, :email, :username, :share_reading_data)
+      json_user = user.slice(:id, :email, :username, :description, :share_reading_data)
       json_user[:avatar_url] = user.avatar.attached? ? url_for(user.avatar) : nil
       json_user.merge!(following_count: following_count, followers_count: followers_count)
 

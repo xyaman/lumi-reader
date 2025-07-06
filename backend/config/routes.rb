@@ -12,6 +12,7 @@ Rails.application.routes.draw do
       resource :user_status, only: [ :update ], controller: "user_status"
 
       patch "avatar", to: "users#update_avatar"
+      patch "description", to: "users#update_description"
     end
 
     # email confirmation
