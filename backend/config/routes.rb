@@ -11,6 +11,8 @@ Rails.application.routes.draw do
       # note (oas-rails bug): if I don't add the controller name, oas-rails can't find the route
       resource :user_status, only: [ :update ], controller: "user_status"
 
+      resources :follows, only: [ :update, :destroy ]
+
       patch "avatar", to: "users#update_avatar"
       patch "description", to: "users#update_description"
     end
@@ -21,7 +23,6 @@ Rails.application.routes.draw do
 
     resources :users, only: [ :create, :show ] do
       resource :status, only: [ :show ], controller: "user_status"
-      resources :follows, only: [ :create, :destroy ]
       get "following", to: "follows#following"
       get "followers", to: "follows#followers"
     end
