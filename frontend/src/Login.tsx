@@ -15,7 +15,7 @@ function Login() {
     createEffect(() => {
         if (authStore.user) {
             const navigate = useNavigate()
-            navigate("/profile", { replace: true })
+            navigate("/users", { replace: true })
             return
         }
         fetchCurrentUser()

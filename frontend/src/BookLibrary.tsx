@@ -56,7 +56,7 @@ function BookLibraryNavbar(props: BookLibraryNavbarProps) {
                         </>
                     }
                 >
-                    <A href="/profile" class="button px-3 py-2 rounded-lg">
+                    <A href="/users" class="button px-3 py-2 rounded-lg">
                         Profile
                     </A>
                 </Show>

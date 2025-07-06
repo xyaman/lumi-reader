@@ -7,7 +7,7 @@ export type SimpleUser = {
 }
 
 type UserListProps = {
-    users: SimpleUser[]
+    users: Partial<SimpleUser>[]
     onUserClick?: (userId: number) => void
 }
 
@@ -22,7 +22,7 @@ export default function UserList(props: UserListProps) {
                     {(user) => (
                         <div
                             class="flex items-center space-x-3 mb-3 p-2 rounded bg-(--base01) hover:bg-(--base03) cursor-pointer"
-                            onClick={() => props.onUserClick?.(user.id)}
+                            onClick={() => props.onUserClick?.(user.id!)}
                         >
                             <img
                                 src={user.avatar_url}

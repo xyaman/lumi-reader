@@ -1,4 +1,5 @@
 import type { IProfileInfoResponse } from "@/lib/api"
+import { useNavigate } from "@solidjs/router"
 import { Show } from "solid-js"
 
 type User = IProfileInfoResponse["user"]
@@ -13,6 +14,7 @@ type UserCardProps = {
 }
 
 export default function UserCard(props: UserCardProps) {
+    const navigate = useNavigate()
     const user = () => props.user
 
     return (
@@ -90,9 +92,26 @@ export default function UserCard(props: UserCardProps) {
                     </button>
                 </div>
             </Show>
-            <p class="text-sm">
-                <span>{user().followers_count}</span> followers ·{" "}
-                <span>{user().following_count}</span> following
+            <p class="text-sm flex gap-2">
+                <span
+                    class="cursor-pointer hover:underline hover:text-(--base0B) focus:underline focus:text-(--base0B) transition"
+                    tabIndex={0}
+                    onClick={() => navigate(`/users/${user().id}/followers`)}
+                    role="button"
+                    aria-label="View followers"
+                >
+                    {user().followers_count} followers
+                </span>
+                ·
+                <span
+                    class="cursor-pointer hover:underline hover:text-(--base0B) focus:underline focus:text-(--base0B) transition"
+                    tabIndex={0}
+                    onClick={() => navigate(`/users/${user().id}/following`)}
+                    role="button"
+                    aria-label="View following"
+                >
+                    {user().following_count} following
+                </span>
             </p>
         </div>
     )

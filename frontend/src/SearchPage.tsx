@@ -17,7 +17,7 @@ export default function UserListPage() {
     })
 
     const handleUserClick = (userId: number) => {
-        navigate(`/profile/${userId}`)
+        navigate(`/users/${userId}`)
     }
 
     const onKeyDown = (e: KeyboardEvent) => {

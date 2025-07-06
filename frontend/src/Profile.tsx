@@ -124,7 +124,7 @@ function Profile() {
                         ← lumireader
                     </A>
                     <button
-                        onClick={() => navigate("/profile/search")}
+                        onClick={() => navigate("/users/search")}
                         class="button px-3 py-2"
                         aria-label="Search"
                         title="Search"
