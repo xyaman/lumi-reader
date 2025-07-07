@@ -5,8 +5,7 @@ export interface IAuthUser {
     email: string
     username: string
     share_reading_data: boolean
-    avatar?: Blob
-    avatar_url: string
+    avatar_url?: string
 }
 
 export enum UserStatus {

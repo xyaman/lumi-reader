@@ -259,7 +259,7 @@ async function updateDescription(description: string): Promise<IUpdateDescriptio
 }
 
 async function updateCurrentUserStatus(activty: string): Promise<IUpdateDescriptionResponse> {
-    const url = `${API_URL}/${API_VERSION}/session/user_status`
+    const url = `${API_URL}/${API_VERSION}/session/status`
 
     const cookie = await getCsrfCookie()
     if (!cookie) {
@@ -275,7 +275,7 @@ async function updateCurrentUserStatus(activty: string): Promise<IUpdateDescript
                 "X-CSRF-TOKEN": cookie,
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ status: activty }),
+            body: JSON.stringify({ last_activity: activty }),
         })
     } catch {
         throw new Error("Network error")
@@ -294,7 +294,7 @@ export interface IUpdateShareStatus {
 }
 
 async function updateShareStatus(status: boolean): Promise<IUpdateDescriptionResponse> {
-    const url = `${API_URL}/${API_VERSION}/session/status`
+    const url = `${API_URL}/${API_VERSION}/session/share_status`
 
     const cookie = await getCsrfCookie()
     if (!cookie) {
@@ -329,6 +329,7 @@ export interface ISesssionInfoResponse {
         email: string
         username: string
         share_status: boolean
+        avatar_url?: string
     }
 }
 

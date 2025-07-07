@@ -36,7 +36,7 @@ async function fetchCurrentUser() {
                 email: res.user.email,
                 username: res.user.username,
                 share_reading_data: res.user.share_status,
-                avatar_url: "",
+                avatar_url: res.user.avatar_url,
             }
             setAuthStore({ user, status: UserStatus.authenticated })
         } else {
