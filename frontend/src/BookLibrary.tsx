@@ -1,5 +1,5 @@
 import { createSignal, For, Show, onCleanup, createEffect, onMount } from "solid-js"
-import { IconFolderOpen, IconSettings, IconTrash, IconUpload } from "@/components/icons"
+import { IconSettings, IconUpload } from "@/components/icons"
 import { EpubBook } from "@/lib/epub"
 import { ReaderSourceDB, ReaderSourceLightRecord } from "./lib/db"
 import Navbar from "./components/Navbar"
@@ -7,6 +7,7 @@ import { A } from "@solidjs/router"
 import { useAuthContext } from "./context/auth"
 import api from "@/lib/api"
 import { timeAgo } from "@/lib/utils"
+import BooksGrid from "./components/library/BooksGrid"
 
 const LS_SORT = "library:sortBy"
 const LS_DIR = "library:direction"
@@ -397,69 +398,26 @@ export default function BookLibrary() {
                                     {dir() === "asc" ? "↑" : "↓"}
                                 </button>
                             </div>
-
-                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-5 mx-6 sm:mx-0">
-                                <For
-                                    each={
-                                        activeShelf() === null
-                                            ? books()
-                                            : books().filter((b) =>
-                                                  shelves()
-                                                      .find((s) => s.id === activeShelf())
-                                                      ?.bookIds.includes(b.localId),
-                                              )
-                                    }
-                                >
-                                    {(b) => (
-                                        <div class="relative group">
-                                            <a href={`/reader/${b.localId}`} class="block">
-                                                <div class="card-theme rounded-lg shadow-md hover:shadow-lg overflow-hidden">
-                                                    <img
-                                                        src={covers()[b.localId]}
-                                                        alt={b.title}
-                                                        class="aspect-[3/4] w-full object-cover"
-                                                    />
-                                                    <button
-                                                        class="absolute cursor-pointer top-2 right-11 w-8 h-8 opacity-0 group-hover:opacity-100 bg-(--base02) hover:bg-(--base03) rounded-full p-1 shadow flex items-center justify-center transition-colors"
-                                                        onClick={(e) => {
-                                                            e.preventDefault()
-                                                            setSelectedBook(b)
-                                                        }}
-                                                    >
-                                                        <IconFolderOpen />
-                                                    </button>
-                                                    <button
-                                                        class="absolute cursor-pointer top-2 right-2 w-8 h-8 opacity-0 group-hover:opacity-100 bg-(--base01) hover:bg-(--base03) hover:ring-2 hover:ring-(--base08) rounded-full p-1 shadow flex items-center justify-center transition-all"
-                                                        onClick={(e) => {
-                                                            e.preventDefault()
-                                                            ReaderSourceDB.deleteBook(
-                                                                b.localId,
-                                                            ).then(() => {
-                                                                setBooks((prev) =>
-                                                                    prev.filter(
-                                                                        (i) =>
-                                                                            i.localId !== b.localId,
-                                                                    ),
-                                                                )
-                                                            })
-                                                        }}
-                                                    >
-                                                        <IconTrash />
-                                                    </button>
-                                                    <div class="px-3 py-2">
-                                                        <p class="text-sm truncate">{b.title}</p>
-                                                        <progress
-                                                            class="progress-theme w-full h-2 rounded"
-                                                            value={b.currChars}
-                                                            max={b.totalChars}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </a>
-                                        </div>
-                                    )}
-                                </For>
-                            </div>
+                            <BooksGrid
+                                books={
+                                    activeShelf() === null
+                                        ? books()
+                                        : books().filter((b) =>
+                                              shelves()
+                                                  .find((s) => s.id === activeShelf())
+                                                  ?.bookIds.includes(b.localId),
+                                          )
+                                }
+                                covers={covers()}
+                                onSelectBook={setSelectedBook}
+                                onDeleteBook={(b) => {
+                                    ReaderSourceDB.deleteBook(b.localId).then(() => {
+                                        setBooks((prev) =>
+                                            prev.filter((i) => i.localId !== b.localId),
+                                        )
+                                    })
+                                }}
+                            />
                         </main>
                         {/* Right sidebar (only if logged in) */}
                         <Show when={user()}>
