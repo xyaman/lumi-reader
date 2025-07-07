@@ -1,6 +1,62 @@
 import type { IProfileInfoResponse } from "@/lib/api"
 import { useNavigate } from "@solidjs/router"
-import { Show } from "solid-js"
+import { createResource, createSignal, Show } from "solid-js"
+import UserList from "./UserList"
+import api from "@/lib/api"
+import Spinner from "./Spiner"
+
+type UserModalProps = {
+    open: boolean
+    onClose: () => void
+    userId: number
+    type: "followers" | "following"
+}
+
+function UserModal(props: UserModalProps) {
+    const navigate = useNavigate()
+    const [users] = createResource(
+        () => props.open,
+        async () => {
+            return props.type === "followers"
+                ? (await api.fetchUserFollowers(props.userId)).followers
+                : (await api.fetchUserFollows(props.userId)).following
+        },
+    )
+
+    return (
+        <Show when={props.open}>
+            <div class="fixed inset-0 z-50 flex items-center justify-center">
+                <div class="absolute inset-0 bg-black opacity-40" onClick={props.onClose} />
+                <div class="relative bg-(--base01) rounded-lg shadow-lg mx-4 md:mx-auto w-full max-w-md p-4">
+                    <button
+                        class="absolute top-4 right-4 text-xl cursor-pointer"
+                        onClick={props.onClose}
+                        aria-label="Close"
+                    >
+                        ×
+                    </button>
+                    <Show
+                        when={!users.loading}
+                        fallback={
+                            <div class="flex items-center justify-center min-h-50">
+                                <Spinner size={48} base16Color="--base05" />
+                            </div>
+                        }
+                    >
+                        <p class="text-xl">{props.type}</p>
+                        <UserList
+                            users={users() ?? []}
+                            onUserClick={(id) => {
+                                navigate(`/users/${id}`)
+                                props.onClose()
+                            }}
+                        />
+                    </Show>
+                </div>
+            </div>
+        </Show>
+    )
+}
 
 type User = IProfileInfoResponse["user"]
 type UserCardProps = {
@@ -14,8 +70,15 @@ type UserCardProps = {
 }
 
 export default function UserCard(props: UserCardProps) {
-    const navigate = useNavigate()
     const user = () => props.user
+
+    const [modalOpen, setModalOpen] = createSignal(false)
+    const [modalType, setModalType] = createSignal<"followers" | "following">("followers")
+
+    const openModal = (type: "followers" | "following") => {
+        setModalType(type)
+        setModalOpen(true)
+    }
 
     return (
         <div class="flex flex-col items-center md:items-start space-y-3">
@@ -96,7 +159,7 @@ export default function UserCard(props: UserCardProps) {
                 <span
                     class="cursor-pointer hover:underline hover:text-(--base0B) focus:underline focus:text-(--base0B) transition"
                     tabIndex={0}
-                    onClick={() => navigate(`/users/${user().id}/followers`)}
+                    onClick={() => openModal("followers")}
                     role="button"
                     aria-label="View followers"
                 >
@@ -106,13 +169,19 @@ export default function UserCard(props: UserCardProps) {
                 <span
                     class="cursor-pointer hover:underline hover:text-(--base0B) focus:underline focus:text-(--base0B) transition"
                     tabIndex={0}
-                    onClick={() => navigate(`/users/${user().id}/following`)}
+                    onClick={() => openModal("following")}
                     role="button"
                     aria-label="View following"
                 >
                     {user().following_count} following
                 </span>
             </p>
+            <UserModal
+                open={modalOpen()}
+                onClose={() => setModalOpen(false)}
+                userId={user().id}
+                type={modalType()}
+            />
         </div>
     )
 }

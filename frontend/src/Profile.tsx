@@ -23,7 +23,7 @@ function Profile() {
     })
 
     // --- User Resource ---
-    const [user, { mutate: mutateUser }] = createResource(async () => {
+    const [user, { mutate: mutateUser }] = createResource(userId, async () => {
         const data = await api.fetchProfileInfo(userId())
         return data.user
     })

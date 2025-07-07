@@ -7,7 +7,6 @@ import Register from "./Register"
 import Login from "./Login"
 import Profile from "./Profile"
 import UserSearch from "./SearchPage"
-import FollowListPage from "./FollowListPage"
 import { AuthProvider } from "./context/auth"
 
 function App() {
@@ -24,14 +23,6 @@ function App() {
                 <Route path="/login" component={Login} />
                 <Route path="/users/search" component={UserSearch} />
                 <Route path="/users/:id?" component={Profile} />
-                <Route
-                    path="/users/:id/following"
-                    component={() => <FollowListPage mode="following" />}
-                />
-                <Route
-                    path="/users/:id/followers"
-                    component={() => <FollowListPage mode="followers" />}
-                />
             </Router>
         </AuthProvider>
     )
