@@ -58,6 +58,11 @@ export function timeAgo(unixTimestamp: number | null): string {
         return `${diffMins} mins ago`
     } else {
         const diffHours = Math.floor(diffMins / 60)
-        return `Last ${diffHours} hour${diffHours > 1 ? "s" : ""} ago`
+        if (diffHours < 24) {
+            return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`
+        } else {
+            const diffDays = Math.floor(diffHours / 24)
+            return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`
+        }
     }
 }
