@@ -1,4 +1,4 @@
-import { createSignal, For, Show, onCleanup, createEffect, onMount } from "solid-js"
+import { createSignal, For, Show, onCleanup, onMount } from "solid-js"
 import { IconSettings, IconUpload } from "@/components/icons"
 import { EpubBook } from "@/lib/epub"
 import { ReaderSourceDB, ReaderSourceLightRecord } from "./lib/db"
@@ -9,9 +9,7 @@ import api from "@/lib/api"
 import { timeAgo } from "@/lib/utils"
 import BooksGrid from "./components/library/BooksGrid"
 import BookshelvesSidebar from "./components/library/BookshelvesList"
-
-const LS_SORT = "library:sortBy"
-const LS_DIR = "library:direction"
+import { useLibraryContext } from "./context/library"
 
 type BookLibraryNavbarProps = {
     handleUpload: (e: Event) => void
@@ -66,8 +64,6 @@ function BookLibraryNavbar(props: BookLibraryNavbarProps) {
         </Navbar>
     )
 }
-
-type Shelf = { id: number; name: string; bookIds: number[] }
 
 export default function BookLibrary() {
     const { authStore } = useAuthContext()
@@ -139,58 +135,30 @@ export default function BookLibrary() {
         onCleanup(() => el?.removeEventListener("scroll", onScroll))
     })
 
-    const [books, setBooks] = createSignal<ReaderSourceLightRecord[]>([])
-    const [covers, setCovers] = createSignal<Record<number, string>>({})
-    const [shelves, setShelves] = createSignal<Shelf[]>([])
-    const [activeShelf, setActiveShelf] = createSignal<number | null>(null)
+    const { state, setState, setSortParams, toggleBookInShelf, removeShelf } = useLibraryContext()
+
+    const books = () => state.books
+    const setBooks = (books: ReaderSourceLightRecord[]) => setState("books", books)
 
     const [editShelf, setEditShelf] = createSignal<{ id: number; name: string } | null>(null)
     const [selectedBook, setSelectedBook] = createSignal<ReaderSourceLightRecord | null>(null)
 
-    const [sort, setSort] = createSignal<"lastModifiedDate" | "creationDate">(
-        (localStorage.getItem(LS_SORT) as any) || "lastModifiedDate",
-    )
-    const [dir, setDir] = createSignal<"asc" | "desc">(
-        (localStorage.getItem(LS_DIR) as any) || "desc",
-    )
+    const sort = () => state.sort
+    const dir = () => state.dir
 
     const [sidebarOpen, setSidebarOpen] = createSignal(false)
 
     // --- Shelves ---
-    const loadShelves = async () => {
-        const all = await ReaderSourceDB.listShelves()
-        setShelves(all || [])
-    }
-
     const deleteShelf = async (shelfId: number) => {
         if (!confirm("Are you sure you want to delete this shelf?")) return
-        await ReaderSourceDB.deleteShelf(shelfId)
-        if (activeShelf() === shelfId) setActiveShelf(null)
-        await loadShelves()
-    }
+        if (state.activeShelf === shelfId) setState("activeShelf", null)
 
-    const toggleBookInShelf = async (shelfId: number) => {
-        const bookId = selectedBook()!.localId
-        const shelf = shelves().find((s) => s.id === shelfId)
-        const exists = shelf?.bookIds.includes(bookId)
-        if (exists) {
-            await ReaderSourceDB.removeBookFromShelf(shelfId, bookId)
-        } else {
-            await ReaderSourceDB.addBookToShelf(shelfId, bookId)
-        }
-        loadShelves()
-    }
-
-    // --- Book handling ---
-    const sortBooks = (bks: ReaderSourceLightRecord[]) => {
-        const d = dir() === "desc" ? -1 : 1
-        return [...bks].sort((a, b) => ((a[sort()] ?? 0) - (b[sort()] ?? 0)) * d)
+        await removeShelf(shelfId)
     }
 
     const handleUpload = async (e: Event) => {
         const files = Array.from((e.target as HTMLInputElement).files || [])
         const newBooks: ReaderSourceLightRecord[] = []
-        const newCovers: Record<number, string> = {}
 
         for (const file of files) {
             if (!file.type.includes("epub") && !file.name.endsWith(".epub")) continue
@@ -201,39 +169,13 @@ export default function BookLibrary() {
             const light = await ReaderSourceDB.getLightBookById(book.localId)
             if (light) {
                 newBooks.push(light)
-                if (light.coverImage) {
-                    newCovers[light.localId] = URL.createObjectURL(light.coverImage.blob)
-                }
             }
         }
 
         if (newBooks.length > 0) {
-            setBooks((prev) => sortBooks([...prev, ...newBooks]))
-            setCovers((prev) => ({ ...prev, ...newCovers }))
+            setBooks(newBooks)
         }
     }
-
-    // --- Lifecycle ---
-    onMount(async () => {
-        const allBooks = await ReaderSourceDB.allLightBooks()
-        const coverMap: Record<number, string> = {}
-        allBooks.forEach((b) => {
-            if (b.coverImage) {
-                coverMap[b.localId] = URL.createObjectURL(b.coverImage.blob)
-            }
-        })
-        setBooks(sortBooks(allBooks))
-        setCovers(coverMap)
-        loadShelves()
-    })
-
-    onCleanup(() => {
-        Object.values(covers()).forEach((url) => URL.revokeObjectURL(url))
-    })
-
-    createEffect(() => setBooks((prev) => sortBooks(prev)))
-    createEffect(() => localStorage.setItem(LS_SORT, sort()))
-    createEffect(() => localStorage.setItem(LS_DIR, dir()))
 
     // --- Render ---
     return (
@@ -253,14 +195,9 @@ export default function BookLibrary() {
                             onClick={(e) => e.stopPropagation()}
                         >
                             <BookshelvesSidebar
-                                books={books}
-                                shelves={shelves}
-                                activeShelf={activeShelf}
-                                setActiveShelf={setActiveShelf}
                                 editShelf={editShelf}
                                 setEditShelf={setEditShelf}
                                 deleteShelf={deleteShelf}
-                                loadShelves={loadShelves}
                             />
                         </div>
                     </aside>
@@ -272,14 +209,9 @@ export default function BookLibrary() {
 
                     <aside class="navbar-theme hidden md:flex border-r p-4 flex-col gap-4 md:w-48 lg:w-64 overflow-y-auto max-h-[calc(100vh-3.5rem)]">
                         <BookshelvesSidebar
-                            books={books}
-                            shelves={shelves}
-                            activeShelf={activeShelf}
-                            setActiveShelf={setActiveShelf}
                             editShelf={editShelf}
                             setEditShelf={setEditShelf}
                             deleteShelf={deleteShelf}
-                            loadShelves={loadShelves}
                         />
                     </aside>
 
@@ -291,34 +223,40 @@ export default function BookLibrary() {
                                 <select
                                     class="button-theme px-2 py-1 rounded border"
                                     value={sort()}
-                                    onInput={(e) => setSort(e.currentTarget.value as any)}
+                                    onInput={(e) =>
+                                        setSortParams(e.currentTarget.value as any, undefined)
+                                    }
                                 >
                                     <option value="lastModifiedDate">Last Updated</option>
                                     <option value="creationDate">Date Added</option>
                                 </select>
                                 <button
                                     class="button-theme px-2 py-1 rounded border"
-                                    onClick={() => setDir((d) => (d === "asc" ? "desc" : "asc"))}
+                                    onClick={() =>
+                                        setSortParams(undefined, dir() === "asc" ? "desc" : "asc")
+                                    }
                                 >
                                     {dir() === "asc" ? "↑" : "↓"}
                                 </button>
                             </div>
                             <BooksGrid
                                 books={
-                                    activeShelf() === null
+                                    state.activeShelf === null
                                         ? books()
                                         : books().filter((b) =>
-                                              shelves()
-                                                  .find((s) => s.id === activeShelf())
+                                              state.shelves
+                                                  .find((s) => s.id === state.activeShelf)
                                                   ?.bookIds.includes(b.localId),
                                           )
                                 }
-                                covers={covers()}
                                 onSelectBook={setSelectedBook}
                                 onDeleteBook={(b) => {
                                     ReaderSourceDB.deleteBook(b.localId).then(() => {
-                                        setBooks((prev) =>
-                                            prev.filter((i) => i.localId !== b.localId),
+                                        setBooks(
+                                            books().filter(
+                                                (i: ReaderSourceLightRecord) =>
+                                                    i.localId !== b.localId,
+                                            ),
                                         )
                                     })
                                 }}
@@ -360,13 +298,15 @@ export default function BookLibrary() {
                                 Add to shelves
                             </h3>
                             <div class="space-y-2 max-h-[300px] overflow-y-auto">
-                                <For each={shelves()}>
+                                <For each={state.shelves}>
                                     {(s) => {
                                         const inShelf = s.bookIds.includes(selectedBook()!.localId)
                                         return (
                                             <button
                                                 class="w-full px-4 py-2 rounded button-theme flex justify-between items-center"
-                                                onClick={() => toggleBookInShelf(s.id)}
+                                                onClick={() =>
+                                                    toggleBookInShelf(s.id, selectedBook()!.localId)
+                                                }
                                             >
                                                 <span>
                                                     {inShelf ? "✓" : "+"} {s.name}

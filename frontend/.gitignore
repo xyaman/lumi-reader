@@ -7,10 +7,6 @@ logs/
 node_modules
 dist
 
-# --- Rust backend ---
-target
-debug
-
 # --- OS / Editor / Misc ---
 .DS_Store
 *.sw?

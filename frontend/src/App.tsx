@@ -9,6 +9,8 @@ import Profile from "./Profile"
 import UserSearch from "./SearchPage"
 import { AuthProvider } from "./context/auth"
 
+import { LibraryProvider } from "@/context/library"
+
 function App() {
     const theme = getSelectedTheme()
     setGlobalTheme(theme)
@@ -16,7 +18,14 @@ function App() {
     return (
         <AuthProvider>
             <Router>
-                <Route path="/" component={BookLibrary} />
+                <Route
+                    path="/"
+                    component={() => (
+                        <LibraryProvider>
+                            <BookLibrary />
+                        </LibraryProvider>
+                    )}
+                />
                 <Route path="/reader/:id?" component={BookReader} />
                 <Route path="/settings" component={Settings} />
                 <Route path="/register" component={Register} />

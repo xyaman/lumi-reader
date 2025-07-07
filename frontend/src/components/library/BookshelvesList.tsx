@@ -1,29 +1,15 @@
 import { For, Show } from "solid-js"
-import { ReaderSourceDB, ReaderSourceLightRecord } from "@/lib/db"
+import { useLibraryContext } from "@/context/library"
 
-type Shelf = { id: number; name: string; bookIds: number[] }
 type BookshelvesSidebarProps = {
-    books: () => ReaderSourceLightRecord[]
-    shelves: () => Shelf[]
-    activeShelf: () => number | null
-    setActiveShelf: (id: number | null) => void
     editShelf: () => { id: number; name: string } | null
     setEditShelf: (shelf: { id: number; name: string } | null) => void
     deleteShelf: (id: number) => void
-    loadShelves: () => Promise<void>
 }
 
 export default function BookshelvesSidebar(props: BookshelvesSidebarProps) {
-    const {
-        books,
-        shelves,
-        activeShelf,
-        setActiveShelf,
-        editShelf,
-        setEditShelf,
-        deleteShelf,
-        loadShelves,
-    } = props
+    const { state, setState, addShelf, renameShelf } = useLibraryContext()
+    const { editShelf, setEditShelf, deleteShelf } = props
 
     return (
         <>
@@ -40,27 +26,27 @@ export default function BookshelvesSidebar(props: BookshelvesSidebarProps) {
             <div class="flex justify-between items-center mb-2">
                 <button
                     class={`flex-1 text-left truncate text-sm ${
-                        activeShelf() === null
+                        state.activeShelf === null
                             ? "font-semibold border-l-2 pl-1"
                             : "font-light text-(--base05)"
                     }`}
-                    onClick={() => setActiveShelf(null)}
+                    onClick={() => setState("activeShelf", null)}
                 >
-                    All Books ({books().length})
+                    All Books ({state.books.length})
                 </button>
             </div>
 
             <div class="flex flex-col gap-2 overflow-y-auto">
-                <For each={shelves()}>
+                <For each={state.shelves}>
                     {(s) => (
                         <div class="flex items-center gap-2 group">
                             <button
                                 class={`flex-1 text-left truncate text-sm ${
-                                    activeShelf() === s.id
+                                    state.activeShelf === s.id
                                         ? "font-semibold border-l-2 pl-1"
                                         : "font-light text-(--base05)"
                                 }`}
-                                onClick={() => setActiveShelf(s.id)}
+                                onClick={() => setState("activeShelf", s.id)}
                             >
                                 {s.name} ({s.bookIds.length})
                             </button>
@@ -117,18 +103,10 @@ export default function BookshelvesSidebar(props: BookshelvesSidebarProps) {
                                     const name = editShelf()?.name.trim()
                                     if (!name) return
                                     if (editShelf()?.id === -1) {
-                                        console.log("Creating shelf:", name)
-                                        await ReaderSourceDB.createShelf?.(name)
+                                        await addShelf(editShelf()!.name)
                                     } else {
-                                        await ReaderSourceDB.updateShelf?.({
-                                            id: editShelf()!.id,
-                                            name,
-                                            bookIds:
-                                                shelves().find((s) => s.id === editShelf()?.id)
-                                                    ?.bookIds || [],
-                                        })
+                                        await renameShelf(editShelf()!.id, editShelf()!.name)
                                     }
-                                    await loadShelves()
                                     setEditShelf(null)
                                 }}
                             >
