@@ -159,15 +159,6 @@ export default function BookLibrary() {
                                 </button>
                             </div>
                             <BooksGrid
-                                books={
-                                    state.activeShelf === null
-                                        ? books()
-                                        : books().filter((b) =>
-                                              state.shelves
-                                                  .find((s) => s.id === state.activeShelf)
-                                                  ?.bookIds.includes(b.localId),
-                                          )
-                                }
                                 onSelectBook={setSelectedBook}
                                 onDeleteBook={(b) => {
                                     ReaderSourceDB.deleteBook(b.localId).then(() => {

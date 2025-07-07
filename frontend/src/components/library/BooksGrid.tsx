@@ -1,11 +1,10 @@
-import { For } from "solid-js"
+import { createMemo, For } from "solid-js"
 import { IconFolderOpen, IconTrash } from "@/components/icons"
 import { ReaderSourceLightRecord } from "@/lib/db"
 import { A } from "@solidjs/router"
 import { useLibraryContext } from "@/context/library"
 
 type BooksGridProps = {
-    books: ReaderSourceLightRecord[]
     onSelectBook: (b: ReaderSourceLightRecord) => void
     onDeleteBook: (b: ReaderSourceLightRecord) => void
 }
@@ -13,11 +12,18 @@ type BooksGridProps = {
 export default function BooksGrid(props: BooksGridProps) {
     const { state } = useLibraryContext()
 
+    const visibleBooks = createMemo(() => {
+        if (!state.activeShelf) return state.books
+        return state.books.filter((b) =>
+            state.shelves.find((s) => s.id === state.activeShelf)?.bookIds.includes(b.localId),
+        )
+    })
+
     return (
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-5 mx-6 sm:mx-0">
-            <For each={props.books}>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 grid-cols-5 gap-4 sm:gap-5 mx-6 sm:mx-0">
+            <For each={visibleBooks()}>
                 {(b) => (
-                    <div class="relative group">
+                    <div class="relative group hover:opacity-70">
                         <A href={`/reader/${b.localId}`}>
                             <div class="card-theme rounded-lg shadow-md hover:shadow-lg overflow-hidden">
                                 <img
