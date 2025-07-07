@@ -8,6 +8,7 @@ import BooksGrid from "./components/library/BooksGrid"
 import BookshelvesSidebar from "@/components/library/BookshelvesList"
 import { useLibraryContext } from "@/context/library"
 import BookLibraryNavbar from "@/components/library/BookLibraryNavbar"
+import { SquaresIcon } from "./components/icons"
 
 export default function BookLibrary() {
     const { authStore } = useAuthContext()
@@ -79,26 +80,17 @@ export default function BookLibrary() {
         onCleanup(() => el?.removeEventListener("scroll", onScroll))
     })
 
-    const { state, setState, setSortParams, toggleBookInShelf, removeShelf } = useLibraryContext()
+    const { state, setState, setSortParams, toggleBookInShelf } = useLibraryContext()
 
     const books = () => state.books
     const setBooks = (books: ReaderSourceLightRecord[]) => setState("books", books)
 
-    const [editShelf, setEditShelf] = createSignal<{ id: number; name: string } | null>(null)
     const [selectedBook, setSelectedBook] = createSignal<ReaderSourceLightRecord | null>(null)
 
     const sort = () => state.sort
     const dir = () => state.dir
 
     const [sidebarOpen, setSidebarOpen] = createSignal(false)
-
-    // --- Shelves ---
-    const deleteShelf = async (shelfId: number) => {
-        if (!confirm("Are you sure you want to delete this shelf?")) return
-        if (state.activeShelf === shelfId) setState("activeShelf", null)
-
-        await removeShelf(shelfId)
-    }
 
     const handleUpload = async (e: Event) => {
         const files = Array.from((e.target as HTMLInputElement).files || [])
@@ -128,41 +120,24 @@ export default function BookLibrary() {
             <BookLibraryNavbar handleUpload={handleUpload} user={user} />
 
             <div class="flex flex-1 min-h-0 mt-14">
-                {/* Sidebar (mobile overlay) */}
-                <Show when={sidebarOpen()}>
-                    <aside
-                        class="fixed inset-0 z-40 bg-black/40 transition-opacity md:hidden"
-                        onClick={() => setSidebarOpen(false)}
-                    >
-                        <div
-                            class="navbar-theme w-64 h-full p-4"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <BookshelvesSidebar
-                                editShelf={editShelf}
-                                setEditShelf={setEditShelf}
-                                deleteShelf={deleteShelf}
-                            />
-                        </div>
-                    </aside>
-                </Show>
+                <BookshelvesSidebar
+                    isOverlay={sidebarOpen}
+                    onCloseOverlay={() => setSidebarOpen(false)}
+                />
 
                 {/* Main layout */}
                 <div class="flex flex-1 flex-col md:flex-row">
-                    {/* Sidebar (desktop) */}
-
-                    <aside class="navbar-theme hidden md:flex border-r p-4 flex-col gap-4 md:w-48 lg:w-64 overflow-y-auto max-h-[calc(100vh-3.5rem)]">
-                        <BookshelvesSidebar
-                            editShelf={editShelf}
-                            setEditShelf={setEditShelf}
-                            deleteShelf={deleteShelf}
-                        />
-                    </aside>
-
                     {/* Main */}
                     <div class="flex-1 flex flex-col md:flex-row">
                         <main class="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 max-h-[calc(100vh-3.5rem)]">
                             <div class="flex flex-wrap items-center gap-2 mb-4">
+                                <button
+                                    class="button px-3 flex flex-row gap-2 md:hidden"
+                                    onClick={() => setSidebarOpen(true)}
+                                >
+                                    <SquaresIcon />
+                                    <span>Boolshelves</span>
+                                </button>
                                 <label class="text-sm font-medium">Sort by:</label>
                                 <select
                                     class="button-theme px-2 py-1 rounded border"
