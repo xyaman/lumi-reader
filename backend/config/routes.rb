@@ -8,14 +8,12 @@ Rails.application.routes.draw do
 
   namespace :v1 do
     resource :session, only: [ :create, :show, :destroy ] do
-      # note (oas-rails bug): if I don't add the controller name, oas-rails can't find the route
-      resource :user_status, only: [ :update ], controller: "user_status"
-
       resources :follows, only: [ :update, :destroy ]
 
       patch "avatar", to: "users#update_avatar"
       patch "description", to: "users#update_description"
-      patch "status", to: "users#update_share_status"
+      patch "status", to: "user_status#update"
+      patch "share_status", to: "users#update_share_status"
     end
 
     # email confirmation

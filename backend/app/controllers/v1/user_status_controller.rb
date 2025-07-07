@@ -2,7 +2,7 @@ class V1::UserStatusController < ApplicationController
   # @oas_include
   # @tags Session, UserStatus
   # @summary Creates or updates the current user's status
-  # @response Success(200) [Hash{status: String}]
+  # @response Success(200) [Hash{last_activity: String}]
   def update
     user = Current.user
 

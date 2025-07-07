@@ -29,13 +29,16 @@ class V1::SessionsController < ApplicationController
   # @response User info(200) [Hash{user: Hash{id: Integer, email: String, username: String, share_status: Boolean}}]
   # @response Not logged in(401) [Hash{user: nil, error: String}]
   def show
-    if Current.session&.user
-      user = Current.session.user
-      render json: { user: user.slice(:id, :email, :username, :share_status) }, status: :ok
-    else
-      # this shouldn't happen. `allow_unauthenticated_access` should block
-      render json: { user: nil, error: "Not logged in" }, status: :unauthorized
-    end
+    # this shoudn't happen
+    return render json: { user: nil, error: "Not logged in" }, status: :unauthorized unless Current.session&.user
+
+    user = Current.session.user
+    avatar_url = user.avatar.attached? ? url_for(user.avatar) : nil
+
+    res_user = user.slice(:id, :email, :username, :share_status)
+    res_user[:avatar_url] = avatar_url if avatar_url
+
+    render json: { user: res_user }, status: :ok
   end
 
   # @oas_include
