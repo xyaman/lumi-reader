@@ -29,15 +29,26 @@ export default function FollowingActivitySidebar() {
                         {
                             last_activity: s.last_activity,
                             timestamp: timeAgo(s.timestamp),
+                            raw_timestamp: s.timestamp,
                         },
                     ]),
                 )
             }
 
-            return followingList.map((f: any) => ({
-                ...f,
-                status: statusBatch[f.id] || undefined,
-            }))
+            return followingList
+                .map((f: any) => ({
+                    ...f,
+                    status: statusBatch[f.id] || undefined,
+                }))
+                .sort((a, b) => {
+                    // Users with no status go to the end
+                    if (!a.status?.raw_timestamp && !b.status?.raw_timestamp) return 0
+                    if (!a.status?.raw_timestamp) return 1
+                    if (!b.status?.raw_timestamp) return -1
+
+                    // most recent first
+                    return b.status.raw_timestamp - a.status.raw_timestamp
+                })
         },
     )
 
