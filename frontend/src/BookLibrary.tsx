@@ -65,33 +65,53 @@ export default function BookLibrary() {
                     {/* Main */}
                     <div class="flex-1 flex flex-col md:flex-row">
                         <main class="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 max-h-[calc(100vh-3.5rem)]">
-                            <div class="flex flex-wrap items-center gap-2 mb-4">
+                            <div class="flex flex-col gap-3 mb-6 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
                                 <button
-                                    class="button px-3 flex flex-row gap-2 md:hidden"
+                                    class="button px-3 py-2 flex flex-row gap-2 md:hidden"
                                     onClick={() => setSidebarOpen(true)}
                                 >
                                     <SquaresIcon />
-                                    <span>Boolshelves</span>
+                                    <span>Bookshelves</span>
                                 </button>
-                                <label class="text-sm font-medium">Sort by:</label>
-                                <select
-                                    class="button-theme px-2 py-1 rounded border"
-                                    value={sort()}
-                                    onInput={(e) =>
-                                        setSortParams(e.currentTarget.value as any, undefined)
-                                    }
-                                >
-                                    <option value="lastModifiedDate">Last Updated</option>
-                                    <option value="creationDate">Date Added</option>
-                                </select>
-                                <button
-                                    class="button-theme px-2 py-1 rounded border"
-                                    onClick={() =>
-                                        setSortParams(undefined, dir() === "asc" ? "desc" : "asc")
-                                    }
-                                >
-                                    {dir() === "asc" ? "↑" : "↓"}
-                                </button>
+
+                                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                                    <span class="text-sm font-medium" style="color: var(--base05)">
+                                        Sort by:
+                                    </span>
+                                    <div class="flex gap-2">
+                                        <select
+                                            class="flex-1 px-3 py-2 rounded-lg border text-sm sm:flex-initial sm:min-w-[140px] bg-(--base01) border-(--base03) hover:bg-(--base02)"
+                                            value={sort()}
+                                            onInput={(e) =>
+                                                setSortParams(
+                                                    e.currentTarget.value as any,
+                                                    undefined,
+                                                )
+                                            }
+                                        >
+                                            <option value="lastModifiedDate">Last Updated</option>
+                                            <option value="creationDate">Date Added</option>
+                                        </select>
+                                        <button
+                                            class="px-3 py-2 rounded-lg border transition-colors min-w-[2.5rem] flex items-center justify-center bg-(--base01) border-(--base03) hover:bg-(--base02)"
+                                            onClick={() =>
+                                                setSortParams(
+                                                    undefined,
+                                                    dir() === "asc" ? "desc" : "asc",
+                                                )
+                                            }
+                                            title={
+                                                dir() === "asc"
+                                                    ? "Sort ascending"
+                                                    : "Sort descending"
+                                            }
+                                        >
+                                            <span class="text-lg leading-none">
+                                                {dir() === "asc" ? "↑" : "↓"}
+                                            </span>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                             <BooksGrid
                                 onSelectBook={setSelectedBook}
