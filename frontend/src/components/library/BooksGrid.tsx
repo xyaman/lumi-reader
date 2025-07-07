@@ -20,7 +20,7 @@ export default function BooksGrid(props: BooksGridProps) {
     })
 
     return (
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 grid-cols-5 gap-4 sm:gap-5 mx-6 sm:mx-0">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-5 mx-6 sm:mx-0">
             <For each={visibleBooks()}>
                 {(b) => (
                     <div class="relative group hover:opacity-70">
