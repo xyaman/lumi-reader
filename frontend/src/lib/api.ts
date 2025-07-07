@@ -258,6 +258,36 @@ async function updateDescription(description: string): Promise<IUpdateDescriptio
     return data
 }
 
+async function updateCurrentUserStatus(activty: string): Promise<IUpdateDescriptionResponse> {
+    const url = `${API_URL}/${API_VERSION}/session/user_status`
+
+    const cookie = await getCsrfCookie()
+    if (!cookie) {
+        throw new Error("Can't validate the connection")
+    }
+
+    let res: Response
+    try {
+        res = await fetch(url, {
+            method: "PATCH",
+            credentials: "include",
+            headers: {
+                "X-CSRF-TOKEN": cookie,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ status: activty }),
+        })
+    } catch {
+        throw new Error("Network error")
+    }
+
+    const data = await res.json()
+    if (!res.ok) {
+        throw new Error(data?.error ? data.error : `Update status failed: ${res.statusText}`)
+    }
+    return data
+}
+
 export interface IUpdateShareStatus {
     message: string
     description: string
@@ -547,6 +577,7 @@ export default {
     updateAvatar,
     updateDescription,
     updateShareStatus,
+    updateCurrentUserStatus,
     fetchProfileInfo,
     follow,
     unfollow,

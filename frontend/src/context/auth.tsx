@@ -7,9 +7,16 @@ const AUTH_STORE_KEY = "auth:userinfo"
 interface IAuthContext {
     authStore: IAuthStore
     fetchCurrentUser: () => Promise<void>
+    updateCurrentStatus: (status: string) => Promise<void>
     logout: () => void
 }
 const AuthContext = createContext<IAuthContext>()
+
+async function updateCurrentStatus(status: string) {
+    if (navigator.onLine && authStore.status === UserStatus.authenticated) {
+        await api.updateCurrentUserStatus(status)
+    }
+}
 
 /**
  * Fetches the current authenticated user from the API.
@@ -92,7 +99,7 @@ export function AuthProvider(props: { children: JSX.Element }) {
     })
 
     return (
-        <AuthContext.Provider value={{ authStore, fetchCurrentUser, logout }}>
+        <AuthContext.Provider value={{ authStore, fetchCurrentUser, logout, updateCurrentStatus }}>
             {props.children}
         </AuthContext.Provider>
     )

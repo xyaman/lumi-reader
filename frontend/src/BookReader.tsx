@@ -7,6 +7,7 @@ import ReaderNavbar from "./components/ReaderNavbar"
 import { SettingsSidebar, ReaderLeftSidebar } from "./components/ReaderSidebar"
 import ReaderContent from "./components/ReaderContent"
 import { ReaderSourceDB } from "./lib/db"
+import { useAuthContext } from "./context/auth"
 
 // CharacterCounter toggles visibility on click, always clickable
 function CharacterCounter() {
@@ -116,6 +117,7 @@ function GlobalKeymapManager() {
 export default function BookReader(): JSX.Element {
     const params = useParams()
     const id = Number(params.id)
+    const { updateCurrentStatus } = useAuthContext()
 
     const navigate = useNavigate()
     if (!id) navigate("/", { replace: true })
@@ -136,6 +138,7 @@ export default function BookReader(): JSX.Element {
             bookStyle.id = "book-css"
             document.head.appendChild(bookStyle)
             document.documentElement.lang = book.language
+            updateCurrentStatus(`Reading ${book.title}`)
         } else {
             navigate("/", { replace: true })
             return

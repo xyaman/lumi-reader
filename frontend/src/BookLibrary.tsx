@@ -1,4 +1,4 @@
-import { createSignal, For, Show } from "solid-js"
+import { createSignal, For, onMount, Show } from "solid-js"
 import { EpubBook } from "@/lib/epub"
 import { ReaderSourceDB, ReaderSourceLightRecord } from "./lib/db"
 import { useAuthContext } from "./context/auth"
@@ -10,7 +10,7 @@ import { SquaresIcon } from "./components/icons"
 import FollowingActivitySidebar from "./components/FollowingActivitySidebar"
 
 export default function BookLibrary() {
-    const { authStore } = useAuthContext()
+    const { authStore, updateCurrentStatus } = useAuthContext()
     const user = () => authStore.user
 
     const { state, setState, setSortParams, toggleBookInShelf } = useLibraryContext()
@@ -43,6 +43,10 @@ export default function BookLibrary() {
             setBooks(newBooks)
         }
     }
+
+    onMount(() => {
+        updateCurrentStatus("Connected")
+    })
 
     // --- Render ---
     return (
