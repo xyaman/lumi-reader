@@ -120,7 +120,6 @@ export default function FollowingActivitySidebar() {
                                                 <div class="text-xs mt-1">
                                                     <Show when={following.status?.last_activity}>
                                                         <div class="truncate">
-                                                            Reading:{" "}
                                                             {following.status!.last_activity}
                                                         </div>
                                                     </Show>
