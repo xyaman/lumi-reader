@@ -42,7 +42,7 @@ export default function FollowingActivitySidebar() {
     )
 
     return (
-        <aside class="navbar-theme hidden md:flex border-l p-4 flex-col w-48 lg:w-64 overflow-y-auto max-h-[calc(100vh-3.5rem)]">
+        <aside class="navbar-theme hidden md:flex p-4 flex-col w-48 lg:w-64 overflow-y-auto max-h-[calc(100vh-3.5rem)]">
             <Show
                 when={!followings.loading}
                 fallback={
