@@ -13,9 +13,11 @@ class V1::UserStatusController < ApplicationController
       return render json: { error: "last_activity is required." }, status: :bad_request
     end
 
-    # Store raw hashes in cache with 24h expiration
-    Rails.cache.write(cache_key(user.id, "timestamp"), timestamp, expires_in: 24.hours)
-    Rails.cache.write(cache_key(user.id, "last_activity"), last_activity, expires_in: 24.hours)
+    # Store raw hashes in cache with 48h expiration
+    Rails.cache.write(cache_key(user.id, "timestamp"), timestamp, expires_in: 48.hours)
+    Rails.cache.write(cache_key(user.id, "last_activity"), last_activity, expires_in: 48.hours)
+
+    UserStatusBroadcaster.call(user.id, last_activity, timestamp)
 
     render json: { status: "Ok" }, status: :created
   end
