@@ -9,18 +9,18 @@ class V1::FollowsController < ApplicationController
     @user = User.find_by(id: params[:user_id])
     return render_user_not_found unless @user
 
-
-
-    # TODO: improve the query?
-    following = @user.following.map do |u|
-      avatar_url = u.avatar.attached? ? url_for(u.avatar) : nil
-      {
-        id: u.id,
-        username: u.username,
-        email: u.email,
-        avatar_url: avatar_url
-      }
-    end
+    # https://stackoverflow.com/questions/52418114/how-to-query-records-that-have-an-activestorage-attachment
+    following = @user.following
+      .includes(avatar_attachment: :blob)
+      .select(:id, :username, :email)
+      .map do |u|
+        {
+          id: u.id,
+          username: u.username,
+          email: u.email,
+          avatar_url: u.avatar.attached? ? url_for(u.avatar) : nil
+        }
+      end
 
     render json: { following: following }
   end
@@ -34,16 +34,18 @@ class V1::FollowsController < ApplicationController
     @user = User.find_by(id: params[:user_id])
     return render_user_not_found unless @user
 
-    # TODO: improve the query?
-    followers = @user.followers.map do |u|
-      avatar_url = u.avatar.attached? ? url_for(u.avatar) : nil
-      {
-        id: u.id,
-        username: u.username,
-        email: u.email,
-        avatar_url: avatar_url
-      }
-    end
+    # https://stackoverflow.com/questions/52418114/how-to-query-records-that-have-an-activestorage-attachment
+    followers = @user.followers
+      .includes(avatar_attachment: :blob)
+      .select(:id, :username, :email)
+      .map do |u|
+        {
+          id: u.id,
+          username: u.username,
+          email: u.email,
+          avatar_url: u.avatar.attached? ? url_for(u.avatar) : nil
+        }
+      end
 
     render json: { followers: followers }
   end
