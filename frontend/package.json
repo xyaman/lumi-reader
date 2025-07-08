@@ -12,7 +12,9 @@
         "format": "bunx prettier . --write"
     },
     "dependencies": {
+        "@rails/actioncable": "^8.0.200",
         "@solidjs/router": "^0.15.3",
+        "@types/rails__actioncable": "^6.1.11",
         "fast-xml-parser": "^5.2.2",
         "htmlparser2": "^10.0.0",
         "idb": "^8.0.2",

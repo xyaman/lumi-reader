@@ -54,7 +54,9 @@ export function timeAgo(unixTimestamp: number | null): string {
     const diffMs = now - inputTime
     const diffMins = Math.floor(diffMs / 60000)
 
-    if (diffMins < 60) {
+    if (diffMins < 3) {
+        return "Now"
+    } else if (diffMins < 60) {
         return `${diffMins} mins ago`
     } else {
         const diffHours = Math.floor(diffMins / 60)

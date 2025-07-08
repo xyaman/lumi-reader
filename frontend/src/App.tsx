@@ -10,6 +10,7 @@ import UserSearch from "./SearchPage"
 import { AuthProvider } from "./context/auth"
 
 import { LibraryProvider } from "@/context/library"
+import { WebSocketProvider } from "./context/websocket"
 
 function App() {
     const theme = getSelectedTheme()
@@ -17,22 +18,24 @@ function App() {
 
     return (
         <AuthProvider>
-            <Router>
-                <Route
-                    path="/"
-                    component={() => (
-                        <LibraryProvider>
-                            <BookLibrary />
-                        </LibraryProvider>
-                    )}
-                />
-                <Route path="/reader/:id?" component={BookReader} />
-                <Route path="/settings" component={Settings} />
-                <Route path="/register" component={Register} />
-                <Route path="/login" component={Login} />
-                <Route path="/users/search" component={UserSearch} />
-                <Route path="/users/:id?" component={Profile} />
-            </Router>
+            <WebSocketProvider>
+                <Router>
+                    <Route
+                        path="/"
+                        component={() => (
+                            <LibraryProvider>
+                                <BookLibrary />
+                            </LibraryProvider>
+                        )}
+                    />
+                    <Route path="/reader/:id?" component={BookReader} />
+                    <Route path="/settings" component={Settings} />
+                    <Route path="/register" component={Register} />
+                    <Route path="/login" component={Login} />
+                    <Route path="/users/search" component={UserSearch} />
+                    <Route path="/users/:id?" component={Profile} />
+                </Router>
+            </WebSocketProvider>
         </AuthProvider>
     )
 }
