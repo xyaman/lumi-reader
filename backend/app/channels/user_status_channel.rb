@@ -1,0 +1,61 @@
+class UserStatusChannel < ApplicationCable::Channel
+  def subscribed
+    @filtered_user_ids = []
+    @current_user_id = current_user&.id
+    puts "subscribed: #{@current_user_id}"
+    stream_from "user_status:update", ->(payload) { filtered_broadcast(payload) }
+
+    update_user_status(online: true)
+    schedule_heartbeat_check
+
+  end
+
+  def update_filter(data)
+    @filtered_user_ids = Array(data["user_ids"]).map(&:to_i)
+    puts @filtered_user_ids
+  end
+
+  def heartbeat
+    # Called by the client periodically (1 min max)
+    update_user_status(online: true)
+  end
+
+  def unsubscribed
+    update_user_status(online: false)
+    cancel_heartbeat_check
+  end
+
+  private
+
+  def update_user_status(online:)
+    return unless @current_user_id
+
+    # Update cache
+    if online
+      Rails.cache.write("online:#{@current_user_id}", true, expires_in: 3.minutes)
+    else
+      Rails.cache.delete("online:#{@current_user_id}")
+    end
+
+    # Broadcast the status change
+    BroadcasterUserStatusJob.perform_later(
+      user_id: @current_user_id,
+      online: online
+    )
+  end
+
+  def schedule_heartbeat_check
+    @heartbeat_job = UserHeartbeatJob.set(wait: 2.minutes).perform_later(@current_user_id)
+  end
+
+  def cancel_heartbeat_check
+    @heartbeat_job&.delete
+  end
+
+  def filtered_broadcast(raw_payload)
+    payload = JSON.parse(raw_payload)
+    user_id = payload["user_id"]
+    return unless @filtered_user_ids.include?(user_id)
+    transmit(payload)
+  end
+end

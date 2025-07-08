@@ -35,6 +35,8 @@ module Backend
     config.middleware.use ActionDispatch::Cookies
     config.middleware.use config.session_store, config.session_options
 
+    # Action Cable (Websockets)
+    config.action_cable.allowed_request_origins = ["http://localhost:5173", "https://lumireader.app"]
 
     # Only loads a smaller set of middleware suitable for API only apps.
     # Middleware like session, flash, cookies can be added back manually.

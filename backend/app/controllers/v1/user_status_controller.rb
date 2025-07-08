@@ -17,7 +17,11 @@ class V1::UserStatusController < ApplicationController
     Rails.cache.write(cache_key(user.id, "timestamp"), timestamp, expires_in: 48.hours)
     Rails.cache.write(cache_key(user.id, "last_activity"), last_activity, expires_in: 48.hours)
 
-    UserStatusBroadcaster.call(user.id, last_activity, timestamp)
+    BroadcasterUserStatusJob.perform_later(
+      user_id: user.id,
+      online: true,
+      activity: last_activity,
+    )
 
     render json: { status: "Ok" }, status: :created
   end
