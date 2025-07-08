@@ -79,7 +79,7 @@ class V1::UsersController < ApplicationController
   # @oas_include
   # @tags Users
   # @summary Show a User
-  # @response User found(200) [Hash{user: Hash{id: Integer, email: String, username: String, description: String, share_status: Boolean, following_count: Integer, followers_count: Integer}}]
+  # @response User found(200) [Hash{user: Hash{id: Integer, email: String, username: String, description: String, avatar_url: String share_status: Boolean, following_count: Integer, followers_count: Integer, following: Boolean}}]
   # @response User not found(404) [Hash{error: String}]
   #
   # Returns the user with the given ID.
@@ -92,6 +92,7 @@ class V1::UsersController < ApplicationController
 
       json_user = user.slice(:id, :email, :username, :description, :share_status)
       json_user[:avatar_url] = user.avatar.attached? ? url_for(user.avatar) : nil
+      json_user[:following] = Current.user.present? && Follow.exists?(follower_id: Current.user.id, followed_id: user.id)
       json_user.merge!(following_count: following_count, followers_count: followers_count)
 
       render json: { user: json_user }, status: :ok
