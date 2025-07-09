@@ -1,6 +1,5 @@
-import { For, Show, createEffect, onMount } from "solid-js"
-import { useAuthContext } from "@/context/auth"
-import { useWebSocket } from "@/context/websocket"
+import { For, Show, createEffect } from "solid-js"
+import { useAuthContext } from "@/context/session"
 import { timeAgo } from "@/lib/utils"
 import { A } from "@solidjs/router"
 import { PartialUser } from "@/lib/api"
@@ -49,7 +48,8 @@ function ActivityStatus(props: { user: PartialUser }) {
             fallback={<div class="text-xs mt-1 italic">No recent activity</div>}
         >
             <div class="text-xs mt-1">
-                <div class="truncate">{timeAgo(props.user.timestamp)}</div>
+                <div class="truncate">{props.user.last_activity}</div>
+                <div>{timeAgo(props.user.timestamp)}</div>
             </div>
         </Show>
     )
@@ -76,8 +76,13 @@ function UserCard(props: { user: User }) {
 }
 
 function FollowingCard(props: { user: PartialUser }) {
+    const title = (user: PartialUser) => user.username + (` - ${user.last_activity}` || "")
+
     return (
-        <div class="bg-(--base00) hover:bg-(--base02) p-2 rounded-md text-sm">
+        <div
+            title={title(props.user)}
+            class="bg-(--base00) hover:bg-(--base02) p-2 rounded-md text-sm"
+        >
             <A href={`/users/${props.user.id}`}>
                 <div class="flex items-center space-x-2">
                     <div class="relative flex-shrink-0">
@@ -94,24 +99,18 @@ function FollowingCard(props: { user: PartialUser }) {
     )
 }
 
-export default function FollowingActivitySidebar() {
-    const { authStore } = useAuthContext()
-    const { websocket, following, fetchSessions } = useWebSocket()
-
-    onMount(() => {
-        websocket.initializeConnection()
-        fetchSessions()
-    })
+export default function FollowingActivitySidebar(props: { following: PartialUser[] }) {
+    const { sessionStore: authStore } = useAuthContext()
 
     // update filter
     createEffect(() => {
-        console.log("following", following())
+        console.log("following", props.following)
     })
 
     return (
         <aside class="navbar-theme hidden md:flex p-4 flex-col w-48 lg:w-64 overflow-y-auto max-h-[calc(100vh-3.5rem)]">
             <Show
-                when={following()}
+                when={props.following}
                 fallback={
                     <div class="flex-1 flex items-center justify-center">
                         <p class="text-sm text-gray-500">Loading...</p>
@@ -124,7 +123,7 @@ export default function FollowingActivitySidebar() {
                     </Show>
 
                     <For
-                        each={following()}
+                        each={props.following}
                         fallback={<p class="text-sm text-center mt-4">No followings found</p>}
                     >
                         {(following) => <FollowingCard user={following} />}

@@ -1,4 +1,3 @@
-// src/context/ThemeContext.tsx
 import { createContext, createSignal, JSX, useContext } from "solid-js"
 import {
     ITheme,

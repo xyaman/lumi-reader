@@ -1,19 +1,30 @@
-import { createContext, useContext, JSX, onCleanup, onMount, createEffect } from "solid-js"
-import { authStore, setAuthStore, UserStatus, IAuthUser, IAuthStore } from "@/stores/auth"
+import { createContext, useContext, JSX, createEffect } from "solid-js"
+import {
+    sessionStore,
+    setSessionStore,
+    ISessionStatus,
+    ISessionUser,
+    ISessionStore,
+} from "@/stores/session"
 import api from "@/lib/api"
 
 const AUTH_STORE_KEY = "auth:userinfo"
 
-interface IAuthContext {
-    authStore: IAuthStore
+interface ISessionContext {
+    sessionStore: ISessionStore
+
+    // local
+    startSession: () => Promise<void>
+    closeSession: () => void
+
+    // helpers (api)
     fetchCurrentUser: () => Promise<void>
     updateCurrentStatus: (status: string) => Promise<void>
-    logout: () => void
 }
-const AuthContext = createContext<IAuthContext>()
+const AuthContext = createContext<ISessionContext>()
 
 async function updateCurrentStatus(status: string) {
-    if (navigator.onLine && authStore.status === UserStatus.authenticated) {
+    if (navigator.onLine && sessionStore.status === ISessionStatus.authenticated) {
         await api.updateCurrentUserStatus(status)
     }
 }
@@ -24,31 +35,27 @@ async function updateCurrentStatus(status: string) {
  */
 async function fetchCurrentUser() {
     if (!navigator.onLine) {
-        setAuthStore("status", UserStatus.offline)
+        setSessionStore("status", ISessionStatus.offline)
         return
     }
 
     try {
         const res = await api.fetchSessionInfo()
         if (res) {
-            const user: IAuthUser = {
+            const user: ISessionUser = {
                 id: res.user.id,
                 email: res.user.email,
                 username: res.user.username,
                 share_reading_data: res.user.share_status,
                 avatar_url: res.user.avatar_url,
             }
-            setAuthStore({ user, status: UserStatus.authenticated })
+            setSessionStore({ user, status: ISessionStatus.authenticated })
         } else {
-            setAuthStore({ user: null, status: UserStatus.unauthenticated })
+            setSessionStore({ user: null, status: ISessionStatus.unauthenticated })
         }
     } catch {
-        setAuthStore("status", UserStatus.offline)
+        setSessionStore("status", ISessionStatus.offline)
     }
-}
-
-function logout() {
-    setAuthStore({ user: null, status: UserStatus.unauthenticated })
 }
 
 /**
@@ -69,37 +76,51 @@ export function AuthProvider(props: { children: JSX.Element }) {
         )
     }
 
+    const startSession = async () => {
+        await fetchCurrentUser()
+        window.addEventListener("online", fetchCurrentUser)
+        window.addEventListener("online", setupInterval)
+        window.addEventListener("offline", () => setSessionStore("status", ISessionStatus.offline))
+    }
+
+    const closeSession = async () => {
+        setSessionStore({ user: null, status: ISessionStatus.unauthenticated })
+        localStorage.removeItem(AUTH_STORE_KEY)
+
+        if (interval) clearInterval(interval)
+        window.removeEventListener("online", fetchCurrentUser)
+        window.removeEventListener("online", setupInterval)
+        window.removeEventListener("offline", () =>
+            setSessionStore("status", ISessionStatus.offline),
+        )
+    }
+
+    // Sync authStore to localStorage on change
+    // The session is removed in `closeSession` when user is null
+    createEffect(() => {
+        if (sessionStore.user) localStorage.setItem(AUTH_STORE_KEY, JSON.stringify(sessionStore))
+    })
+
     // Hydrate authStore from localStorage
     const stored = localStorage.getItem(AUTH_STORE_KEY)
     if (stored) {
         try {
             const parsed = JSON.parse(stored)
-            setAuthStore(parsed)
+            setSessionStore(parsed)
+            startSession().then(() => console.log("Session started"))
         } catch {}
     }
 
-    onMount(() => {
-        fetchCurrentUser()
-        setupInterval()
-        window.addEventListener("online", fetchCurrentUser)
-        window.addEventListener("online", setupInterval)
-        window.addEventListener("offline", () => setAuthStore("status", UserStatus.offline))
-    })
-
-    onCleanup(() => {
-        if (interval) clearInterval(interval)
-        window.removeEventListener("online", fetchCurrentUser)
-        window.removeEventListener("online", setupInterval)
-        window.removeEventListener("offline", () => setAuthStore("status", UserStatus.offline))
-    })
-
-    // Sync authStore to localStorage on change
-    createEffect(() => {
-        localStorage.setItem(AUTH_STORE_KEY, JSON.stringify(authStore))
-    })
-
     return (
-        <AuthContext.Provider value={{ authStore, fetchCurrentUser, logout, updateCurrentStatus }}>
+        <AuthContext.Provider
+            value={{
+                sessionStore: sessionStore,
+                fetchCurrentUser,
+                updateCurrentStatus,
+                startSession,
+                closeSession,
+            }}
+        >
             {props.children}
         </AuthContext.Provider>
     )

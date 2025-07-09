@@ -2,10 +2,10 @@ import { createEffect, createSignal, Show } from "solid-js"
 import { A, useNavigate } from "@solidjs/router"
 import api from "./lib/api"
 import Navbar from "./components/Navbar"
-import { useAuthContext } from "./context/auth"
+import { useAuthContext } from "./context/session"
 
 function Register() {
-    const { authStore, fetchCurrentUser } = useAuthContext()
+    const { sessionStore: authStore, fetchCurrentUser } = useAuthContext()
 
     createEffect(() => {
         if (authStore.user) {

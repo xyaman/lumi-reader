@@ -460,7 +460,6 @@ async function fetchUserFollows(userId: number): Promise<IFollowResponse> {
     if (!res.ok) {
         throw new Error(data?.error ? data.error : `User follows fetch failed: ${res.statusText}`)
     }
-    console.log(data)
     return data
 }
 
@@ -512,7 +511,7 @@ async function fetchUserStatus(userId: number): Promise<IFollowerResponse> {
 
 export interface IUserStatusBatchResponse {
     results: Array<{
-        user_id: number
+        id: number
         timestamp: number
         last_activity: string
     }>

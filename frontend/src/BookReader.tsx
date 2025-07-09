@@ -7,7 +7,7 @@ import ReaderNavbar from "./components/ReaderNavbar"
 import { SettingsSidebar, ReaderLeftSidebar } from "./components/ReaderSidebar"
 import ReaderContent from "./components/ReaderContent"
 import { ReaderSourceDB } from "./lib/db"
-import { useAuthContext } from "./context/auth"
+import { useAuthContext } from "./context/session"
 
 // CharacterCounter toggles visibility on click, always clickable
 function CharacterCounter() {
@@ -138,7 +138,11 @@ export default function BookReader(): JSX.Element {
             bookStyle.id = "book-css"
             document.head.appendChild(bookStyle)
             document.documentElement.lang = book.language
+
             updateCurrentStatus(`Reading ${book.title}`)
+            setInterval(() => {
+                updateCurrentStatus(`Reading ${book.title}`)
+            }, 30000)
         } else {
             navigate("/", { replace: true })
             return

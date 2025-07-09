@@ -2,23 +2,23 @@ import { createEffect, createSignal, Show } from "solid-js"
 import { A, useLocation, useNavigate } from "@solidjs/router"
 import api from "./lib/api"
 import Navbar from "./components/Navbar"
-import { useAuthContext } from "./context/auth"
+import { useAuthContext } from "./context/session"
 
 function Login() {
-    const { authStore, fetchCurrentUser } = useAuthContext()
+    const { sessionStore: authStore, startSession } = useAuthContext()
     const location = useLocation()
     const [email, setEmail] = createSignal("")
     const [password, setPassword] = createSignal("")
     const [error, setError] = createSignal("")
     const [statusMsg, setStatusMsg] = createSignal("")
 
+    // this will make the user to redirect on successful login too
     createEffect(() => {
         if (authStore.user) {
             const navigate = useNavigate()
             navigate("/users", { replace: true })
             return
         }
-        fetchCurrentUser()
     })
 
     createEffect(() => {
@@ -44,7 +44,7 @@ function Login() {
                 password: password(),
             }
             await api.login(body)
-            await fetchCurrentUser()
+            await startSession()
         } catch (e: unknown) {
             if (typeof e === "string") {
                 setError(e)

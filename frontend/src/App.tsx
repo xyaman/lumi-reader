@@ -7,10 +7,9 @@ import Register from "./Register"
 import Login from "./Login"
 import Profile from "./Profile"
 import UserSearch from "./SearchPage"
-import { AuthProvider } from "./context/auth"
+import { AuthProvider } from "./context/session"
 
 import { LibraryProvider } from "@/context/library"
-import { WebSocketProvider } from "./context/websocket"
 
 function App() {
     const theme = getSelectedTheme()
@@ -18,24 +17,22 @@ function App() {
 
     return (
         <AuthProvider>
-            <WebSocketProvider>
-                <Router>
-                    <Route
-                        path="/"
-                        component={() => (
-                            <LibraryProvider>
-                                <BookLibrary />
-                            </LibraryProvider>
-                        )}
-                    />
-                    <Route path="/reader/:id?" component={BookReader} />
-                    <Route path="/settings" component={Settings} />
-                    <Route path="/register" component={Register} />
-                    <Route path="/login" component={Login} />
-                    <Route path="/users/search" component={UserSearch} />
-                    <Route path="/users/:id?" component={Profile} />
-                </Router>
-            </WebSocketProvider>
+            <Router>
+                <Route
+                    path="/"
+                    component={() => (
+                        <LibraryProvider>
+                            <BookLibrary />
+                        </LibraryProvider>
+                    )}
+                />
+                <Route path="/reader/:id?" component={BookReader} />
+                <Route path="/settings" component={Settings} />
+                <Route path="/register" component={Register} />
+                <Route path="/login" component={Login} />
+                <Route path="/users/search" component={UserSearch} />
+                <Route path="/users/:id?" component={Profile} />
+            </Router>
         </AuthProvider>
     )
 }

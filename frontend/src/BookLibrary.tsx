@@ -1,7 +1,7 @@
-import { createSignal, For, Show } from "solid-js"
+import { createEffect, createResource, createSignal, For, Show } from "solid-js"
 import { EpubBook } from "@/lib/epub"
 import { ReaderSourceDB, ReaderSourceLightRecord } from "./lib/db"
-import { useAuthContext } from "./context/auth"
+import { useAuthContext } from "./context/session"
 import BooksGrid from "./components/library/BooksGrid"
 import BookshelvesSidebar from "@/components/library/BookshelvesList"
 import { useLibraryContext } from "@/context/library"
@@ -9,8 +9,11 @@ import BookLibraryNavbar from "@/components/library/BookLibraryNavbar"
 import { SquaresIcon } from "./components/icons"
 import FollowingActivitySidebar from "./components/FollowingActivitySidebar"
 
+import consumer from "@/services/websocket"
+import api, { PartialUser } from "./lib/api"
+
 export default function BookLibrary() {
-    const { authStore } = useAuthContext()
+    const { sessionStore: authStore } = useAuthContext()
     const user = () => authStore.user
 
     const { state, setState, setSortParams, toggleBookInShelf } = useLibraryContext()
@@ -43,6 +46,56 @@ export default function BookLibrary() {
             setBooks(newBooks)
         }
     }
+
+    const [viewportFollowings, setViewportFollowings] = createSignal<PartialUser[]>()
+    const [follows, { mutate: setFollowers }] = createResource(async () => {
+        if (!authStore.user) return []
+        const res = await api.fetchUserFollows(authStore.user!.id)
+        setViewportFollowings(res.following)
+        const { results } = await api.fetchUserStatusBatch(res.following.map((u) => u.id))
+
+        const mapB = new Map(results.map((u) => [u.id, u]))
+        return res.following.map((u) => ({ ...u, ...(mapB.get(u.id) || {}) }))
+    })
+
+    const channel = consumer.subscriptions.create(
+        { channel: "UserStatusChannel" },
+        {
+            connected() {
+                console.log("websocket connected")
+                startHeartbeat()
+            },
+            disconnected() {
+                console.log("websocket disconnected")
+                stopHeartbeatInterval()
+            },
+            received(data: PartialUser) {
+                setFollowers(
+                    (prev) =>
+                        prev && prev.map((u) => ({ ...u, ...(data.id === u.id ? data : {}) })),
+                )
+            },
+        },
+    )
+
+    let heartbeatInterval: number | null = null
+    const startHeartbeat = () => {
+        heartbeatInterval = setInterval(() => {
+            channel.perform("heartbeat")
+        }, 30000)
+    }
+
+    const stopHeartbeatInterval = () => {
+        if (heartbeatInterval) clearInterval(heartbeatInterval)
+    }
+
+    createEffect(() => {
+        // TODO: se triggea 2 veces
+        const users = viewportFollowings()
+        if (!users) return
+        console.log("updating filter")
+        channel.perform("update_filter", { user_ids: users.map((u) => u.id) })
+    })
 
     // --- Render ---
     return (
@@ -124,8 +177,8 @@ export default function BookLibrary() {
                             />
                         </main>
                         {/* Right sidebar (only if logged in) */}
-                        <Show when={user()}>
-                            <FollowingActivitySidebar />
+                        <Show when={user() && follows()}>
+                            <FollowingActivitySidebar following={follows()!} />
                         </Show>
                     </div>
                 </div>

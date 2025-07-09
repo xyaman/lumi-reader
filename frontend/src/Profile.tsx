@@ -3,7 +3,7 @@ import Navbar from "./components/Navbar"
 import { IconExit, IconSearch, IconSettings } from "./components/icons"
 import { createEffect, createResource, Match, Show, Switch } from "solid-js"
 import api from "./lib/api"
-import { useAuthContext } from "./context/auth"
+import { useAuthContext } from "./context/session"
 import Spinner from "./components/Spiner"
 import { createStore } from "solid-js/store"
 import UserCard from "./components/UserCard"
@@ -11,7 +11,7 @@ import UserCard from "./components/UserCard"
 function Profile() {
     const params = useParams()
     const navigate = useNavigate()
-    const { authStore, logout: localLogout } = useAuthContext()
+    const { sessionStore: authStore, closeSession } = useAuthContext()
 
     // --- Identity / Context ---
     const userId = () => Number(params.id ?? authStore.user?.id)
@@ -29,6 +29,7 @@ function Profile() {
     })
 
     // --- Follow Status ---
+    // TODO: Use new route
     const [isFollowing, { mutate: setIsFollowing }] = createResource(
         () => (!isOwnProfile() && authStore.user ? true : null),
         async () => {
@@ -105,14 +106,12 @@ function Profile() {
         setDescStore("loading", false)
     }
 
-    // --- Logout ---
     const logout = () => {
         api.logout()
-        localLogout()
+        closeSession()
         navigate("/login")
     }
 
-    // --- Render ---
     return (
         <>
             <Navbar>
