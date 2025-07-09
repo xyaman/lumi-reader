@@ -51,7 +51,6 @@ class V1::UserStatusController < ApplicationController
   # @response Success(200) [Hash{ results: Array<Hash{ user_id: Integer, timestamp: Integer, last_activity: String}>}]
   def batch
     ids = params[:user_ids]
-    puts ids
 
     # Validate input (only accept numbers)
     unless ids.is_a?(Array) && ids.all? { |id| id.to_s =~ /^\d+$/ }
@@ -67,11 +66,20 @@ class V1::UserStatusController < ApplicationController
     user_ids = ids.map(&:to_i)
     users = User.where(id: user_ids, share_status: true)
 
+    cache_keys = users.flat_map do |user|
+      [
+        cache_key(user.id, "timestamp"),
+        cache_key(user.id, "last_activity")
+      ]
+    end
+
+    cache_data = Rails.cache.read_multi(*cache_keys)
+
     results = users.map do |user|
       {
         user_id: user.id,
-        timestamp: Rails.cache.read(cache_key(user.id, "timestamp")),
-        last_activity: Rails.cache.read(cache_key(user.id, "last_activity"))
+        timestamp: cache_data[cache_key(user.id, "timestamp")],
+        last_activity: cache_data[cache_key(user.id, "last_activity")]
       }
     end
 
