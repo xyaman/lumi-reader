@@ -43,10 +43,7 @@ function OnlineStatusIndicator(props: { isOnline?: boolean }) {
 
 function ActivityStatus(props: { user: PartialUser }) {
     return (
-        <Show
-            when={props.user.last_activity}
-            fallback={<div class="text-xs mt-1 italic">No recent activity</div>}
-        >
+        <Show when={props.user.last_activity}>
             <div class="text-xs mt-1">
                 <div class="truncate">{props.user.last_activity}</div>
                 <div>{timeAgo(props.user.timestamp)}</div>
@@ -102,14 +99,19 @@ function FollowingCard(props: { user: PartialUser }) {
 export default function FollowingActivitySidebar(props: { following: PartialUser[] }) {
     const { sessionStore: authStore } = useAuthContext()
 
-    const users = createMemo(() => {
-        return props.following.sort((a, b) => {
+    const users = createMemo(() =>
+        props.following.slice().sort((a, b) => {
             const aOnline = !!a.online
             const bOnline = !!b.online
-            if (aOnline === bOnline) return 0
-            return aOnline ? -1 : 1
-        })
-    })
+            if (aOnline !== bOnline) return aOnline ? -1 : 1
+
+            if (!a.timestamp && !b.timestamp) return 0
+            if (!a.timestamp) return 1
+            if (!b.timestamp) return -1
+
+            return b.timestamp - a.timestamp
+        }),
+    )
 
     // update filter
     createEffect(() => {
