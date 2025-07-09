@@ -303,7 +303,10 @@ async function extractManifest(
             xhtmlHref.push(href)
             xhtmlIds.push(item["@_id"])
         } else if (type === "image/jpeg" || type === "image/png" || type === "image/svg+xml") {
-            if ((item["@_id"] as string).includes("cover")) {
+            if (
+                (item["@_id"] as string).includes("cover") ||
+                (item["@_properties"] as string)?.includes("cover")
+            ) {
                 imgsHref.splice(0, 0, href)
                 continue
             }
