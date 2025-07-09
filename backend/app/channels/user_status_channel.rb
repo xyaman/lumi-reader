@@ -2,7 +2,6 @@ class UserStatusChannel < ApplicationCable::Channel
   def subscribed
     @filtered_user_ids = []
     @current_user_id = current_user&.id
-    puts "subscribed: #{@current_user_id}"
     stream_from "user_status:update", ->(payload) { filtered_broadcast(payload) }
 
     update_user_status(online: true)
@@ -12,7 +11,6 @@ class UserStatusChannel < ApplicationCable::Channel
 
   def update_filter(data)
     @filtered_user_ids = Array(data["user_ids"]).map(&:to_i)
-    puts @filtered_user_ids
   end
 
   def heartbeat
@@ -39,7 +37,7 @@ class UserStatusChannel < ApplicationCable::Channel
 
     # Broadcast the status change
     BroadcasterUserStatusJob.perform_later(
-      user_id: @current_user_id,
+      id: @current_user_id,
       online: online
     )
   end
@@ -54,7 +52,7 @@ class UserStatusChannel < ApplicationCable::Channel
 
   def filtered_broadcast(raw_payload)
     payload = JSON.parse(raw_payload)
-    user_id = payload["user_id"]
+    user_id = payload["id"]
     return unless @filtered_user_ids.include?(user_id)
     transmit(payload)
   end

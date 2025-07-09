@@ -53,7 +53,6 @@ class V1::UsersController < ApplicationController
   def update_description
     user = Current.user
     if user.update(description: params[:description])
-      puts user.description
       render json: { message: "Description updated successfully.", description: user.description }, status: :ok
     else
       render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
@@ -69,7 +68,6 @@ class V1::UsersController < ApplicationController
   def update_share_status
     user = Current.user
     if user.update(share_status: params[:share_status])
-      puts user.description
       render json: { message: "Share status updated successfully.", share_status: user.share_status }, status: :ok
     else
       render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
@@ -110,7 +108,6 @@ class V1::UsersController < ApplicationController
   # @response Invalid or expired confirmation token(404) [Hash{error: String}]
   def confirm
     user = User.find_by(confirmation_token: params[:token])
-    puts params
     base_url = ENV["FRONTEND_URL"].presence || "http://localhost:5173"
     login_url = "#{base_url}/login"
 

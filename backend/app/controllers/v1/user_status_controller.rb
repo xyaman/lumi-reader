@@ -18,7 +18,7 @@ class V1::UserStatusController < ApplicationController
     Rails.cache.write(cache_key(user.id, "last_activity"), last_activity, expires_in: 48.hours)
 
     BroadcasterUserStatusJob.perform_later(
-      user_id: user.id,
+      id: user.id,
       online: true,
       activity: last_activity,
     )
@@ -48,7 +48,7 @@ class V1::UserStatusController < ApplicationController
   # @oas_include
   # @tags UserStatus
   # @summary Retrieves status for multiple users
-  # @response Success(200) [Hash{ results: Array<Hash{ user_id: Integer, timestamp: Integer, last_activity: String}>}]
+  # @response Success(200) [Hash{ results: Array<Hash{ id: Integer, timestamp: Integer, last_activity: String}>}]
   def batch
     ids = params[:user_ids]
 
@@ -77,7 +77,7 @@ class V1::UserStatusController < ApplicationController
 
     results = users.map do |user|
       {
-        user_id: user.id,
+        id: user.id,
         timestamp: cache_data[cache_key(user.id, "timestamp")],
         last_activity: cache_data[cache_key(user.id, "last_activity")]
       }

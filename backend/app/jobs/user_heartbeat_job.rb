@@ -1,12 +1,12 @@
 class UserHeartbeatJob < ApplicationJob
   queue_as :default
 
-  def perform(user_id)
-    if Rails.cache.exist?("online:#{user_id}")
-      UserHeartbeatJob.set(wait: 2.minutes).perform_later(user_id)
+  def perform(id)
+    if Rails.cache.exist?("online:#{id}")
+      UserHeartbeatJob.set(wait: 2.minutes).perform_later(id)
     else
       BroadcasterUserStatusJob.perform_later(
-        user_id: user_id,
+        id: id,
         online: false
       )
     end

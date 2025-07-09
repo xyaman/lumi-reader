@@ -18,7 +18,8 @@ class V1::FollowsController < ApplicationController
           id: u.id,
           username: u.username,
           email: u.email,
-          avatar_url: u.avatar.attached? ? url_for(u.avatar) : nil
+          avatar_url: u.avatar.attached? ? url_for(u.avatar) : nil,
+          online: Rails.cache.exist?("online:#{u.id}")
         }
       end
 
