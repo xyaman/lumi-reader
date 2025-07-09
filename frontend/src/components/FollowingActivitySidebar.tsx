@@ -1,4 +1,4 @@
-import { For, Show, createEffect } from "solid-js"
+import { For, Show, createEffect, createMemo } from "solid-js"
 import { useAuthContext } from "@/context/session"
 import { timeAgo } from "@/lib/utils"
 import { A } from "@solidjs/router"
@@ -102,6 +102,15 @@ function FollowingCard(props: { user: PartialUser }) {
 export default function FollowingActivitySidebar(props: { following: PartialUser[] }) {
     const { sessionStore: authStore } = useAuthContext()
 
+    const users = createMemo(() => {
+        return props.following.sort((a, b) => {
+            const aOnline = !!a.online
+            const bOnline = !!b.online
+            if (aOnline === bOnline) return 0
+            return aOnline ? -1 : 1
+        })
+    })
+
     // update filter
     createEffect(() => {
         console.log("following", props.following)
@@ -123,7 +132,7 @@ export default function FollowingActivitySidebar(props: { following: PartialUser
                     </Show>
 
                     <For
-                        each={props.following}
+                        each={users()}
                         fallback={<p class="text-sm text-center mt-4">No followings found</p>}
                     >
                         {(following) => <FollowingCard user={following} />}
