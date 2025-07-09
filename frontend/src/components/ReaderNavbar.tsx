@@ -2,6 +2,7 @@ import { Show } from "solid-js"
 import Navbar from "@/components/Navbar"
 import {
     IconBookmark,
+    IconBookmarkSquare,
     IconExit,
     IconFullscreen,
     IconSettings,
@@ -20,7 +21,13 @@ export default function ReaderNavbar() {
     const navigate = useNavigate()
     const isFullscreen = () => document.fullscreenElement != null
 
-    const { readerStore, setReaderStore } = useReaderContext()
+    const { readerStore, setReaderStore, bookmarkGoTo } = useReaderContext()
+    const goToLastBookmark = () => {
+        const bookmarks = readerStore.book.bookmarks
+        if (bookmarks.length === 0) return
+        const lastBookmark = bookmarks[bookmarks.length - 1]
+        bookmarkGoTo(lastBookmark)
+    }
 
     return (
         <>
@@ -46,6 +53,11 @@ export default function ReaderNavbar() {
                         >
                             <IconBookmark />
                         </button>
+                        <Show when={readerStore.book.bookmarks.length > 0}>
+                            <button class="cursor-pointer" onClick={() => goToLastBookmark()}>
+                                <IconBookmarkSquare />
+                            </button>
+                        </Show>
                     </Navbar.Left>
                     <Navbar.Right>
                         <button
