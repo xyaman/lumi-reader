@@ -4,7 +4,7 @@ class V1::FollowsController < ApplicationController
   # @oas_include
   # @tags Follows
   # @summary List users that the specified user is following
-  # @response Success(200) [Hash{following: Array<Hash{id: Integer, username: String, email: String}}}]
+  # @response Success(200) [Hash{following: Array<Hash{id: Integer, username: String, email: String}>}}]
   def following
     @user = User.find_by(id: params[:user_id])
     return render_user_not_found unless @user
@@ -28,7 +28,7 @@ class V1::FollowsController < ApplicationController
   # @oas_include
   # @tags Follows
   # @summary List users that follow the specified user
-  # @response Success(200) [Hash{followers: Array<Hash{id: Integer, username: String, email: String}}}]
+  # @response Success(200) [Hash{followers: Array<Hash{id: Integer, username: String, email: String}>}}]
   # @response User not found(404) [Hash{error: String}]
   def followers
     @user = User.find_by(id: params[:user_id])
