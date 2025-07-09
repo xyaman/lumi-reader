@@ -43,7 +43,7 @@ export default function BookLibrary() {
         }
 
         if (newBooks.length > 0) {
-            setBooks(newBooks)
+            setBooks([...books(), ...newBooks])
         }
     }
 
