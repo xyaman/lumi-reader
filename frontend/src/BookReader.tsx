@@ -8,7 +8,6 @@ import { SettingsSidebar, ReaderLeftSidebar } from "./components/ReaderSidebar"
 import ReaderContent from "./components/ReaderContent"
 import { ReaderSourceDB } from "./lib/db"
 import { useAuthContext } from "./context/auth"
-import { useWebSocket } from "./context/websocket"
 
 // CharacterCounter toggles visibility on click, always clickable
 function CharacterCounter() {

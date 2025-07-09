@@ -1,20 +1,22 @@
 import { createStore } from "solid-js/store"
 import { createConsumer } from "@rails/actioncable"
+import api, { PartialUser } from "@/lib/api"
+import { authStore } from "./auth"
 
 const WS_URL = import.meta.env.PROD ? "wss://api.lumireader.app/cable" : "ws://localhost:3000/cable"
 
-export interface UserStatus {
-    user_id: number
-    online: boolean
-    last_activity?: string
-    timestamp: number
-}
-
 interface UserStatusStore {
-    userStatuses: Record<number, UserStatus>
+    userStatuses: Record<number, PartialUser>
     isConnected: boolean
     error: string | null
     filteredUserIds: number[]
+}
+
+interface UserStatus {
+    user_id: number
+    online: boolean
+    last_activity?: string
+    timestamp?: number
 }
 
 export function createWebSocketStore() {
@@ -31,12 +33,13 @@ export function createWebSocketStore() {
     let heartbeatInterval: number | null = null
 
     // Start heartbeat to keep connection alive
+    // Send heartbeat every 30 seconds
     const startHeartbeat = () => {
         stopHeartbeat()
         heartbeatInterval = setInterval(() => {
             console.log("Sending heartbeat...")
             sendHeartbeat()
-        }, 30000) // Send heartbeat every 30 seconds
+        }, 30000)
     }
 
     // Stop heartbeat interval
@@ -48,11 +51,19 @@ export function createWebSocketStore() {
     }
 
     // Initialize ActionCable connection
-    const initializeConnection = () => {
+    const initializeConnection = async () => {
         if (consumer) {
             console.log("Consumer already exists, skipping initialization")
             return
         }
+
+        const res = await api.fetchUserFollows(authStore.user!.id)
+        res.following.forEach((u) => setStore("userStatuses", u.id, u))
+        const fs = res.following.map((u) => u.id)
+        const initialStatus = await api.fetchUserStatusBatch(fs)
+        initialStatus.results.forEach((u) =>
+            setStore("userStatuses", u.user_id, { ...u, id: u.user_id }),
+        )
 
         try {
             consumer = createConsumer(WS_URL)
@@ -64,6 +75,7 @@ export function createWebSocketStore() {
                         setStore("isConnected", true)
                         setStore("error", null)
                         startHeartbeat()
+                        updateFilter(fs)
                     },
                     disconnected() {
                         console.log("Status websocket disconnected")
@@ -74,8 +86,15 @@ export function createWebSocketStore() {
                         console.log("Received payload:", payload)
                         // TODO: handle more payloads
                         if (payload && typeof payload === "object" && "user_id" in payload) {
-                            const userStatus = payload as UserStatus
-                            setStore("userStatuses", userStatus.user_id, userStatus)
+                            const status = payload as UserStatus
+
+                            // network delays etc
+                            if (!store.filteredUserIds.includes(status.user_id)) return
+
+                            setStore("userStatuses", status.user_id, (prev) => ({
+                                ...prev,
+                                ...status,
+                            }))
                         }
                     },
                     rejected() {
@@ -111,16 +130,6 @@ export function createWebSocketStore() {
         setStore("isConnected", false)
     }
 
-    const connect = () => {
-        console.log("WebSocket connect() called")
-        initializeConnection()
-    }
-
-    const disconnect = () => {
-        console.log("WebSocket disconnect() called")
-        destroyConnection()
-    }
-
     // Only updates from users in this filter will be received by the client
     const updateFilter = (userIds: number[]) => {
         if (userStatusChannel) {
@@ -140,10 +149,10 @@ export function createWebSocketStore() {
 
     return {
         store,
-        connect,
-        disconnect,
+        setStore,
         updateFilter,
         sendHeartbeat,
+        initializeConnection,
         destroyConnection,
     }
 }

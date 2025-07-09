@@ -45,7 +45,7 @@ export function parseCss(cssText: string) {
     return rules
 }
 
-export function timeAgo(unixTimestamp: number | null): string {
+export function timeAgo(unixTimestamp?: number): string {
     if (!unixTimestamp) return ""
 
     const now = Date.now()

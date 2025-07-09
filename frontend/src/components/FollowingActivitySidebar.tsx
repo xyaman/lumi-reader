@@ -1,22 +1,14 @@
-import { For, Show, createResource, createMemo, createEffect, onMount } from "solid-js"
+import { For, Show, createEffect, onMount } from "solid-js"
 import { useAuthContext } from "@/context/auth"
 import { useWebSocket } from "@/context/websocket"
-import api from "@/lib/api"
 import { timeAgo } from "@/lib/utils"
 import { A } from "@solidjs/router"
+import { PartialUser } from "@/lib/api"
 
 interface User {
     id: number
     username: string
     avatar_url?: string
-}
-
-interface UserWithStatus extends User {
-    status?: {
-        last_activity: string
-        online: boolean
-        timestamp: string
-    }
 }
 
 function UserAvatar(props: { user: User }) {
@@ -50,14 +42,14 @@ function OnlineStatusIndicator(props: { isOnline?: boolean }) {
     )
 }
 
-function ActivityStatus(props: { status?: UserWithStatus["status"] }) {
+function ActivityStatus(props: { user: PartialUser }) {
     return (
         <Show
-            when={props.status?.last_activity}
+            when={props.user.last_activity}
             fallback={<div class="text-xs mt-1 italic">No recent activity</div>}
         >
             <div class="text-xs mt-1">
-                <div class="truncate">{props.status!.timestamp}</div>
+                <div class="truncate">{timeAgo(props.user.timestamp)}</div>
             </div>
         </Show>
     )
@@ -83,18 +75,18 @@ function UserCard(props: { user: User }) {
     )
 }
 
-function FollowingCard(props: { following: UserWithStatus }) {
+function FollowingCard(props: { user: PartialUser }) {
     return (
         <div class="bg-(--base00) hover:bg-(--base02) p-2 rounded-md text-sm">
-            <A href={`/users/${props.following.id}`}>
+            <A href={`/users/${props.user.id}`}>
                 <div class="flex items-center space-x-2">
                     <div class="relative flex-shrink-0">
-                        <UserAvatar user={props.following} />
-                        <OnlineStatusIndicator isOnline={props.following.status?.online} />
+                        <UserAvatar user={props.user} />
+                        <OnlineStatusIndicator isOnline={props.user.online} />
                     </div>
                     <div class="min-w-0 flex-1">
-                        <p class="font-medium truncate">{props.following.username}</p>
-                        <ActivityStatus status={props.following.status} />
+                        <p class="font-medium truncate">{props.user.username}</p>
+                        <ActivityStatus user={props.user} />
                     </div>
                 </div>
             </A>
@@ -104,68 +96,22 @@ function FollowingCard(props: { following: UserWithStatus }) {
 
 export default function FollowingActivitySidebar() {
     const { authStore } = useAuthContext()
-    const webSocket = useWebSocket()
-
-    const [followingsList] = createResource(
-        () => authStore.user,
-        async (currUser) => {
-            if (!currUser) return []
-            const res = await api.fetchUserFollows(currUser.id)
-            return res.following
-        },
-    )
+    const { websocket, following, fetchSessions } = useWebSocket()
 
     onMount(() => {
-        webSocket.connect()
+        websocket.initializeConnection()
+        fetchSessions()
     })
 
+    // update filter
     createEffect(() => {
-        const list = followingsList()
-        if (list && list.length > 0) {
-            const userIds = list.map((f: any) => f.id)
-            webSocket.updateFilter(userIds)
-        }
-    })
-
-    const followings = createMemo(() => {
-        const list = followingsList()
-        if (!list) return []
-
-        const userStatuses = webSocket.store.userStatuses
-
-        return list
-            .map((f: any) => {
-                const status = userStatuses[f.id]
-                return {
-                    ...f,
-                    status: status
-                        ? {
-                              last_activity: status.last_activity,
-                              online: status.online,
-                              timestamp: status.timestamp
-                                  ? timeAgo(status.timestamp)
-                                  : "No recent activity",
-                          }
-                        : undefined,
-                }
-            })
-            .sort((a, b) => {
-                if (a.status?.online && !b.status?.online) return -1
-                if (!a.status?.online && b.status?.online) return 1
-                if (!a.status && !b.status) return 0
-                if (!a.status) return 1
-                if (!b.status) return -1
-                if (a.status?.timestamp && b.status?.timestamp) {
-                    return b.status.timestamp - a.status.timestamp
-                }
-                return 0
-            })
+        console.log("following", following())
     })
 
     return (
         <aside class="navbar-theme hidden md:flex p-4 flex-col w-48 lg:w-64 overflow-y-auto max-h-[calc(100vh-3.5rem)]">
             <Show
-                when={!followingsList.loading}
+                when={following()}
                 fallback={
                     <div class="flex-1 flex items-center justify-center">
                         <p class="text-sm text-gray-500">Loading...</p>
@@ -178,10 +124,10 @@ export default function FollowingActivitySidebar() {
                     </Show>
 
                     <For
-                        each={followings() || []}
+                        each={following()}
                         fallback={<p class="text-sm text-center mt-4">No followings found</p>}
                     >
-                        {(following) => <FollowingCard following={following} />}
+                        {(following) => <FollowingCard user={following} />}
                     </For>
                 </div>
             </Show>

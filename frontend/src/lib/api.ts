@@ -418,18 +418,23 @@ async function unfollow(userId: number): Promise<void> {
     return data
 }
 
+export interface PartialUser {
+    id: number
+    username: string
+    avatar_url: string
+
+    // Status related
+    online?: boolean
+    last_activity?: string
+    timestamp?: number
+}
+
 export interface IFollowResponse {
-    following: Array<{
-        id: number
-        username: string
-    }>
+    following: Array<PartialUser>
 }
 
 export interface IFollowerResponse {
-    followers: Array<{
-        id: number
-        username: string
-    }>
+    followers: Array<PartialUser>
 }
 
 /**
@@ -509,11 +514,13 @@ export interface IUserStatusBatchResponse {
     results: Array<{
         user_id: number
         timestamp: number
-        last_activity: number
+        last_activity: string
     }>
 }
 
 async function fetchUserStatusBatch(userIds: number[]): Promise<IUserStatusBatchResponse> {
+    if (userIds.length === 0) return { results: [] }
+
     const params = new URLSearchParams()
     userIds.forEach((id) => params.append("user_ids[]", id.toString()))
     const url = `${API_URL}/${API_VERSION}/user_status/batch?${params.toString()}`
