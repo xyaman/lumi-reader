@@ -150,18 +150,6 @@ function ReadingSessionSidebar() {
     const session = () => readingManager.activeSession()
     const [currentTime, setCurrentTime] = createSignal(Math.floor(Date.now() / 1000))
 
-    let interval: number | null = null
-
-    createEffect(() => {
-        if (interval) clearInterval(interval)
-
-        if (session() && !session()!.isPaused) {
-            interval = setInterval(() => {
-                setCurrentTime(Math.floor(Date.now() / 1000))
-            }, 1000)
-        }
-    })
-
     const totalReadingTime = () => {
         const s = session()
         if (!s) return 0
@@ -185,6 +173,8 @@ function ReadingSessionSidebar() {
         } else {
             await readingManager.startSession(readerStore.book)
         }
+
+        setCurrentTime(session()!.lastActiveTime)
     }
 
     const charactersRead = () => {
