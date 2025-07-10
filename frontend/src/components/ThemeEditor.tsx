@@ -128,7 +128,7 @@ export default function ThemeEditor(props: {
                 </h3>
                 <button
                     type="button"
-                    class="button-theme cursor-pointer text-sm px-4 py-2 rounded-lg"
+                    class="button cursor-pointer text-sm px-4 py-2 rounded-lg"
                     onClick={props.onClose}
                 >
                     ← Back
@@ -192,14 +192,10 @@ export default function ThemeEditor(props: {
             </div>
 
             <div class="space-x-2 mb-4">
-                <button type="submit" class="button-theme px-4 py-2 rounded">
+                <button type="submit" class="button px-4">
                     {props.mode === "edit" ? "Save" : "Create"}
                 </button>
-                <button
-                    type="button"
-                    class="button-theme px-4 py-2 rounded"
-                    onClick={props.onClose}
-                >
+                <button type="button" class="button px-4" onClick={props.onClose}>
                     Cancel
                 </button>
             </div>

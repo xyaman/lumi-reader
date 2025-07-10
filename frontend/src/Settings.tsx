@@ -1,16 +1,14 @@
 import { createSignal, Show } from "solid-js"
 import { ITheme } from "@/theme"
 import Navbar from "@/components/Navbar"
-import { IconExit, IconToc } from "@/components/icons"
-import { useNavigate } from "@solidjs/router"
+import { IconToc } from "@/components/icons"
+import { A } from "@solidjs/router"
 import ThemeList from "@/components/Themelist"
 import ThemeEditor from "@/components/ThemeEditor"
 import { ThemeProvider } from "@/context/theme"
 import ReaderSettings from "@/components/ReaderSettings"
 
 export default function ThemeSettings() {
-    const navigate = useNavigate()
-
     // Sidebar/menu state
     const [selectedMenu, setSelectedMenu] = createSignal<"theme" | "reader">("theme")
     const [showSidebar, setShowSidebar] = createSignal(false)
@@ -23,18 +21,18 @@ export default function ThemeSettings() {
 
     return (
         <>
-            <Navbar fixed>
+            <Navbar fixed disableCollapse>
                 <Navbar.Left>
                     <button class="md:hidden mr-4" onClick={() => setShowSidebar((prev) => !prev)}>
                         <IconToc />
                     </button>
-                    <p class="font-semibold text-lg">Settings</p>
+                    <A
+                        href="/"
+                        class="text-xl font-bold hover:text-[var(--base0D)] transition-colors"
+                    >
+                        ← lumireader
+                    </A>
                 </Navbar.Left>
-                <Navbar.Right>
-                    <button onClick={() => navigate("/")}>
-                        <IconExit />
-                    </button>
-                </Navbar.Right>
             </Navbar>
             <div class="mt-12 flex flex-col md:flex-row min-h-screen">
                 <aside
@@ -43,10 +41,10 @@ export default function ThemeSettings() {
                     <ul class="space-y-2">
                         <li>
                             <button
-                                class={`w-full text-left font-medium rounded px-2 py-1 ${
+                                class={`cursor-pointer w-full text-left font-medium hover:opacity-70 rounded px-2 py-1 ${
                                     selectedMenu() === "theme"
-                                        ? "bg-[var(--base02)] text-[var(--base07)]"
-                                        : "text-[var(--base04)] hover:text-[var(--base07)]"
+                                        ? "bg-(--base02) text-(--base05)"
+                                        : "text-(--base04)"
                                 }`}
                                 onClick={() => {
                                     setSelectedMenu("theme")
@@ -58,10 +56,10 @@ export default function ThemeSettings() {
                         </li>
                         <li>
                             <button
-                                class={`w-full text-left font-medium rounded px-2 py-1 ${
+                                class={`cursor-pointer w-full text-left font-medium hover:opacity-70 rounded px-2 py-1 ${
                                     selectedMenu() === "reader"
-                                        ? "bg-[var(--base02)] text-[var(--base07)]"
-                                        : "text-[var(--base04)] hover:text-[var(--base07)]"
+                                        ? "bg-(--base02) text-(--base05)"
+                                        : "text-(--base04)"
                                 }`}
                                 onClick={() => {
                                     setSelectedMenu("reader")
@@ -91,7 +89,7 @@ export default function ThemeSettings() {
                                     >
                                         <>
                                             <button
-                                                class="button-theme-alt cursor-pointer px-4 py-2 mt-2 mb-4 rounded-lg"
+                                                class="button-alt cursor-pointer px-4 py-2 mt-2 mb-4 rounded-lg"
                                                 onClick={() => setEditorMode({ mode: "create" })}
                                             >
                                                 + New Theme
