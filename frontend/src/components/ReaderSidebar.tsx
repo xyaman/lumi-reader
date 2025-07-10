@@ -152,8 +152,9 @@ function ReadingSessionSidebar() {
         readingManager.activeSession()?.totalReadingTime || 0,
     )
 
+    // value might also be undefined
     const [fakePaused, setFakePaused] = createSignal(
-        readingManager.activeSession()?.isPaused || false,
+        readingManager.activeSession() ? readingManager.activeSession()!.isPaused : true,
     )
 
     let fakeInterval: number | null = null
@@ -162,6 +163,11 @@ function ReadingSessionSidebar() {
             setFakeTime((prev) => prev + 1)
         }, 1000)
     }
+
+    // testing
+    createEffect(() => {
+        console.log("isPaused changed", readingManager.activeSession()?.isPaused)
+    })
 
     createEffect(() => {
         // depend on session, trully reactive signal
@@ -198,6 +204,7 @@ function ReadingSessionSidebar() {
             else pause()
         } else {
             readingManager.startSession(readerStore.book)
+            setFakePaused(false)
         }
     }
 
@@ -227,7 +234,10 @@ function ReadingSessionSidebar() {
 
     return (
         <div class="max-h-[90vh] overflow-y-auto">
-            <p class="text-md mb-2">Session: {fakePaused() ? "Paused" : "Active"}</p>
+            <p class="text-md mb-2">
+                Session:{" "}
+                {readingManager.activeSession() ? (fakePaused() ? "Paused" : "Active") : "None"}
+            </p>
 
             <div class="space-y-4">
                 <button class="button px-4 py-2 font-semibold" onClick={() => toggleSession()}>

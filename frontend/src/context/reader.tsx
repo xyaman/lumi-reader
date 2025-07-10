@@ -42,6 +42,7 @@ type ReaderContextType = {
 }
 
 const ReaderContext = createContext<ReaderContextType>()
+const LS_AUTOMATICSTART = "reader:sessions:automaticstart"
 
 /**
  * Provides the reader context to its children.
@@ -55,7 +56,11 @@ export function ReaderProvider(props: { book: ReaderSource; children: JSX.Elemen
     })
 
     const readingManager = new ReadingSessionManager()
-    readingManager.startSession(props.book)
+
+    const automaticStart = localStorage.getItem(LS_AUTOMATICSTART)
+        ? localStorage.getItem(LS_AUTOMATICSTART) === "true"
+        : true
+    if (automaticStart) readingManager.startSession(props.book)
 
     const updateChars = (isPaginated: boolean, isVertical: boolean) => {
         let lastIndex = props.book.currParagraph

@@ -1,4 +1,4 @@
-import { createMemo, createSignal, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, Show } from "solid-js"
 import { ITheme } from "@/theme"
 import Navbar from "@/components/Navbar"
 import { IconToc } from "@/components/icons"
@@ -10,20 +10,33 @@ import ReaderSettings from "@/components/ReaderSettings"
 
 type Menu = "theme" | "reader" | "sessions"
 
+const LS_AUTOMATICSTART = "reader:sessions:automaticstart"
+
 function SessionSettings() {
+    // default to true
+    const initialValue = localStorage.getItem(LS_AUTOMATICSTART)
+        ? localStorage.getItem(LS_AUTOMATICSTART) === "true"
+        : true
+
+    const [automaticStart, setAutomaticStart] = createSignal(initialValue)
+    createEffect(() => {
+        localStorage.setItem(LS_AUTOMATICSTART, String(automaticStart()))
+    })
+
     return (
         <section>
             <h2 class="text-2xl font-semibold">Session Settings</h2>
             <div class="mt-5 space-y-3">
                 <p>Start sesssion:</p>
                 <div class="flex items-center space-x-2">
-                    <input name="automatic-start" id="automatic-checkbox" type="radio"></input>
+                    <input
+                        id="automatic-checkbox"
+                        type="checkbox"
+                        checked={automaticStart()}
+                        onChange={(e) => setAutomaticStart(e.target.checked)}
+                    />
                     <label for="automatic-checkbox" class="text-sm font-medium">
                         Automatic
-                    </label>
-                    <input name="automatic-start" id="manual-checkbox" type="radio"></input>
-                    <label for="manual-checkbox" class="text-sm font-medium">
-                        Manual Start
                     </label>
                 </div>
             </div>
@@ -95,7 +108,7 @@ export default function Settings() {
                             <A
                                 href="/settings/sessions/"
                                 class={`cursor-pointer w-full text-left font-medium hover:opacity-70 rounded px-2 py-1 ${
-                                    selectedMenu() === "reader"
+                                    selectedMenu() === "sessions"
                                         ? "bg-(--base02) text-(--base05)"
                                         : "text-(--base04)"
                                 }`}
