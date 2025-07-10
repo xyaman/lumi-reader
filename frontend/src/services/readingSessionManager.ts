@@ -37,9 +37,10 @@ export default class ReadingSessionManager {
         }
 
         const now = Math.floor(Date.now() / 1000)
-        session.endTime = now
-        this.setActiveSession(session)
-        await LumiDb.updateReadingSession(session)
+        const updatedSession = { ...session, endTime: now }
+        this.setActiveSession(updatedSession)
+        await LumiDb.updateReadingSession(updatedSession)
+        this.setActiveSession(undefined)
     }
 
     async pauseSession() {
@@ -47,11 +48,13 @@ export default class ReadingSessionManager {
         if (!session) return
 
         const now = Math.floor(Date.now() / 1000)
-        session.lastActiveTime = now
-
-        session.isPaused = true
-        this.setActiveSession(session)
-        await LumiDb.updateReadingSession(session)
+        const updatedSession = {
+            ...session,
+            lastActiveTime: now,
+            isPaused: true,
+        }
+        this.setActiveSession(updatedSession)
+        await LumiDb.updateReadingSession(updatedSession)
     }
 
     async resumeSession() {
@@ -59,12 +62,14 @@ export default class ReadingSessionManager {
         if (!session) return
 
         const now = Math.floor(Date.now() / 1000)
-        session.lastActiveTime = now
+        const updatedSession = {
+            ...session,
+            lastActiveTime: now,
+            isPaused: false,
+        }
 
-        session.isPaused = false
-
-        this.setActiveSession(session)
-        await LumiDb.updateReadingSession(session)
+        this.setActiveSession(updatedSession)
+        await LumiDb.updateReadingSession(updatedSession)
     }
 
     async updateReadingProgress(charsPosition: number) {
@@ -72,11 +77,14 @@ export default class ReadingSessionManager {
         if (!session || session.isPaused) return
 
         const now = Math.floor(Date.now() / 1000)
-        session.totalReadingTime += now - session.lastActiveTime!
+        const updatedSession = {
+            ...session,
+            totalReadingTime: session.totalReadingTime + (now - session.lastActiveTime),
+            currChars: charsPosition,
+            lastActiveTime: now,
+        }
 
-        session.currChars = charsPosition
-        session.lastActiveTime = now
-        this.setActiveSession(session)
-        await LumiDb.updateReadingSession(session)
+        this.setActiveSession(updatedSession)
+        await LumiDb.updateReadingSession(updatedSession)
     }
 }

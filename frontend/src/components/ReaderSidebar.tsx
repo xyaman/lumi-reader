@@ -5,7 +5,6 @@ import ThemeList from "./Themelist"
 import { useReaderContext } from "@/context/reader"
 import { ThemeProvider } from "@/context/theme"
 import { Bookmark } from "@/lib/readerSource"
-import { LumiDb } from "@/lib/db"
 
 export function SettingsSidebar() {
     const { readerStore, setReaderStore } = useReaderContext()
@@ -148,84 +147,64 @@ export function BookmarksSidebarContent(props: { onItemClick: (b: Bookmark) => v
 
 function ReadingSessionSidebar() {
     const { readerStore, readingManager } = useReaderContext()
-    const [fakeTime, setFakeTime] = createSignal(
-        readingManager.activeSession()?.totalReadingTime || 0,
-    )
+    const session = () => readingManager.activeSession()
+    const [currentTime, setCurrentTime] = createSignal(Math.floor(Date.now() / 1000))
 
-    // value might also be undefined
-    const [fakePaused, setFakePaused] = createSignal(
-        readingManager.activeSession() ? readingManager.activeSession()!.isPaused : true,
-    )
-
-    let fakeInterval: number | null = null
-    const startFakeInterval = () => {
-        fakeInterval = setInterval(() => {
-            setFakeTime((prev) => prev + 1)
-        }, 1000)
-    }
-
-    // testing
-    createEffect(() => {
-        console.log("isPaused changed", readingManager.activeSession()?.isPaused)
-    })
+    let interval: number | null = null
 
     createEffect(() => {
-        // depend on session, trully reactive signal
-        if (fakeInterval) clearInterval(fakeInterval)
+        if (interval) clearInterval(interval)
 
-        if (!fakePaused()) {
-            startFakeInterval()
+        if (session() && !session()!.isPaused) {
+            interval = setInterval(() => {
+                setCurrentTime(Math.floor(Date.now() / 1000))
+            }, 1000)
         }
     })
 
-    const resume = async () => {
-        await readingManager.resumeSession()
-        setFakePaused(false)
-        setFakeTime(
-            readingManager.activeSession()
-                ? readingManager.activeSession()!.totalReadingTime
-                : fakeTime(),
-        )
-    }
+    const totalReadingTime = () => {
+        const s = session()
+        if (!s) return 0
 
-    const pause = async () => {
-        await readingManager.pauseSession()
-        setFakePaused(true)
-        setFakeTime(
-            readingManager.activeSession()
-                ? readingManager.activeSession()!.totalReadingTime
-                : fakeTime(),
-        )
-    }
-
-    const toggleSession = () => {
-        if (readingManager.activeSession()) {
-            if (fakePaused()) resume()
-            else pause()
+        if (s.isPaused) {
+            return s.totalReadingTime
         } else {
-            readingManager.startSession(readerStore.book)
-            setFakePaused(false)
+            // Add time since last update for real-time display
+            const now = currentTime()
+            return s.totalReadingTime + (now - s.lastActiveTime)
+        }
+    }
+
+    const toggleSession = async () => {
+        if (session()) {
+            if (session()!.isPaused) {
+                await readingManager.resumeSession()
+            } else {
+                await readingManager.pauseSession()
+            }
+        } else {
+            await readingManager.startSession(readerStore.book)
         }
     }
 
     const charactersRead = () => {
-        const session = readingManager.activeSession()
-        if (!session) return 0
-        return session.currChars - session.initialChars
+        const s = session()
+        if (!s) return 0
+        return s.currChars - s.initialChars
     }
 
     const readingSpeed = () => {
-        if (charactersRead() === 0 || fakeTime() === 0) return "0 chars/h"
-        return `${Math.ceil((charactersRead() * 3600) / fakeTime())} chars/h`
+        const time = totalReadingTime()
+        if (charactersRead() === 0 || time === 0) return "0 chars/h"
+        return `${Math.ceil((charactersRead() * 3600) / time)} chars/h`
     }
 
     const formatTime = (secs: number) => {
-        let h = Math.floor(secs / 3600)
-        let m = Math.floor((secs % 3600) / 60)
-        let s = (secs % 60) as number
-        ;[h, m, s].map((v) => v.toString().padStart(2, "0"))
+        const h = Math.floor(secs / 3600)
+        const m = Math.floor((secs % 3600) / 60)
+        const s = secs % 60
 
-        return `${h}h ${m}m ${s}s`
+        return `${h.toString().padStart(2, "0")}h ${m.toString().padStart(2, "0")}m ${s.toString().padStart(2, "0")}s`
     }
 
     const progress = () => {
@@ -235,18 +214,17 @@ function ReadingSessionSidebar() {
     return (
         <div class="max-h-[90vh] overflow-y-auto">
             <p class="text-md mb-2">
-                Session:{" "}
-                {readingManager.activeSession() ? (fakePaused() ? "Paused" : "Active") : "None"}
+                Session: {session() ? (session()!.isPaused ? "Paused" : "Active") : "None"}
             </p>
 
             <div class="space-y-4">
-                <button class="button px-4 py-2 font-semibold" onClick={() => toggleSession()}>
-                    {readingManager.activeSession() ? (fakePaused() ? "Resume" : "Pause") : "Start"}
+                <button class="button px-4 py-2 font-semibold" onClick={toggleSession}>
+                    {session() ? (session()!.isPaused ? "Resume" : "Pause") : "Start"}
                 </button>
 
                 <div class="bg-(--base02) p-4 rounded">
                     <h3 class="text-sm font-medium mb-1">Reading Time</h3>
-                    <p class="text-xl font-semibold">{formatTime(fakeTime())}</p>
+                    <p class="text-xl font-semibold">{formatTime(totalReadingTime())}</p>
                 </div>
                 <div class="bg-(--base02) p-4 rounded">
                     <h3 class="text-sm font-medium mb-1">Characters Read</h3>
