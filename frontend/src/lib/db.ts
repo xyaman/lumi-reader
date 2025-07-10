@@ -42,9 +42,16 @@ export type ReadingSession = {
 
     startTime: number // unix timestamp
     endTime?: number | null // unix timestamp
-    updatedAt?: number | null // unix timestamp
 
-    charRead: number
+    totalReadingTime: number // accumulated seconds of active reading
+    lastActiveTime: number // unix timestamp of last activity
+    isPaused: boolean
+
+    initialChars: number
+    currChars: number
+    sessionsCount: number // number of pause/resume
+
+    updatedAt?: number | null
 }
 
 const DB_NAME = "BookReaderDB"
@@ -116,7 +123,7 @@ export class LumiDb {
                         const store = db.createObjectStore(STORE_READING_SESSIONS, {
                             keyPath: "id",
                         })
-                        store.createIndex("bookUniqueId", "bookUniqueId", { unique: true })
+                        store.createIndex("bookUniqueId", "bookUniqueId", { unique: false })
                     }
                 },
             })
@@ -243,18 +250,26 @@ export class LumiDb {
         uniqueId: string
         title: string
         language: string
+        currChars: number
     }): Promise<ReadingSession> {
         const db = await this.getDB()
         // Date.now returns miliseconds. We need unix timestamp
-        const startime = Math.floor(Date.now() / 1000)
+        const now = Math.floor(Date.now() / 1000)
+
         const session: ReadingSession = {
-            id: startime,
+            id: now,
             bookLocalId: book.localId,
             bookUniqueId: book.uniqueId,
             bookTitle: book.title,
-            startTime: startime,
             language: book.language,
-            charRead: 0,
+            startTime: now,
+            totalReadingTime: 0,
+            lastActiveTime: now,
+            isPaused: false,
+            initialChars: book.currChars,
+            currChars: book.currChars,
+            sessionsCount: 1,
+            updatedAt: now,
         }
 
         await db.add(STORE_READING_SESSIONS, session)
@@ -266,24 +281,8 @@ export class LumiDb {
         return db.get(STORE_READING_SESSIONS, id)
     }
 
-    static async finishReadingSession(id: number): Promise<void> {
-        const session = await this.getReadingSessionById(id)
-        if (!session) return
-
-        // remove the session from the database if characters count is 0
-        // or if updateTime is undefined
-        if (session.charRead === 0 || !session.updatedAt) {
-            this.deleteReadingSession(session.id)
-        } else {
-            this.updateReadingSession(session, true)
-        }
-    }
-
     // @throws if id is not passed
-    static async updateReadingSession(
-        newSession: Partial<ReadingSession>,
-        end?: boolean,
-    ): Promise<void> {
+    static async updateReadingSession(newSession: Partial<ReadingSession>): Promise<void> {
         if (!newSession.id) throw new Error("Undefined id. Id must be a valid value")
 
         const db = await this.getDB()
@@ -294,8 +293,9 @@ export class LumiDb {
                 (updatedSession as any)[key] = newSession[key as keyof ReadingSession]
         }
 
+        console.log("updating", updatedSession)
+
         updatedSession.updatedAt = Math.floor(Date.now() / 1000)
-        if (end) updatedSession.endTime = updatedSession.updatedAt
         await db.put(STORE_READING_SESSIONS, updatedSession as ReadingSession)
     }
 

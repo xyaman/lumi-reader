@@ -12,7 +12,7 @@ import { AuthProvider } from "./context/session"
 import { LibraryProvider } from "@/context/library"
 
 const settingsFilter: MatchFilters = {
-    name: ["theme", "reader"],
+    name: ["theme", "reader", "sessions"],
 }
 
 function App() {

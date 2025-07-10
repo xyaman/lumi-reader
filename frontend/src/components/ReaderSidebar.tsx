@@ -1,10 +1,11 @@
-import { createEffect, createMemo, createSignal, For, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, For, on, Show } from "solid-js"
 import ReaderSettings from "./ReaderSettings"
 import Sidebar from "./Sidebar"
 import ThemeList from "./Themelist"
 import { useReaderContext } from "@/context/reader"
 import { ThemeProvider } from "@/context/theme"
 import { Bookmark } from "@/lib/readerSource"
+import { LumiDb } from "@/lib/db"
 
 export function SettingsSidebar() {
     const { readerStore, setReaderStore } = useReaderContext()
@@ -36,11 +37,19 @@ export function SettingsSidebar() {
 export function ReaderLeftSidebar() {
     const { navigationGoTo, bookmarkGoTo, readerStore, setReaderStore } = useReaderContext()
 
+    const titles = {
+        toc: "Table of Contents",
+        bookmarks: "Bookmarks",
+        session: "Reading Session",
+        settings: "",
+        generic: "",
+    }
+
     return (
         <Sidebar
             open={readerStore.sideBar !== null && readerStore.sideBar !== "settings"}
             side="left"
-            title={readerStore.sideBar === "toc" ? "Table of Contents" : "Bookmarks"}
+            title={titles[readerStore.sideBar || "generic"]}
             overlay
             onClose={() => setReaderStore("sideBar", null)}
         >
@@ -49,6 +58,9 @@ export function ReaderLeftSidebar() {
             </Show>
             <Show when={readerStore.sideBar === "bookmarks"}>
                 <BookmarksSidebarContent onItemClick={bookmarkGoTo} />
+            </Show>
+            <Show when={readerStore.sideBar === "session"}>
+                <ReadingSessionSidebar />
             </Show>
         </Sidebar>
     )
@@ -130,6 +142,121 @@ export function BookmarksSidebarContent(props: { onItemClick: (b: Bookmark) => v
                     </p>
                 )}
             </For>
+        </div>
+    )
+}
+
+function ReadingSessionSidebar() {
+    const { readerStore, readingManager } = useReaderContext()
+    const [fakeTime, setFakeTime] = createSignal(
+        readingManager.activeSession()?.totalReadingTime || 0,
+    )
+
+    const [fakePaused, setFakePaused] = createSignal(
+        readingManager.activeSession()?.isPaused || false,
+    )
+
+    let fakeInterval: number | null = null
+    const startFakeInterval = () => {
+        fakeInterval = setInterval(() => {
+            setFakeTime((prev) => prev + 1)
+        }, 1000)
+    }
+
+    createEffect(() => {
+        // depend on session, trully reactive signal
+        if (fakeInterval) clearInterval(fakeInterval)
+
+        if (!fakePaused()) {
+            startFakeInterval()
+        }
+    })
+
+    const resume = async () => {
+        await readingManager.resumeSession()
+        setFakePaused(false)
+        setFakeTime(
+            readingManager.activeSession()
+                ? readingManager.activeSession()!.totalReadingTime
+                : fakeTime(),
+        )
+    }
+
+    const pause = async () => {
+        await readingManager.pauseSession()
+        setFakePaused(true)
+        setFakeTime(
+            readingManager.activeSession()
+                ? readingManager.activeSession()!.totalReadingTime
+                : fakeTime(),
+        )
+    }
+
+    const toggleSession = () => {
+        if (readingManager.activeSession()) {
+            if (fakePaused()) resume()
+            else pause()
+        } else {
+            readingManager.startSession(readerStore.book)
+        }
+    }
+
+    const charactersRead = () => {
+        const session = readingManager.activeSession()
+        if (!session) return 0
+        return session.currChars - session.initialChars
+    }
+
+    const readingSpeed = () => {
+        if (charactersRead() === 0) return "0 chars/h"
+        return `${Math.ceil((charactersRead() * 60) / fakeTime())} chars/h`
+    }
+
+    const formatTime = (secs: number) => {
+        let h = Math.floor(secs / 3600)
+        let m = Math.floor((secs % 3600) / 60)
+        let s = (secs % 60) as number
+        ;[h, m, s].map((v) => v.toString().padStart(2, "0"))
+
+        return `${h}h ${m}m ${s}s`
+    }
+
+    const progress = () => {
+        return Math.floor((readerStore.currChars * 100) / readerStore.book.totalChars)
+    }
+
+    return (
+        <div class="max-h-[90vh] overflow-y-auto">
+            <p class="text-md mb-2">Session: {fakePaused() ? "Paused" : "Active"}</p>
+
+            <div class="space-y-4">
+                <button class="button px-4 py-2 font-semibold" onClick={() => toggleSession()}>
+                    {readingManager.activeSession() ? (fakePaused() ? "Resume" : "Pause") : "Start"}
+                </button>
+
+                <div class="bg-(--base02) p-4 rounded">
+                    <h3 class="text-sm font-medium mb-1">Reading Time</h3>
+                    <p class="text-xl font-semibold">{formatTime(fakeTime())}</p>
+                </div>
+                <div class="bg-(--base02) p-4 rounded">
+                    <h3 class="text-sm font-medium mb-1">Characters Read</h3>
+                    <p class="text-xl font-semibold">{charactersRead()}</p>
+                </div>
+                <div class="bg-(--base02) p-4 rounded">
+                    <h3 class="text-sm font-medium mb-1">Reading Speed</h3>
+                    <p class="text-xl font-semibold">{readingSpeed()}</p>
+                </div>
+                <div class="bg-(--base02) p-4 rounded">
+                    <h3 class="text-sm font-medium mb-1">Progress</h3>
+                    <div class="w-full bg-(--base03) rounded-full h-2.5 mt-2">
+                        <div
+                            class="bg-(--base0B) h-2.5 rounded-full"
+                            style={{ width: `${progress()}%` }}
+                        ></div>
+                    </div>
+                    <p class="text-sm mt-2">{progress()} % completed</p>
+                </div>
+            </div>
         </div>
     )
 }

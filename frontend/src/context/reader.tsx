@@ -1,4 +1,6 @@
+import { ReadingSession } from "@/lib/db"
 import { Bookmark, ReaderSource } from "@/lib/readerSource"
+import ReadingSessionManager from "@/services/readingSessionManager"
 import { createContext, JSX, useContext } from "solid-js"
 import { createStore, SetStoreFunction } from "solid-js/store"
 
@@ -9,7 +11,7 @@ interface ReaderStore {
     // reader related
     shouldReload: boolean
     navOpen: boolean
-    sideBar: "toc" | "bookmarks" | "settings" | null
+    sideBar: "toc" | "bookmarks" | "settings" | "session" | null
 
     // book related
     book: ReaderSource
@@ -36,6 +38,7 @@ type ReaderContextType = {
     bookmarkGoTo: (bookmark: Bookmark) => void
     readerStore: ReaderStore
     setReaderStore: SetStoreFunction<ReaderStore>
+    readingManager: ReadingSessionManager
 }
 
 const ReaderContext = createContext<ReaderContextType>()
@@ -50,6 +53,9 @@ export function ReaderProvider(props: { book: ReaderSource; children: JSX.Elemen
         book: props.book,
         currSection: props.book.findSectionIndex(props.book.currParagraph) ?? 0,
     })
+
+    const readingManager = new ReadingSessionManager()
+    readingManager.startSession(props.book)
 
     const updateChars = (isPaginated: boolean, isVertical: boolean) => {
         let lastIndex = props.book.currParagraph
@@ -79,6 +85,8 @@ export function ReaderProvider(props: { book: ReaderSource; children: JSX.Elemen
         // update store state
         setReaderStore("currIndex", lastIndex)
         setReaderStore("currChars", currChars)
+
+        readingManager.updateReadingProgress(currChars).then(() => console.log("progress updated"))
 
         return lastIndex
     }
@@ -113,7 +121,14 @@ export function ReaderProvider(props: { book: ReaderSource; children: JSX.Elemen
 
     return (
         <ReaderContext.Provider
-            value={{ updateChars, navigationGoTo, bookmarkGoTo, readerStore, setReaderStore }}
+            value={{
+                updateChars,
+                navigationGoTo,
+                bookmarkGoTo,
+                readerStore,
+                setReaderStore,
+                readingManager,
+            }}
         >
             {props.children}
         </ReaderContext.Provider>

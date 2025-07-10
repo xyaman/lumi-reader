@@ -1,6 +1,7 @@
 import { Show } from "solid-js"
 import Navbar from "@/components/Navbar"
 import {
+    ClockIcon,
     IconBookmark,
     IconBookmarkSquare,
     IconExit,
@@ -58,6 +59,12 @@ export default function ReaderNavbar() {
                                 <IconBookmarkSquare />
                             </button>
                         </Show>
+                        <button
+                            class="cursor-pointer"
+                            onClick={() => setReaderStore("sideBar", "session")}
+                        >
+                            <ClockIcon />
+                        </button>
                     </Navbar.Left>
                     <Navbar.Right>
                         <button

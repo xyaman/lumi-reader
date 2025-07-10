@@ -8,7 +8,28 @@ import ThemeEditor from "@/components/ThemeEditor"
 import { ThemeProvider } from "@/context/theme"
 import ReaderSettings from "@/components/ReaderSettings"
 
-type Menu = "theme" | "reader"
+type Menu = "theme" | "reader" | "sessions"
+
+function SessionSettings() {
+    return (
+        <section>
+            <h2 class="text-2xl font-semibold">Session Settings</h2>
+            <div class="mt-5 space-y-3">
+                <p>Start sesssion:</p>
+                <div class="flex items-center space-x-2">
+                    <input name="automatic-start" id="automatic-checkbox" type="radio"></input>
+                    <label for="automatic-checkbox" class="text-sm font-medium">
+                        Automatic
+                    </label>
+                    <input name="automatic-start" id="manual-checkbox" type="radio"></input>
+                    <label for="manual-checkbox" class="text-sm font-medium">
+                        Manual Start
+                    </label>
+                </div>
+            </div>
+        </section>
+    )
+}
 
 export default function Settings() {
     const params = useParams()
@@ -37,6 +58,8 @@ export default function Settings() {
                     </A>
                 </Navbar.Left>
             </Navbar>
+
+            {/* Sidebar */}
             <div class="mt-12 flex flex-col md:flex-row min-h-screen">
                 <aside
                     class={`navbar-theme w-full md:w-64 p-4 md:block ${showSidebar() ? "block" : "hidden"}`}
@@ -68,8 +91,23 @@ export default function Settings() {
                                 Reader Settings
                             </A>
                         </li>
+                        <li>
+                            <A
+                                href="/settings/sessions/"
+                                class={`cursor-pointer w-full text-left font-medium hover:opacity-70 rounded px-2 py-1 ${
+                                    selectedMenu() === "reader"
+                                        ? "bg-(--base02) text-(--base05)"
+                                        : "text-(--base04)"
+                                }`}
+                                onClick={() => setShowSidebar(false)}
+                            >
+                                Session Settings
+                            </A>
+                        </li>
                     </ul>
                 </aside>
+
+                {/* Main content */}
                 <main class="flex-1 p-6 md:p-12">
                     <div class="max-w-4xl mx-auto space-y-12">
                         <Show when={selectedMenu() === "theme"}>
@@ -108,6 +146,9 @@ export default function Settings() {
                                 <h2 class="text-2xl font-semibold">Reader Settings</h2>
                                 <ReaderSettings />
                             </section>
+                        </Show>
+                        <Show when={selectedMenu() === "sessions"}>
+                            <SessionSettings />
                         </Show>
                     </div>
                 </main>

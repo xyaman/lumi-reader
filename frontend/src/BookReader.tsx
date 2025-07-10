@@ -6,7 +6,7 @@ import { EpubBook } from "@/lib/epub"
 import ReaderNavbar from "./components/ReaderNavbar"
 import { SettingsSidebar, ReaderLeftSidebar } from "./components/ReaderSidebar"
 import ReaderContent from "./components/ReaderContent"
-import { LumiDb } from "./lib/db"
+import { LumiDb, ReadingSession } from "./lib/db"
 import { useAuthContext } from "./context/session"
 import { ReaderSource } from "./lib/readerSource"
 
@@ -125,6 +125,25 @@ export default function BookReader(): JSX.Element {
 
     // -- signals
     const [currBook, setCurrBook] = createSignal<ReaderSource | null>(null)
+
+    // -- helper functions used in effects and onMount
+    const initializeReader = async (source: ReaderSource) => {
+        setCurrBook(source)
+
+        const bookStyle = source.getCssStyle()
+        bookStyle.id = "book-css"
+        document.head.appendChild(bookStyle)
+        document.documentElement.lang = source.language
+
+        // api-status related call, if user is offline or unauthenticated
+        // the function will be called, but it wont fetch the api
+        // TODO: Don't make calls if user is unauthenticated
+        updateCurrentStatus(`Reading ${source.title}`)
+        setInterval(() => {
+            updateCurrentStatus(`Reading ${source.title}`)
+        }, 30000)
+    }
+
     onMount(async () => {
         const record = await LumiDb.getBookById(id)
         if (!record) {
@@ -132,19 +151,10 @@ export default function BookReader(): JSX.Element {
             return
         }
 
+        // everything is ok, well start reading
         if (record.kind === "epub") {
             const book = EpubBook.fromReaderSourceRecord(record)
-            setCurrBook(book)
-
-            const bookStyle = book.getCssStyle()
-            bookStyle.id = "book-css"
-            document.head.appendChild(bookStyle)
-            document.documentElement.lang = book.language
-
-            updateCurrentStatus(`Reading ${book.title}`)
-            setInterval(() => {
-                updateCurrentStatus(`Reading ${book.title}`)
-            }, 30000)
+            initializeReader(book)
         } else {
             navigate("/", { replace: true })
             return
