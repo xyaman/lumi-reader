@@ -38,6 +38,7 @@ export type ReadingSession = {
     bookLocalId: number // reference to ReaderSourceLightRecord or similar
     bookUniqueId: string // reference to the real source (ex. epub identifier)
     bookTitle: string
+    language: string
 
     startTime: number // unix timestamp
     endTime?: number | null // unix timestamp
@@ -237,7 +238,12 @@ export class LumiDb {
         await this.updateBookshelf(shelf)
     }
 
-    static async createReadingSession(book: ReaderSourceRecord): Promise<ReadingSession> {
+    static async createReadingSession(book: {
+        localId: number
+        uniqueId: string
+        title: string
+        language: string
+    }): Promise<ReadingSession> {
         const db = await this.getDB()
         // Date.now returns miliseconds. We need unix timestamp
         const startime = Math.floor(Date.now() / 1000)
@@ -247,6 +253,7 @@ export class LumiDb {
             bookUniqueId: book.uniqueId,
             bookTitle: book.title,
             startTime: startime,
+            language: book.language,
             charRead: 0,
         }
 
