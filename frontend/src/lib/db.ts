@@ -31,12 +31,28 @@ export type Bookshelf = {
     bookIds: number[]
 }
 
+export type ReadingSession = {
+    id: number // unique session id (snowflake/timestamp)
+    userId?: number | null // null or undefined for local users
+
+    bookLocalId: number // reference to ReaderSourceLightRecord or similar
+    bookUniqueId: string // reference to the real source (ex. epub identifier)
+    bookTitle: string
+
+    startTime: number // unix timestamp
+    endTime?: number | null // unix timestamp
+    updatedAt?: number | null // unix timestamp
+
+    charRead: number
+}
+
 const DB_NAME = "BookReaderDB"
 const DB_VERSION = 1
 
 const STORE_RECORDS = "readerSources"
 const STORE_LIGHT = "readerLightSources"
 const STORE_SHELVES = "bookshelves"
+const STORE_READING_SESSIONS = "readingSessions"
 
 interface LumiDbSchema extends DBSchema {
     [STORE_RECORDS]: {
@@ -55,6 +71,14 @@ interface LumiDbSchema extends DBSchema {
     [STORE_SHELVES]: {
         key: number
         value: Bookshelf
+    }
+
+    [STORE_READING_SESSIONS]: {
+        key: number
+        value: ReadingSession
+        indexes: {
+            bookUniqueId: string
+        }
     }
 }
 
@@ -85,6 +109,13 @@ export class LumiDb {
                             keyPath: "id",
                             autoIncrement: true,
                         })
+                    }
+
+                    if (!db.objectStoreNames.contains(STORE_READING_SESSIONS)) {
+                        const store = db.createObjectStore(STORE_READING_SESSIONS, {
+                            keyPath: "id",
+                        })
+                        store.createIndex("bookUniqueId", "bookUniqueId", { unique: true })
                     }
                 },
             })
@@ -204,5 +235,65 @@ export class LumiDb {
         if (!shelf) return
         shelf.bookIds = shelf.bookIds.filter((id) => id !== bookId)
         await this.updateBookshelf(shelf)
+    }
+
+    static async createReadingSession(book: ReaderSourceRecord): Promise<ReadingSession> {
+        const db = await this.getDB()
+        // Date.now returns miliseconds. We need unix timestamp
+        const startime = Math.floor(Date.now() / 1000)
+        const session: ReadingSession = {
+            id: startime,
+            bookLocalId: book.localId,
+            bookUniqueId: book.uniqueId,
+            bookTitle: book.title,
+            startTime: startime,
+            charRead: 0,
+        }
+
+        await db.add(STORE_READING_SESSIONS, session)
+        return session
+    }
+
+    static async getReadingSessionById(id: number): Promise<ReadingSession | undefined> {
+        const db = await this.getDB()
+        return db.get(STORE_READING_SESSIONS, id)
+    }
+
+    static async finishReadingSession(id: number): Promise<void> {
+        const session = await this.getReadingSessionById(id)
+        if (!session) return
+
+        // remove the session from the database if characters count is 0
+        // or if updateTime is undefined
+        if (session.charRead === 0 || !session.updatedAt) {
+            this.deleteReadingSession(session.id)
+        } else {
+            this.updateReadingSession(session, true)
+        }
+    }
+
+    // @throws if id is not passed
+    static async updateReadingSession(
+        newSession: Partial<ReadingSession>,
+        end?: boolean,
+    ): Promise<void> {
+        if (!newSession.id) throw new Error("Undefined id. Id must be a valid value")
+
+        const db = await this.getDB()
+        const currSession = await this.getReadingSessionById(newSession.id)
+        const updatedSession = { ...currSession }
+        for (const key in newSession) {
+            if (newSession[key as keyof ReadingSession])
+                (updatedSession as any)[key] = newSession[key as keyof ReadingSession]
+        }
+
+        updatedSession.updatedAt = Math.floor(Date.now() / 1000)
+        if (end) updatedSession.endTime = updatedSession.updatedAt
+        await db.put(STORE_READING_SESSIONS, updatedSession as ReadingSession)
+    }
+
+    static async deleteReadingSession(id: number): Promise<void> {
+        const db = await this.getDB()
+        return db.delete(STORE_READING_SESSIONS, id)
     }
 }
