@@ -39,6 +39,8 @@ interface IEpubManifest {
 type IEpubSpine = string[]
 
 export class EpubBook implements ReaderSource {
+    kind: string = "epub"
+
     localId!: number
     uniqueId!: string
     creationDate: number = Date.now()
@@ -69,6 +71,7 @@ export class EpubBook implements ReaderSource {
         book.totalChars = record.totalChars
         book.currChars = record.currChars
         book.currParagraph = record.currParagraph
+        book.kind = "epub"
 
         book.bookmarks = record.bookmarks
         book.nav = record.nav

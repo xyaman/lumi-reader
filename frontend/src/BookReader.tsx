@@ -8,6 +8,7 @@ import { SettingsSidebar, ReaderLeftSidebar } from "./components/ReaderSidebar"
 import ReaderContent from "./components/ReaderContent"
 import { LumiDb } from "./lib/db"
 import { useAuthContext } from "./context/session"
+import { ReaderSource } from "./lib/readerSource"
 
 // CharacterCounter toggles visibility on click, always clickable
 function CharacterCounter() {
@@ -122,7 +123,8 @@ export default function BookReader(): JSX.Element {
     const navigate = useNavigate()
     if (!id) navigate("/", { replace: true })
 
-    const [currBook, setCurrBook] = createSignal<EpubBook | null>(null)
+    // -- signals
+    const [currBook, setCurrBook] = createSignal<ReaderSource | null>(null)
     onMount(async () => {
         const record = await LumiDb.getBookById(id)
         if (!record) {

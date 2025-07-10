@@ -2,7 +2,7 @@ import { openDB, DBSchema, IDBPDatabase } from "idb"
 import type { Bookmark, SourceImage, NavigationItem, Section } from "./readerSource"
 
 export type ReaderSourceLightRecord = {
-    kind: "epub"
+    kind: string
     localId: number
     uniqueId: string
     title: string
