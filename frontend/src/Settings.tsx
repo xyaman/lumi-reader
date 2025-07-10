@@ -1,16 +1,19 @@
-import { createSignal, Show } from "solid-js"
+import { createMemo, createSignal, Show } from "solid-js"
 import { ITheme } from "@/theme"
 import Navbar from "@/components/Navbar"
 import { IconToc } from "@/components/icons"
-import { A } from "@solidjs/router"
+import { A, useParams } from "@solidjs/router"
 import ThemeList from "@/components/Themelist"
 import ThemeEditor from "@/components/ThemeEditor"
 import { ThemeProvider } from "@/context/theme"
 import ReaderSettings from "@/components/ReaderSettings"
 
-export default function ThemeSettings() {
+type Menu = "theme" | "reader"
+
+export default function Settings() {
+    const params = useParams()
     // Sidebar/menu state
-    const [selectedMenu, setSelectedMenu] = createSignal<"theme" | "reader">("theme")
+    const selectedMenu = createMemo<Menu>(() => (params.name as Menu) ?? "theme")
     const [showSidebar, setShowSidebar] = createSignal(false)
 
     // Theme state
@@ -40,34 +43,30 @@ export default function ThemeSettings() {
                 >
                     <ul class="space-y-2">
                         <li>
-                            <button
+                            <A
+                                href="/settings/theme"
                                 class={`cursor-pointer w-full text-left font-medium hover:opacity-70 rounded px-2 py-1 ${
                                     selectedMenu() === "theme"
                                         ? "bg-(--base02) text-(--base05)"
                                         : "text-(--base04)"
                                 }`}
-                                onClick={() => {
-                                    setSelectedMenu("theme")
-                                    setShowSidebar(false)
-                                }}
+                                onClick={() => setShowSidebar(false)}
                             >
                                 Theme Settings
-                            </button>
+                            </A>
                         </li>
                         <li>
-                            <button
+                            <A
+                                href="/settings/reader/"
                                 class={`cursor-pointer w-full text-left font-medium hover:opacity-70 rounded px-2 py-1 ${
                                     selectedMenu() === "reader"
                                         ? "bg-(--base02) text-(--base05)"
                                         : "text-(--base04)"
                                 }`}
-                                onClick={() => {
-                                    setSelectedMenu("reader")
-                                    setShowSidebar(false)
-                                }}
+                                onClick={() => setShowSidebar(false)}
                             >
                                 Reader Settings
-                            </button>
+                            </A>
                         </li>
                     </ul>
                 </aside>
