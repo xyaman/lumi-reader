@@ -9,7 +9,7 @@ import {
     batch,
 } from "solid-js"
 import { createStore, SetStoreFunction } from "solid-js/store"
-import { ReaderSourceDB, ReaderSourceLightRecord } from "@/lib/db"
+import { LumiDb, ReaderSourceLightRecord } from "@/lib/db"
 
 // LocalStorage keys
 const LS_KEYS = {
@@ -75,8 +75,8 @@ export function LibraryProvider(props: { children: JSX.Element }) {
     // Load and **sort** books on mount
     onMount(async () => {
         const [books, shelves] = await Promise.all([
-            ReaderSourceDB.allLightBooks(),
-            ReaderSourceDB.listShelves(),
+            LumiDb.getAllLightBooks(),
+            LumiDb.getAllBookshelves(),
         ])
         setState("books", books)
         setState("shelves", shelves)
@@ -136,13 +136,13 @@ export function LibraryProvider(props: { children: JSX.Element }) {
 
     // Add shelf
     const addShelf = async (name: string) => {
-        const shelf = await ReaderSourceDB.createShelf(name)
+        const shelf = await LumiDb.createBookShelf(name)
         setState("shelves", (shelves) => [...shelves, shelf])
     }
 
     // Remove shelf
     const removeShelf = async (shelfId: number) => {
-        await ReaderSourceDB.deleteShelf(shelfId)
+        await LumiDb.deleteBookshelfById(shelfId)
         setState("shelves", (shelves) => shelves.filter((s) => s.id !== shelfId))
     }
 
@@ -151,7 +151,7 @@ export function LibraryProvider(props: { children: JSX.Element }) {
         const shelf = state.shelves.find((s) => s.id === shelfId)
         if (!shelf) return
 
-        await ReaderSourceDB.updateShelf({
+        await LumiDb.updateBookshelf({
             id: shelfId,
             name,
             bookIds: shelf.bookIds,
@@ -168,7 +168,7 @@ export function LibraryProvider(props: { children: JSX.Element }) {
 
         const exists = shelf.bookIds.includes(bookId)
         if (exists) {
-            await ReaderSourceDB.removeBookFromShelf(shelfId, bookId)
+            await LumiDb.removeBookFromShelf(shelfId, bookId)
             setState("shelves", (shelves) =>
                 shelves.map((s) =>
                     s.id === shelfId
@@ -177,7 +177,7 @@ export function LibraryProvider(props: { children: JSX.Element }) {
                 ),
             )
         } else {
-            await ReaderSourceDB.addBookToShelf(shelfId, bookId)
+            await LumiDb.addBookToShelf(shelfId, bookId)
             setState("shelves", (shelves) =>
                 shelves.map((s) =>
                     s.id === shelfId ? { ...s, bookIds: [...s.bookIds, bookId] } : s,

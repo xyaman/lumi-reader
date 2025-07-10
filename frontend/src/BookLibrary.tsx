@@ -1,6 +1,6 @@
 import { createEffect, createResource, createSignal, For, Show } from "solid-js"
 import { EpubBook } from "@/lib/epub"
-import { ReaderSourceDB, ReaderSourceLightRecord } from "./lib/db"
+import { LumiDb, ReaderSourceLightRecord } from "./lib/db"
 import { useAuthContext } from "./context/session"
 import BooksGrid from "./components/library/BooksGrid"
 import BookshelvesSidebar from "@/components/library/BookshelvesList"
@@ -36,7 +36,7 @@ export default function BookLibrary() {
             book.deinit()
             if (!book.localId) continue
 
-            const light = await ReaderSourceDB.getLightBookById(book.localId)
+            const light = await LumiDb.getLightBookById(book.localId)
             if (light) {
                 newBooks.push(light)
             }
@@ -81,7 +81,7 @@ export default function BookLibrary() {
     let heartbeatInterval: number | null = null
     const startHeartbeat = () => {
         heartbeatInterval = setInterval(() => {
-            channel.perform("heartbeat")
+            channel.perform("heartbeat", {})
         }, 30000)
     }
 
@@ -165,7 +165,7 @@ export default function BookLibrary() {
                             <BooksGrid
                                 onSelectBook={setSelectedBook}
                                 onDeleteBook={(b) => {
-                                    ReaderSourceDB.deleteBook(b.localId).then(() => {
+                                    LumiDb.deleteBookById(b.localId).then(() => {
                                         setBooks(
                                             books().filter(
                                                 (i: ReaderSourceLightRecord) =>

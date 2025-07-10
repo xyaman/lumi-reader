@@ -6,7 +6,7 @@ import { EpubBook } from "@/lib/epub"
 import ReaderNavbar from "./components/ReaderNavbar"
 import { SettingsSidebar, ReaderLeftSidebar } from "./components/ReaderSidebar"
 import ReaderContent from "./components/ReaderContent"
-import { ReaderSourceDB } from "./lib/db"
+import { LumiDb } from "./lib/db"
 import { useAuthContext } from "./context/session"
 
 // CharacterCounter toggles visibility on click, always clickable
@@ -124,7 +124,7 @@ export default function BookReader(): JSX.Element {
 
     const [currBook, setCurrBook] = createSignal<EpubBook | null>(null)
     onMount(async () => {
-        const record = await ReaderSourceDB.getBookById(id)
+        const record = await LumiDb.getBookById(id)
         if (!record) {
             navigate("/", { replace: true })
             return

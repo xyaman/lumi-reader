@@ -3,7 +3,7 @@ import { Bookmark, SourceImage, NavigationItem, ReaderSource, Section } from "./
 import { XMLParser } from "fast-xml-parser"
 import { Parser } from "htmlparser2"
 import { assert, parseCss } from "./utils"
-import { ReaderSourceDB, ReaderSourceRecord } from "./db"
+import { LumiDb, ReaderSourceRecord } from "./db"
 
 interface IEpubMetadata {
     identifier: string
@@ -195,7 +195,7 @@ export class EpubBook implements ReaderSource {
     async save(): Promise<void> {
         const record = this.toReaderSourceRecord() as ReaderSourceRecord
         if (this.localId) record.localId = this.localId
-        await ReaderSourceDB.save(record)
+        await LumiDb.saveBookRecord(record)
 
         // Update localId if it was assigned by IndexedDB
         if (record.localId != null) this.localId = record.localId
