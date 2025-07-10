@@ -215,8 +215,8 @@ function ReadingSessionSidebar() {
     }
 
     const readingSpeed = () => {
-        if (charactersRead() === 0) return "0 chars/h"
-        return `${Math.ceil((charactersRead() * 60) / fakeTime())} chars/h`
+        if (charactersRead() === 0 || fakeTime() === 0) return "0 chars/h"
+        return `${Math.ceil((charactersRead() * 3600) / fakeTime())} chars/h`
     }
 
     const formatTime = (secs: number) => {
