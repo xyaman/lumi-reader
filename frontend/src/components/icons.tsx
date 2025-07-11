@@ -17,7 +17,7 @@ export function IconToc() {
     )
 }
 
-export function ClockIcon() {
+export function IconClock() {
     return (
         <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -36,7 +36,7 @@ export function ClockIcon() {
     )
 }
 
-export function SquaresIcon() {
+export function IconSquares() {
     return (
         <svg
             xmlns="http://www.w3.org/2000/svg"

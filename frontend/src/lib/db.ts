@@ -276,6 +276,11 @@ export class LumiDb {
         return session
     }
 
+    static async getAllReadingSessions(): Promise<ReadingSession[]> {
+        const db = await this.getDB()
+        return db.getAll(STORE_READING_SESSIONS)
+    }
+
     static async getReadingSessionById(id: number): Promise<ReadingSession | undefined> {
         const db = await this.getDB()
         return db.get(STORE_READING_SESSIONS, id)

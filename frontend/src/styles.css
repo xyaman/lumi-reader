@@ -10,11 +10,11 @@
 
 @layer components {
     .button {
-       @apply rounded-lg shadow-md bg-(--base00) hover:bg-(--base01) border border-(--base03) text-(--base05) p-1
+       @apply cursor-pointer rounded-lg shadow-md bg-(--base00) hover:bg-(--base01) border border-(--base03) text-(--base05) p-1
     }
 
     .button-alt {
-       @apply rounded-lg shadow-md bg-(--base01) hover:bg-(--base00) border border-(--base03) text-(--base05) p-1
+       @apply cursor-pointer rounded-lg shadow-md bg-(--base01) hover:bg-(--base00) border border-(--base03) text-(--base05) p-1
     }
 
     .body-alt {

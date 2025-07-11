@@ -5,6 +5,7 @@ import ThemeList from "@/components/Themelist"
 import { useReaderContext } from "@/context/reader"
 import { ThemeProvider } from "@/context/theme"
 import { Bookmark } from "@/lib/readerSource"
+import { formatTime } from "@/lib/utils"
 
 export function SettingsSidebar() {
     const { readerStore, setReaderStore } = useReaderContext()
@@ -211,14 +212,6 @@ function ReadingSessionSidebar() {
         const time = totalReadingTime()
         if (charactersRead() === 0 || time === 0) return "0 chars/h"
         return `${Math.ceil((charactersRead() * 3600) / time)} chars/h`
-    }
-
-    const formatTime = (secs: number) => {
-        const h = Math.floor(secs / 3600)
-        const m = Math.floor((secs % 3600) / 60)
-        const s = secs % 60
-
-        return `${h.toString().padStart(2, "0")}h ${m.toString().padStart(2, "0")}m ${s.toString().padStart(2, "0")}s`
     }
 
     const progress = () => {

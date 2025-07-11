@@ -1,5 +1,5 @@
 import { Show } from "solid-js"
-import { IconSettings, IconUpload } from "@/components/icons"
+import { IconClock, IconSettings, IconUpload } from "@/components/icons"
 import Navbar from "@/components/Navbar"
 import { A } from "@solidjs/router"
 
@@ -32,6 +32,9 @@ export default function BookLibraryNavbar(props: BookLibraryNavbarProps) {
                         class="absolute inset-0 opacity-0"
                     />
                 </label>
+                <A href="/sessions" class="button px-3 py-2 rounded-lg">
+                    <IconClock />
+                </A>
                 <A href="/settings" class="button px-3 py-2 rounded-lg">
                     <IconSettings />
                 </A>

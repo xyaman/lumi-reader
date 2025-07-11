@@ -1,6 +1,6 @@
 import { Bookmark, ReaderSource } from "@/lib/readerSource"
 import ReadingSessionManager from "@/services/readingSessionManager"
-import { createContext, JSX, useContext } from "solid-js"
+import { createContext, JSX, onCleanup, useContext } from "solid-js"
 import { createStore, SetStoreFunction } from "solid-js/store"
 
 /**
@@ -94,6 +94,8 @@ export function ReaderProvider(props: { book: ReaderSource; children: JSX.Elemen
 
         return lastIndex
     }
+
+    onCleanup(() => readingManager.finishSession())
 
     const bookmarkGoTo = (bookmark: Bookmark) => {
         const sectionId = readerStore.book.findSectionIndexById(bookmark.sectionName)

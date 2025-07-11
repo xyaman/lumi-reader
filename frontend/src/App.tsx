@@ -10,6 +10,7 @@ import UserSearch from "./SearchPage"
 import { AuthProvider } from "./context/session"
 
 import { LibraryProvider } from "@/context/library"
+import { ReadingSessionsPage } from "./components/SessionList"
 
 const settingsFilter: MatchFilters = {
     name: ["theme", "reader", "sessions"],
@@ -34,6 +35,7 @@ function App() {
                 <Route path="/settings/:name?" component={Settings} />
                 <Route path="/register" component={Register} />
                 <Route path="/login" component={Login} />
+                <Route path="/sessions" component={ReadingSessionsPage} />
                 <Route path="/users/search" component={UserSearch} />
                 <Route path="/users/:id?" component={Profile} />
             </Router>

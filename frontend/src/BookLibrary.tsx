@@ -6,7 +6,7 @@ import BooksGrid from "./components/library/BooksGrid"
 import BookshelvesSidebar from "@/components/library/BookshelvesList"
 import { useLibraryContext } from "@/context/library"
 import BookLibraryNavbar from "@/components/library/BookLibraryNavbar"
-import { SquaresIcon } from "./components/icons"
+import { IconSquares } from "./components/icons"
 import FollowingActivitySidebar from "./components/FollowingActivitySidebar"
 
 import consumer from "@/services/websocket"
@@ -119,7 +119,7 @@ export default function BookLibrary() {
                                     class="button px-3 py-2 flex flex-row gap-2 md:hidden"
                                     onClick={() => setSidebarOpen(true)}
                                 >
-                                    <SquaresIcon />
+                                    <IconSquares />
                                     <span>Bookshelves</span>
                                 </button>
 

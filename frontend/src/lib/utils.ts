@@ -4,6 +4,14 @@ export function assert(condition: unknown, message = "Assertion failed"): assert
     }
 }
 
+export function formatTime(secs: number) {
+    const h = Math.floor(secs / 3600)
+    const m = Math.floor((secs % 3600) / 60)
+    const s = secs % 60
+
+    return `${h.toString().padStart(2, "0")}h ${m.toString().padStart(2, "0")}m ${s.toString().padStart(2, "0")}s`
+}
+
 export function parseCss(cssText: string) {
     const rules = []
     let cursor = 0
