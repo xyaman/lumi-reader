@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal, For, on, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, For, onCleanup, Show } from "solid-js"
 import ReaderSettings from "./ReaderSettings"
 import Sidebar from "./Sidebar"
 import ThemeList from "./Themelist"
@@ -149,6 +149,30 @@ function ReadingSessionSidebar() {
     const { readerStore, readingManager } = useReaderContext()
     const session = () => readingManager.activeSession()
     const [currentTime, setCurrentTime] = createSignal(Math.floor(Date.now() / 1000))
+
+    let intervalId: number | null = null
+    const startTimer = () => {
+        if (intervalId) return
+        setInterval(() => {
+            setCurrentTime(Math.floor(Date.now() / 1000))
+        }, 1000)
+    }
+
+    const stopTimer = () => {
+        if (!intervalId) return
+        clearInterval(intervalId)
+        intervalId = null
+    }
+
+    createEffect(() => {
+        if (readerStore.sideBar === "session") {
+            startTimer()
+        } else {
+            stopTimer()
+        }
+    })
+
+    onCleanup(() => stopTimer())
 
     const totalReadingTime = () => {
         const s = session()

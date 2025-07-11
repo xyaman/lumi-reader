@@ -1,4 +1,3 @@
-import { ReadingSession } from "@/lib/db"
 import { Bookmark, ReaderSource } from "@/lib/readerSource"
 import ReadingSessionManager from "@/services/readingSessionManager"
 import { createContext, JSX, useContext } from "solid-js"

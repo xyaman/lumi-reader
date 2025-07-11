@@ -6,7 +6,7 @@ import { EpubBook } from "@/lib/epub"
 import ReaderNavbar from "./components/ReaderNavbar"
 import { SettingsSidebar, ReaderLeftSidebar } from "./components/ReaderSidebar"
 import ReaderContent from "./components/ReaderContent"
-import { LumiDb, ReadingSession } from "./lib/db"
+import { LumiDb } from "./lib/db"
 import { useAuthContext } from "./context/session"
 import { ReaderSource } from "./lib/readerSource"
 
