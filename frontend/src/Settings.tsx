@@ -6,7 +6,7 @@ import { A, useParams } from "@solidjs/router"
 import ThemeList from "@/components/Themelist"
 import ThemeEditor from "@/components/ThemeEditor"
 import { ThemeProvider } from "@/context/theme"
-import ReaderSettings from "@/components/ReaderSettings"
+import ReaderSettings from "@/components/reader/ReaderSettings"
 
 type Menu = "theme" | "reader" | "sessions"
 

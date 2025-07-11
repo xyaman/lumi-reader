@@ -1,6 +1,6 @@
 import { useReaderContext } from "@/context/reader"
 import { createEffect, For, on, onCleanup, Show } from "solid-js"
-import { IconBookmarkFull } from "./icons"
+import { IconBookmarkFull } from "@/components/icons"
 import { readerSettingsStore } from "@/stores/readerSettings"
 
 function getBaseName(path: string) {
