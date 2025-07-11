@@ -286,6 +286,19 @@ export class LumiDb {
         return db.get(STORE_READING_SESSIONS, id)
     }
 
+    static async getReadingSessionByDateRange(start: number, end: number, limit = 20, offset = 0) {
+        const db = await this.getDB()
+        const range = IDBKeyRange.bound(start, end, false, false)
+
+        // id is the same as startTime (so no need to use an index)
+        const sessions = await db.getAll(STORE_READING_SESSIONS, range)
+
+        // sort by startTime descending (newest first)
+        sessions.sort((a, b) => b.startTime - a.startTime)
+
+        return sessions.slice(offset, offset + limit)
+    }
+
     // @throws if id is not passed
     static async updateReadingSession(newSession: Partial<ReadingSession>): Promise<void> {
         if (!newSession.id) throw new Error("Undefined id. Id must be a valid value")
