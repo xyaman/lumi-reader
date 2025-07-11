@@ -1,11 +1,21 @@
 import { LumiDb, ReadingSession } from "@/lib/db"
 import { formatTime } from "@/lib/utils"
-import { createResource, For } from "solid-js"
+import { createResource, createSignal, For } from "solid-js"
 import Navbar from "./Navbar"
 import { A } from "@solidjs/router"
 import { IconEdit, IconTrash } from "./icons"
+import Calendar from "./Calendar"
 
 export function ReadingSessionsPage() {
+    const today = new Date()
+
+    const todayStart = new Date(today)
+    todayStart.setHours(0, 0, 0, 0)
+
+    const [dateRange, setDateRange] = createSignal<{ from: Date | null; to: Date | null }>({
+        from: todayStart,
+        to: today,
+    })
     return (
         <>
             <Navbar disableCollapse>
@@ -24,16 +34,30 @@ export function ReadingSessionsPage() {
                     <h1 class="text-3xl font-bold">Reading Sessions</h1>
                     <p>Manage your reading progress</p>
                 </header>
+                <div class="w-min">
+                    <Calendar mode="range" onValueChange={(e) => setDateRange(e)}>
+                        {() => null}
+                    </Calendar>
+                </div>
                 {/* content */}
-                <ReadingSessionsList />
+                <ReadingSessionsList range={dateRange} />
             </div>
         </>
     )
 }
 
-export function ReadingSessionsList() {
-    const [sessions, { mutate }] = createResource(async () => {
-        return await LumiDb.getAllReadingSessions()
+export function ReadingSessionsList(props: {
+    range: () => { from: Date | null; to: Date | null }
+}) {
+    const [sessions, { mutate }] = createResource(props.range, async () => {
+        const range = props.range()
+        // TODO: Should i return something if its null? what is best UX?
+        if (range.from === null) return []
+        if (range.to === null) return []
+
+        const start = Math.floor(range.from.getTime() / 1000)
+        const end = Math.floor(range.to.getTime() / 1000)
+        return await LumiDb.getReadingSessionByDateRange(start, end)
     })
 
     const deleteSession = async (id: number) => {
