@@ -30,9 +30,9 @@ class UserStatusChannel < ApplicationCable::Channel
 
     # Update cache
     if online
-      Rails.cache.write("online:#{@current_user_id}", true, expires_in: 3.minutes)
+      UserCacheService.set_online @current_user_id
     else
-      Rails.cache.delete("online:#{@current_user_id}")
+      UserCacheService.set_offline @current_user_id
     end
 
     # Broadcast the status change
@@ -46,9 +46,9 @@ class UserStatusChannel < ApplicationCable::Channel
     @heartbeat_job = UserHeartbeatJob.set(wait: 2.minutes).perform_later(@current_user_id)
   end
 
-  def cancel_heartbeat_check
-    @heartbeat_job&.delete
-  end
+  # def cancel_heartbeat_check
+  #   @heartbeat_job&.delete
+  # end
 
   def filtered_broadcast(raw_payload)
     payload = JSON.parse(raw_payload)

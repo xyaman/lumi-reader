@@ -1,11 +1,10 @@
 class BroadcasterUserStatusJob < ApplicationJob
   queue_as :default
 
+  # TODO: Rename
   def perform(id:, online:, activity: nil)
-    activity_key = "user:#{id}:last_activity"
-    timestamp_key = "user:#{id}:timestamp"
-    last_activity = activity.presence || (Rails.cache.exist?(activity_key) && Rails.cache.read(activity_key))
-    timestamp = (Rails.cache.exist?(timestamp_key) && Rails.cache.read(timestamp_key)) || nil
+    last_activity = activity.presence || UserCacheService.get_activity(id)
+    timestamp = UserCacheService.get_timestamp(id)
 
     payload = {
       id: id,
