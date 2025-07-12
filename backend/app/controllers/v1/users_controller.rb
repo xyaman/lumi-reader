@@ -85,8 +85,8 @@ class V1::UsersController < ApplicationController
     user = User.find_by(id: params[:id])
     if user
 
-      following_count = user.following.count
-      followers_count = user.followers.count
+      following_count = user.follows_count
+      followers_count = user.followers_count
 
       json_user = user.slice(:id, :email, :username, :description, :share_status)
       json_user[:avatar_url] = user.avatar.attached? ? url_for(user.avatar) : nil
