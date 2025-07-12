@@ -6,6 +6,7 @@ import { IconCalendar, IconHome, IconSettings, IconUsers } from "./components/ic
 import { LibraryProvider, useLibraryContext } from "./context/library"
 import SocialList from "./components/SocialList"
 import Dialog from "@corvu/dialog"
+import { LumiDb } from "./lib/db"
 
 function useIsMobile() {
     const [isMobile, setIsMobile] = createSignal(window.innerWidth <= 768)
@@ -24,20 +25,15 @@ function AddShelfDialog() {
         document.addEventListener("keydown", (e) => {
             if (e.key !== "Enter") return
             e.preventDefault()
-            handleAdd()
-            setOpen(false)
+            handleAdd().then(() => setOpen(false))
         })
     })
 
     // Add shelf to state
-    const handleAdd = () => {
+    const handleAdd = async () => {
         const name = shelfName().trim()
         if (!name) return
-        const newShelf = {
-            id: Date.now(), // simple unique id
-            name,
-            bookIds: [],
-        }
+        const newShelf = await LumiDb.createBookShelf(name)
         setState("shelves", [...state.shelves, newShelf])
         setShelfName("")
     }
@@ -73,21 +69,21 @@ function AddShelfDialog() {
 function Header() {
     const location = useLocation()
     const titles: Record<string, string> = {
-        "/": "",
         "/sessions": "Reading sessions",
         "/social": "Social activity",
     }
 
     const subtitle: Record<string, string | null> = {
-        "/": null,
         "/sessions": "Manage your reading progress",
     }
 
     return (
-        <header class="mb-8">
-            <h1 class="text-3xl font-bold">{titles[location.pathname]}</h1>
-            <p>{subtitle[location.pathname] || ""}</p>
-        </header>
+        <Show when={location.pathname in titles}>
+            <header class="mb-8">
+                <h1 class="text-3xl font-bold">{titles[location.pathname]}</h1>
+                <p>{subtitle[location.pathname] || ""}</p>
+            </header>
+        </Show>
     )
 }
 

@@ -18,14 +18,8 @@ function SortPopover() {
     })
 
     return (
-        <Popover
-            floatingOptions={{
-                offset: 13,
-                flip: true,
-                shift: true,
-            }}
-        >
-            <Popover.Trigger class="cursor-pointer bg-base02 hover:bg-base03 px-4 py-2 rounded-md flex items-center">
+        <Popover floatingOptions={{ offset: 13, flip: true, shift: true }}>
+            <Popover.Trigger class="max-h-[40px] cursor-pointer bg-base02 hover:bg-base03 px-4 rounded-md flex items-center">
                 <IconFilter />
                 <span class="ml-2">Sort</span>
             </Popover.Trigger>
@@ -86,7 +80,7 @@ function SortPopover() {
 }
 
 export default function BookLibrary() {
-    const { state, setState, setSortParams, toggleBookInShelf } = useLibraryContext()
+    const { setState } = useLibraryContext()
 
     const handleUpload = async (e: Event) => {
         const files = Array.from((e.target as HTMLInputElement).files || [])
@@ -114,16 +108,16 @@ export default function BookLibrary() {
     return (
         <>
             <header class="mb-8">
-                <div class="flex justify-between">
-                    <h1 class="text-3xl font-bold">Your Library</h1>
-                    <div class="flex space-x-2">
-                        <label class="cursor-pointer relative rounded-md bg-base02 hover:bg-base03 px-4 py-2 flex items-center">
+                <div class="flex flex-col md:flex-row justify-between">
+                    <h1 class="text-3xl font-bold mb-2 md:mb-0">Your Library</h1>
+                    <div class="flex space-y-2 md:space-y-0 space-x-2 ml-auto">
+                        <label class="max-h-[40px] cursor-pointer relative rounded-md bg-base02 hover:bg-base03 px-4 py-2 flex items-center">
                             <input
                                 type="file"
                                 accept=".epub"
                                 multiple
                                 onInput={handleUpload}
-                                class="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                class="absolute inset-0 opacity-0 cursor-pointer"
                             />
                             <IconUpload />
                             <span class="cursor-pointer ml-2">Upload Book</span>
@@ -132,7 +126,7 @@ export default function BookLibrary() {
                     </div>
                 </div>
             </header>
-            <BooksGrid onSelectBook={() => {}} />
+            <BooksGrid />
         </>
     )
 }
