@@ -5,6 +5,7 @@
       "name": "lumi-reader",
       "dependencies": {
         "@corvu/calendar": "^0.1.2",
+        "@corvu/dialog": "^0.2.4",
         "@corvu/popover": "^0.2.0",
         "@corvu/resizable": "^0.2.5",
         "@rails/actioncable": "^8.0.200",

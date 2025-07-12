@@ -1,10 +1,11 @@
 import Resizable from "@corvu/resizable"
 import { useAuthContext } from "./context/session"
-import { onCleanup, createSignal, For, JSX, Show } from "solid-js"
+import { onCleanup, createSignal, For, JSX, Show, onMount } from "solid-js"
 import { A, useLocation } from "@solidjs/router"
 import { IconCalendar, IconHome, IconSettings, IconUsers } from "./components/icons"
 import { LibraryProvider, useLibraryContext } from "./context/library"
 import SocialList from "./components/SocialList"
+import Dialog from "@corvu/dialog"
 
 function useIsMobile() {
     const [isMobile, setIsMobile] = createSignal(window.innerWidth <= 768)
@@ -12,6 +13,61 @@ function useIsMobile() {
     window.addEventListener("resize", handler)
     onCleanup(() => window.removeEventListener("resize", handler))
     return isMobile
+}
+
+function AddShelfDialog() {
+    const { state, setState } = useLibraryContext()
+    const [shelfName, setShelfName] = createSignal("")
+    const { setOpen } = Dialog.useContext()
+
+    onMount(() => {
+        document.addEventListener("keydown", (e) => {
+            if (e.key !== "Enter") return
+            e.preventDefault()
+            handleAdd()
+            setOpen(false)
+        })
+    })
+
+    // Add shelf to state
+    const handleAdd = () => {
+        const name = shelfName().trim()
+        if (!name) return
+        const newShelf = {
+            id: Date.now(), // simple unique id
+            name,
+            bookIds: [],
+        }
+        setState("shelves", [...state.shelves, newShelf])
+        setShelfName("")
+    }
+
+    return (
+        <>
+            <Dialog.Trigger class="cursor-pointer">+</Dialog.Trigger>
+            <Dialog.Portal>
+                <Dialog.Overlay class="fixed inset-0 bg-black/50" />
+                <Dialog.Content class="fixed left-1/2 top-1/2 z-50 min-w-80 max-w-md -translate-x-1/2 -translate-y-1/2 rounded border border-base02 bg-base01 px-6 py-5 data-open:animate-in data-open:fade-in-0% data-open:zoom-in-95% data-open:slide-in-from-top-10% data-closed:animate-out data-closed:fade-out-0% data-closed:zoom-out-95% data-closed:slide-out-to-top-10%">
+                    <Dialog.Label class="font-semibold">Add Bookshelf</Dialog.Label>
+                    <input
+                        class="mt-4 w-full p-2 border rounded border-base02"
+                        placeholder="Shelf name"
+                        value={shelfName()}
+                        onInput={(e) => setShelfName(e.currentTarget.value)}
+                    />
+                    <div class="mt-6 flex justify-end space-x-2">
+                        <Dialog.Close class="px-4 py-2 text-sm rounded-lg">Cancel</Dialog.Close>
+                        <Dialog.Close
+                            class="px-4 py-2 text-sm font-medium rounded-lg bg-base02 hover:bg-base0D hover:text-base00"
+                            onClick={handleAdd}
+                        >
+                            Add
+                        </Dialog.Close>
+                    </div>
+                </Dialog.Content>
+            </Dialog.Portal>
+        </>
+    )
 }
 
 function Header() {
@@ -121,7 +177,9 @@ function Sidebar() {
             <div class="p-4 border-b border-base02">
                 <div class="flex justify-between mb-2">
                     <h2 class="font-semibold">Your collections</h2>
-                    <button class="cursor-pointer">+</button>
+                    <Dialog>
+                        <AddShelfDialog />
+                    </Dialog>
                 </div>
                 <ul>
                     <li classList={{ "border-l-3 border-base0D": state.activeShelf === null }}>
