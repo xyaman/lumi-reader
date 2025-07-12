@@ -7,23 +7,12 @@ class V1::FollowsController < ApplicationController
   # @response Success(200) [Hash{following: Array<Hash{id: Integer, username: String, email: String}>}}]
   def following
     @user = User.find_by(id: params[:user_id])
-    return render_user_not_found unless @user
+    return user_not_found_response unless @user
 
-    # https://stackoverflow.com/questions/52418114/how-to-query-records-that-have-an-activestorage-attachment
-    following = @user.following
-      .includes(avatar_attachment: :blob)
-      .select(:id, :username, :email)
-      .map do |u|
-        {
-          id: u.id,
-          username: u.username,
-          email: u.email,
-          avatar_url: u.avatar.attached? ? url_for(u.avatar) : nil,
-          online: UserCacheService.online?(u.id)
-        }
-      end
+    following_users = @user.following.includes(avatar_attachment: :blob)
+    serialized_users = UserSerializer.collection_with_status(following_users)
 
-    render json: { following: following }
+    success_response({ following: serialized_users })
   end
 
   # @oas_include
@@ -33,22 +22,12 @@ class V1::FollowsController < ApplicationController
   # @response User not found(404) [Hash{error: String}]
   def followers
     @user = User.find_by(id: params[:user_id])
-    return render_user_not_found unless @user
+    return user_not_found_response unless @user
 
-    # https://stackoverflow.com/questions/52418114/how-to-query-records-that-have-an-activestorage-attachment
-    followers = @user.followers
-      .includes(avatar_attachment: :blob)
-      .select(:id, :username, :email)
-      .map do |u|
-        {
-          id: u.id,
-          username: u.username,
-          email: u.email,
-          avatar_url: u.avatar.attached? ? url_for(u.avatar) : nil
-        }
-      end
+    followers_users = @user.followers.includes(avatar_attachment: :blob)
+    serialized_users = UserSerializer.collection(followers_users)
 
-    render json: { followers: followers }
+    success_response({ followers: serialized_users })
   end
 
   # @oas_include
@@ -60,15 +39,15 @@ class V1::FollowsController < ApplicationController
   # @response Already following(422) [Hash{error: String}]
   def update
     @user = User.find_by(id: params[:id])
-    return render_user_not_found unless @user
+    return user_not_found_response unless @user
 
     if Current.user.id == @user.id
-      render json: { error: "Can't follow oneself" }, status: :unprocessable_entity
+      error_response("Can't follow oneself")
     elsif Current.user.following.exists?(@user.id)
-      render json: { error: "Already following" }, status: :unprocessable_entity
+      error_response("Already following")
     else
       Current.user.following << @user
-      render json: { message: "Followed successfully" }, status: :created
+      success_response({ message: "Followed successfully" }, status: :created)
     end
   end
 
@@ -81,21 +60,15 @@ class V1::FollowsController < ApplicationController
   # @response Already not following(422) [Hash{error: String}]
   def destroy
     @user = User.find_by(id: params[:id])
-    return render_user_not_found unless @user
+    return user_not_found_response unless @user
 
     if Current.user.id == @user.id
-      render json: { error: "Can't unfollow oneself" }, status: :unprocessable_entity
+      error_response("Can't unfollow oneself")
     elsif !Current.user.following.exists?(@user.id)
-      render json: { error: "Already not following" }, status: :unprocessable_entity
+      error_response("Already not following")
     else
       Current.user.following.delete(@user)
-      render json: { message: "Unfollowed successfully" }, status: :ok
+      success_response({ message: "Unfollowed successfully" })
     end
-  end
-
-  private
-
-  def render_user_not_found
-    render json: { error: "User not found" }, status: :not_found
   end
 end

@@ -20,7 +20,6 @@ class UserStatusChannel < ApplicationCable::Channel
 
   def unsubscribed
     update_user_status(online: false)
-    cancel_heartbeat_check
   end
 
   private

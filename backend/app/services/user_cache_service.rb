@@ -1,6 +1,6 @@
 class UserCacheService
   ONLINE_EXPIRATION = 3.minutes
-  ACTIVITY_EXPIRATION = 48.minutes
+  ACTIVITY_EXPIRATION = 48.hours
 
   class << self
     # Cache key generators
@@ -50,8 +50,8 @@ class UserCacheService
       cache_data = Rails.cache.read_multi(*cache_keys)
 
       {
-        last_activity: cache_data[timestamp_key(user_id)],
-        timestamp: cache_data[activity_key(user_id)]
+        timestamp: cache_data[timestamp_key(user_id)],
+        last_activity: cache_data[activity_key(user_id)]
       }
     end
 
@@ -65,8 +65,8 @@ class UserCacheService
       users_ids.map do |user_id|
       {
         id: user_id,
-        last_activity: cache_data[timestamp_key(user_id)],
-        timestamp: cache_data[activity_key(user_id)]
+        timestamp: cache_data[timestamp_key(user_id)],
+        last_activity: cache_data[activity_key(user_id)]
       }
       end
     end

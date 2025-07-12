@@ -5,11 +5,10 @@ class V1::UserStatusController < ApplicationController
   # @response Success(200) [Hash{last_activity: String}]
   def update
     user = Current.user
-
     last_activity = params[:last_activity]
 
     if last_activity.blank?
-      return render json: { error: "last_activity is required." }, status: :bad_request
+      return bad_request_response("last_activity is required.")
     end
 
     UserCacheService.set_activity(user.id, last_activity)
@@ -17,10 +16,10 @@ class V1::UserStatusController < ApplicationController
     BroadcasterUserStatusJob.perform_later(
       id: user.id,
       online: true,
-      activity: last_activity,
+      activity: last_activity
     )
 
-    render json: { status: "Ok" }, status: :created
+    success_response({ status: "Ok" }, status: :created)
   end
 
   # @oas_include
@@ -28,16 +27,11 @@ class V1::UserStatusController < ApplicationController
   # @summary Retrieves a user's status
   def show
     user = User.find_by(id: params[:user_id])
-    unless user
-      return render json: { error: "Invalid user id" }, status: :bad_request
-    end
+    return bad_request_response("Invalid user id") unless user
+    return success_response({ last_activity: nil, last_book: nil }) unless user.share_status
 
-    unless user.share_status
-      return render json: { last_activity: nil, last_book: nil }
-    end
-
-    user_status = UserCacheService.get_user_status(user.id)
-    render json: user_status
+    status = UserCacheService.get_user_status(user.id)
+    success_response(status)
   end
 
   # @oas_include
@@ -47,20 +41,24 @@ class V1::UserStatusController < ApplicationController
   def batch
     ids = params[:user_ids]
 
-    # Validate input (only accept numbers)
-    unless ids.is_a?(Array) && ids.all? { |id| id.to_s =~ /^\d+$/ }
-      return render json: { error: "Invalid user_ids param" }, status: :bad_request
+    unless valid_user_ids?(ids)
+      return bad_request_response("Invalid user_ids param")
     end
 
-    # Limit to 30 users
-    # TODO: Add pagination
     if ids.size > 30
-      return render json: { error: "Too many user_ids (max. 30)" }, status: :bad_request
+      return bad_request_response("Too many user_ids (max. 30)")
     end
 
     user_ids = ids.map(&:to_i)
     users = User.where(id: user_ids, share_status: true)
-    batch_status = UserCacheService.get_batch_status(users)
-    render json: { results: batch_status }
+    results = UserCacheService.get_batch_status(users.pluck(:id))
+
+    success_response({ results: results })
+  end
+
+  private
+
+  def valid_user_ids?(ids)
+    ids.is_a?(Array) && ids.all? { |id| id.to_s =~ /^\d+$/ }
   end
 end

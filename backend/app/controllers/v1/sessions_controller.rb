@@ -11,16 +11,18 @@ class V1::SessionsController < ApplicationController
   # @response Invalid credentials(401) [Hash{error: String}]
   def create
     user = User.authenticate_by(params.permit(:email, :password))
-    if user
-      if user.confirmed?
-        start_new_session_for user
-        render json: { user: user.slice(:id, :email, :username, :share_status) }, status: :ok
-      else
-        render json: { error: "Please confirm your email before logging in." }, status: :unauthorized
-      end
-    else
-      render json: { error: "Invalid id or password" }, status: :unauthorized
+
+    unless user
+      return unauthorized_response("Invalid id or password")
     end
+
+    unless user.confirmed?
+      return unauthorized_response("Please confirm your email before logging in.")
+    end
+
+    start_new_session_for user
+    serialized_user = UserSerializer.basic(user).merge(share_status: user.share_status)
+    success_response({ user: serialized_user })
   end
 
   # @oas_include
@@ -29,16 +31,13 @@ class V1::SessionsController < ApplicationController
   # @response User info(200) [Hash{user: Hash{id: Integer, email: String, username: String, share_status: Boolean}}]
   # @response Not logged in(401) [Hash{user: nil, error: String}]
   def show
-    # this shoudn't happen
-    return render json: { user: nil, error: "Not logged in" }, status: :unauthorized unless Current.session&.user
+    unless Current.session&.user
+      return render json: { user: nil, error: "Not logged in" }, status: :unauthorized
+    end
 
     user = Current.session.user
-    avatar_url = user.avatar.attached? ? url_for(user.avatar) : nil
-
-    res_user = user.slice(:id, :email, :username, :share_status)
-    res_user[:avatar_url] = avatar_url if avatar_url
-
-    render json: { user: res_user }, status: :ok
+    serialized_user = UserSerializer.basic(user).merge(share_status: user.share_status)
+    success_response({ user: serialized_user })
   end
 
   # @oas_include
@@ -47,6 +46,6 @@ class V1::SessionsController < ApplicationController
   # @response No content(204) []
   def destroy
     terminate_session
-    head :no_content
+    no_content_response
   end
 end
