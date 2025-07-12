@@ -1,8 +1,89 @@
+import { createEffect, createSignal } from "solid-js"
 import { IconFilter, IconUpload } from "./components/icons"
 import BooksGrid from "./components/library/BooksGrid"
 import { useLibraryContext } from "./context/library"
 import { LumiDb, ReaderSourceLightRecord } from "./lib/db"
 import { EpubBook } from "./lib/epub"
+
+import Popover from "@corvu/popover"
+
+function SortPopover() {
+    const { setSortParams, state } = useLibraryContext()
+
+    const [sortBy, setSortBy] = createSignal(state.sort || "lastModifiedDate")
+    const [order, setOrder] = createSignal(state.dir || "desc")
+
+    createEffect(() => {
+        setSortParams(sortBy(), order())
+    })
+
+    return (
+        <Popover
+            floatingOptions={{
+                offset: 13,
+                flip: true,
+                shift: true,
+            }}
+        >
+            <Popover.Trigger class="cursor-pointer bg-base02 hover:bg-base03 px-4 py-2 rounded-md flex items-center">
+                <IconFilter />
+                <span class="ml-2">Sort</span>
+            </Popover.Trigger>
+            <Popover.Portal>
+                <Popover.Content class="z-50 rounded-lg bg-base02 px-3 py-2 shadow-md">
+                    <Popover.Label class="font-bold">Sort Options</Popover.Label>
+                    <div class="mt-2">
+                        <div>
+                            <label>
+                                <input
+                                    type="radio"
+                                    name="sortBy"
+                                    checked={sortBy() === "lastModifiedDate"}
+                                    onChange={() => setSortBy("lastModifiedDate")}
+                                />
+                                <span class="ml-2">Last Read</span>
+                            </label>
+                        </div>
+                        <div>
+                            <label>
+                                <input
+                                    type="radio"
+                                    name="sortBy"
+                                    checked={sortBy() === "creationDate"}
+                                    onChange={() => setSortBy("creationDate")}
+                                />
+                                <span class="ml-2">Added Time</span>
+                            </label>
+                        </div>
+                        <div class="mt-2">
+                            <label>
+                                <input
+                                    type="radio"
+                                    name="order"
+                                    checked={order() === "asc"}
+                                    onChange={() => setOrder("asc")}
+                                />
+                                <span class="ml-2">Ascending</span>
+                            </label>
+                        </div>
+                        <div>
+                            <label>
+                                <input
+                                    type="radio"
+                                    name="order"
+                                    checked={order() === "desc"}
+                                    onChange={() => setOrder("desc")}
+                                />
+                                <span class="ml-2">Descending</span>
+                            </label>
+                        </div>
+                    </div>
+                    <Popover.Arrow class="text-base02" />
+                </Popover.Content>
+            </Popover.Portal>
+        </Popover>
+    )
+}
 
 export default function BookLibrary() {
     const { state, setState, setSortParams, toggleBookInShelf } = useLibraryContext()
@@ -47,10 +128,7 @@ export default function BookLibrary() {
                             <IconUpload />
                             <span class="cursor-pointer ml-2">Upload Book</span>
                         </label>
-                        <button class="cursor-pointer bg-base02 hover:bg-base03 px-4 py-2 rounded-md flex items-center">
-                            <IconFilter />
-                            <span class="ml-2">Filter</span>
-                        </button>
+                        <SortPopover />
                     </div>
                 </div>
             </header>
