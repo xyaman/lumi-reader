@@ -17,7 +17,7 @@ function useIsMobile() {
 function Header() {
     const location = useLocation()
     const titles: Record<string, string> = {
-        "/": "Your Library",
+        "/": "",
         "/sessions": "Reading sessions",
         "/social": "Social activity",
     }
@@ -39,7 +39,7 @@ function Sidebar() {
     const location = useLocation()
 
     const { sessionStore } = useAuthContext()
-    const { state } = useLibraryContext()
+    const { state, setState } = useLibraryContext()
     return (
         <div class="bg-base01 border border-base02 h-full w-full">
             {/* User */}
@@ -125,7 +125,10 @@ function Sidebar() {
                 </div>
                 <ul>
                     <li classList={{ "border-l-3 border-base0D": state.activeShelf === null }}>
-                        <button class="w-full flex cursor-pointer rounded p-2 hover:bg-base02">
+                        <button
+                            class="w-full flex cursor-pointer rounded p-2 hover:bg-base02"
+                            onClick={() => setState("activeShelf", null)}
+                        >
                             <p>All Books</p>
                         </button>
                     </li>
@@ -136,7 +139,10 @@ function Sidebar() {
                                     "border-l-3 border-base0D": state.activeShelf === shelf.id,
                                 }}
                             >
-                                <button class="w-full flex cursor-pointer rounded p-2 hover:bg-base02">
+                                <button
+                                    class="w-full flex cursor-pointer rounded p-2 hover:bg-base02"
+                                    onClick={() => setState("activeShelf", shelf.id)}
+                                >
                                     <p>{shelf.name}</p>
                                 </button>
                             </li>
