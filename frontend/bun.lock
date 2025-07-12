@@ -5,6 +5,7 @@
       "name": "lumi-reader",
       "dependencies": {
         "@corvu/calendar": "^0.1.2",
+        "@corvu/resizable": "^0.2.5",
         "@rails/actioncable": "^8.0.200",
         "@solidjs/router": "^0.15.3",
         "@types/rails__actioncable": "^6.1.11",
@@ -75,6 +76,8 @@
     "@babel/types": ["@babel/types@7.27.1", "", { "dependencies": { "@babel/helper-string-parser": "^7.27.1", "@babel/helper-validator-identifier": "^7.27.1" } }, "sha512-+EzkxvLNfiUeKMgy/3luqfsCWFRXLb7U6wNQTk60tovuckwB15B191tJWvpp4HjiQWdJkCxO3Wbvc6jlk3Xb2Q=="],
 
     "@corvu/calendar": ["@corvu/calendar@0.1.2", "", { "dependencies": { "@corvu/utils": "~0.4.2" }, "peerDependencies": { "solid-js": "^1.8" } }, "sha512-Vbdns1iNNI0WTIwDZS7m9pHWtr/YTz7yrisXhHUCfl4mxDvb9W8MMmun651wiEjhL7+OrcNbbl2kTOmYSFIf4g=="],
+
+    "@corvu/resizable": ["@corvu/resizable@0.2.5", "", { "dependencies": { "@corvu/utils": "~0.4.2" }, "peerDependencies": { "solid-js": "^1.8" } }, "sha512-psax38DraM9SXtaNh/sfvizGO6xLCL4sqT4rWYlMZP5ZsUM05Q30tvXgnTo2roQFNOz2e06WofhDsBXTjY6g4A=="],
 
     "@corvu/utils": ["@corvu/utils@0.4.2", "", { "dependencies": { "@floating-ui/dom": "^1.6.11" }, "peerDependencies": { "solid-js": "^1.8" } }, "sha512-Ox2kYyxy7NoXdKWdHeDEjZxClwzO4SKM8plAaVwmAJPxHMqA0rLOoAsa+hBDwRLpctf+ZRnAd/ykguuJidnaTA=="],
 

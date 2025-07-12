@@ -2,7 +2,7 @@ import Resizable from "@corvu/resizable"
 import { useAuthContext } from "./context/session"
 import { onCleanup, createSignal, For, JSX, Show } from "solid-js"
 import { A, useLocation } from "@solidjs/router"
-import { IconClock, IconHome, IconSettings, IconUsers } from "./components/icons"
+import { IconCalendar, IconHome, IconSettings, IconUsers } from "./components/icons"
 import { LibraryProvider, useLibraryContext } from "./context/library"
 import SocialList from "./components/SocialList"
 
@@ -43,29 +43,41 @@ function Sidebar() {
     return (
         <div class="bg-base01 border border-base02 h-full w-full">
             {/* User */}
-            <div class="p-2 border-b border-base02">
-                <div class="flex items-center space-x-3 p-2 rounded hover:bg-base02">
-                    {/* User Avatar */}
-                    <Show
-                        when={sessionStore.user?.avatar_url}
-                        fallback={
-                            <div class="bg-(--base01) w-8 h-8 rounded-full flex items-center">
-                                <span class="text-xs font-medium">
-                                    {sessionStore.user?.username.charAt(0).toUpperCase()}
-                                </span>
-                            </div>
-                        }
-                    >
-                        <img
-                            src={sessionStore.user?.avatar_url}
-                            class="w-10 h-10 rounded-full"
-                            alt="User avatar"
-                        />
-                    </Show>
-                    {/* Name  */}
-                    <p class="font-semibold">{sessionStore.user?.username}</p>
+            <Show
+                when={sessionStore.user}
+                fallback={
+                    <div class="p-4 border-b border-base02">
+                        <A href="/register">
+                            <h3 class="font-semibold text-base05">Welcome to Lumireader</h3>
+                            <p class="text-xs text-base04">Sign in to access all features</p>
+                        </A>
+                    </div>
+                }
+            >
+                <div class="p-2 border-b border-base02">
+                    <div class="flex items-center space-x-3 p-2 rounded hover:bg-base02">
+                        {/* User Avatar */}
+                        <Show
+                            when={sessionStore.user?.avatar_url}
+                            fallback={
+                                <div class="bg-(--base01) w-8 h-8 rounded-full flex items-center">
+                                    <span class="text-xs font-medium">
+                                        {sessionStore.user?.username.charAt(0).toUpperCase()}
+                                    </span>
+                                </div>
+                            }
+                        >
+                            <img
+                                src={sessionStore.user?.avatar_url}
+                                class="w-10 h-10 rounded-full"
+                                alt="User avatar"
+                            />
+                        </Show>
+                        {/* Name  */}
+                        <p class="font-semibold">{sessionStore.user?.username}</p>
+                    </div>
                 </div>
-            </div>
+            </Show>
 
             {/* Navigation */}
             <nav class="p-2 border-b border-base02">
@@ -89,7 +101,7 @@ function Sidebar() {
                     >
                         <A href="/sessions" class="flex items-center hover:bg-base02 p-2 rounded">
                             <span class="mr-3">
-                                <IconClock />
+                                <IconCalendar />
                             </span>
                             <span>Sessions</span>
                         </A>
@@ -164,10 +176,7 @@ export default function HomePage(props: { children?: JSX.Element }) {
                                 <div class="size-full rounded-sm transition-colors group-data-active:bg-base02 group-data-dragging:bg-base03" />
                             </Resizable.Handle>
                             <Resizable.Panel initialSize={0.8} minSize={0.7}>
-                                <div class="p-10">
-                                    <Header />
-                                    {props.children}
-                                </div>
+                                <div class="p-10">{props.children}</div>
                             </Resizable.Panel>
                         </Resizable>
                     </div>
@@ -191,7 +200,7 @@ export default function HomePage(props: { children?: JSX.Element }) {
                         class="p-2"
                         classList={{ "text-base0D": location.pathname === "/sessions" }}
                     >
-                        <IconClock />
+                        <IconCalendar />
                     </A>
                     <A
                         href="/social"

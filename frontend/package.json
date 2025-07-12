@@ -13,6 +13,7 @@
     },
     "dependencies": {
         "@corvu/calendar": "^0.1.2",
+        "@corvu/resizable": "^0.2.5",
         "@rails/actioncable": "^8.0.200",
         "@solidjs/router": "^0.15.3",
         "@types/rails__actioncable": "^6.1.11",
