@@ -1,8 +1,6 @@
 import { LumiDb, ReadingSession } from "@/lib/db"
 import { formatTime } from "@/lib/utils"
 import { createResource, createSignal, For } from "solid-js"
-import Navbar from "./Navbar"
-import { A } from "@solidjs/router"
 import { IconEdit, IconTrash } from "./icons"
 import Calendar from "./Calendar"
 
@@ -17,32 +15,15 @@ export function ReadingSessionsPage() {
         to: today,
     })
     return (
-        <>
-            <Navbar disableCollapse>
-                <Navbar.Left>
-                    <A
-                        href="/"
-                        class="text-xl font-bold text-[var(--base07)] hover:text-[var(--base0D)] transition-colors"
-                    >
-                        lumireader
-                    </A>
-                </Navbar.Left>
-            </Navbar>
-            {/* container */}
-            <div class="px-4 py-8 mx-auto">
-                <header class="mb-8">
-                    <h1 class="text-3xl font-bold">Reading Sessions</h1>
-                    <p>Manage your reading progress</p>
-                </header>
-                <div class="w-min">
-                    <Calendar mode="range" onValueChange={(e) => setDateRange(e)}>
-                        {() => null}
-                    </Calendar>
-                </div>
-                {/* content */}
-                <ReadingSessionsList range={dateRange} />
+        <div class="px-4 mx-auto">
+            <div class="w-min">
+                <Calendar mode="range" onValueChange={(e) => setDateRange(e)}>
+                    {() => null}
+                </Calendar>
             </div>
-        </>
+            {/* content */}
+            <ReadingSessionsList range={dateRange} />
+        </div>
     )
 }
 

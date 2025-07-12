@@ -11,6 +11,9 @@ import { AuthProvider } from "./context/session"
 
 import { LibraryProvider } from "@/context/library"
 import { ReadingSessionsPage } from "./components/SessionList"
+import HomePage from "./HomePage"
+import BooksGrid from "./components/library/BooksGrid"
+import SocialList from "./components/SocialList"
 
 const settingsFilter: MatchFilters = {
     name: ["theme", "reader", "sessions"],
@@ -23,19 +26,32 @@ function App() {
     return (
         <AuthProvider>
             <Router>
-                <Route
-                    path="/"
-                    component={() => (
-                        <LibraryProvider>
-                            <BookLibrary />
-                        </LibraryProvider>
-                    )}
-                />
+                <Route path="/" component={HomePage}>
+                    <Route
+                        path="/"
+                        component={() => (
+                            <BooksGrid onSelectBook={() => {}} onDeleteBook={() => {}} />
+                        )}
+                    />
+                    <Route path="/sessions" component={ReadingSessionsPage} />
+                    <Route path="/social" component={SocialList} />
+                </Route>
+
+                <LibraryProvider>
+                    <Route
+                        path="/library"
+                        component={() => (
+                            <LibraryProvider>
+                                <BookLibrary />
+                            </LibraryProvider>
+                        )}
+                    />
+                </LibraryProvider>
+
                 <Route path="/reader/:id?" component={BookReader} matchFilters={settingsFilter} />
                 <Route path="/settings/:name?" component={Settings} />
                 <Route path="/register" component={Register} />
                 <Route path="/login" component={Login} />
-                <Route path="/sessions" component={ReadingSessionsPage} />
                 <Route path="/users/search" component={UserSearch} />
                 <Route path="/users/:id?" component={Profile} />
             </Router>

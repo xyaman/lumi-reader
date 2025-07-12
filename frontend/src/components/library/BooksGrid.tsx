@@ -20,16 +20,17 @@ export default function BooksGrid(props: BooksGridProps) {
     })
 
     return (
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-5 mx-6 sm:mx-0">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
             <For each={visibleBooks()}>
+                {/* Card */}
                 {(b) => (
-                    <div class="relative group hover:opacity-70">
+                    <div class="relative group">
                         <A href={`/reader/${b.localId}`}>
-                            <div class="card-theme rounded-lg shadow-md hover:shadow-lg overflow-hidden">
+                            <div class="bg-base01 shadow-lg hover:shadow-xl transition-shadow rounded overflow-hidden">
                                 <img
                                     src={state.covers[b.localId]}
                                     alt={b.title}
-                                    class="aspect-[3/4] w-full object-cover"
+                                    class="w-full h-48 object-cover"
                                 />
                                 <button
                                     class="button absolute cursor-pointer top-2 right-11 w-8 h-8 opacity-0 group-hover:opacity-100 rounded-full flex items-center justify-center transition-opacity"
@@ -49,13 +50,17 @@ export default function BooksGrid(props: BooksGridProps) {
                                 >
                                     <IconTrash />
                                 </button>
-                                <div class="px-3 py-2">
-                                    <p class="text-sm truncate">{b.title}</p>
-                                    <progress
-                                        class="progress-theme w-full h-2 rounded"
-                                        value={b.currChars}
-                                        max={b.totalChars}
-                                    />
+                                <div class="p-3">
+                                    <p class="font-semibold truncate">{b.title}</p>
+                                    <p class="text-sm text-base04 truncate">{b.creator}</p>
+                                    <div class="bg-base02 w-full rounded mt-2">
+                                        <div
+                                            class="bg-base0D h-[4px] rounded"
+                                            style={{
+                                                width: `${Math.floor((100 * b.currChars) / b.totalChars)}%`,
+                                            }}
+                                        ></div>
+                                    </div>
                                 </div>
                             </div>
                         </A>
