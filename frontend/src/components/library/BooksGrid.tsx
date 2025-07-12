@@ -1,16 +1,15 @@
 import { createMemo, createSignal, For, onCleanup, onMount } from "solid-js"
 import { IconFolderOpen, IconTrash } from "@/components/icons"
-import { ReaderSourceLightRecord } from "@/lib/db"
+import { LumiDb, ReaderSourceLightRecord } from "@/lib/db"
 import { A } from "@solidjs/router"
 import { useLibraryContext } from "@/context/library"
 
 type BooksGridProps = {
     onSelectBook: (b: ReaderSourceLightRecord) => void
-    onDeleteBook: (b: ReaderSourceLightRecord) => void
 }
 
 export default function BooksGrid(props: BooksGridProps) {
-    const { state } = useLibraryContext()
+    const { state, setState } = useLibraryContext()
     const [hoveredBookId, setHoveredBookId] = createSignal<number | null>(null)
     const [isTouch, setIsTouch] = createSignal(false)
 
@@ -47,6 +46,15 @@ export default function BooksGrid(props: BooksGridProps) {
                 setHoveredBookId(null)
             }
         }
+    }
+
+    const deleteBook = async (id: number) => {
+        if (!confirm("Are you sure you want to delete this book?")) return
+        await LumiDb.deleteBookById(id)
+        setState(
+            "books",
+            state.books.filter((i) => i.localId !== id),
+        )
     }
 
     return (
@@ -92,7 +100,7 @@ export default function BooksGrid(props: BooksGridProps) {
                                     }`}
                                     onClick={(e) => {
                                         e.preventDefault()
-                                        props.onDeleteBook(b)
+                                        deleteBook(b.localId)
                                     }}
                                 >
                                     <IconTrash />

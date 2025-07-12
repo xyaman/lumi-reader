@@ -132,7 +132,7 @@ export default function BookLibrary() {
                     </div>
                 </div>
             </header>
-            <BooksGrid onSelectBook={() => {}} onDeleteBook={() => {}} />
+            <BooksGrid onSelectBook={() => {}} />
         </>
     )
 }
