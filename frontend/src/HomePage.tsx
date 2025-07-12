@@ -243,11 +243,14 @@ export default function HomePage(props: { children?: JSX.Element }) {
                 }
             >
                 {/* Mobile version */}
-                <div class="p-10">
+                <div class="p-10 overflow-auto" style="height: calc(100vh - 60px);">
                     <Header />
                     {props.children}
                 </div>
-                <div class="fixed bottom-0 left-0 right-0 bg-base01 border-t border-base02 flex justify-around items-center p-2 md:hidden">
+                <div
+                    class="fixed bottom-0 left-0 right-0 bg-base01 border-t border-base02 flex justify-around items-center p-2 md:hidden"
+                    style="height: 56px;"
+                >
                     <A
                         href="/"
                         class="p-2"
