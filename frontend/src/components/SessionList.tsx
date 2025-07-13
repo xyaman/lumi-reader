@@ -1,8 +1,9 @@
 import { LumiDb, ReadingSession } from "@/lib/db"
 import { formatTime } from "@/lib/utils"
-import { createResource, createSignal, For } from "solid-js"
+import { createResource, createSignal, For, onMount } from "solid-js"
 import { IconEdit, IconTrash } from "./icons"
 import Calendar from "./Calendar"
+import api from "@/lib/api"
 
 export function ReadingSessionsPage() {
     const today = new Date()
@@ -41,10 +42,20 @@ export function ReadingSessionsList(props: {
         return await LumiDb.getReadingSessionByDateRange(start, end)
     })
 
+    // update sessions with the backend
+    onMount(async () => {
+        const backendSessions = await api.getAllReadingSessions()
+        backendSessions.forEach(async (s) => {
+            const front = await LumiDb.getReadingSessionById(s.snowflake)
+            if (!front) return LumiDb.createReadingSessionFromCloud(s)
+            if (front.endTime !== s.endTime) await LumiDb.updateReadingSession(s)
+        })
+    })
+
     const deleteSession = async (id: number) => {
         if (confirm("Are you sure you want to delete this session?")) {
             await LumiDb.deleteReadingSession(id)
-            mutate((prev) => prev && prev.filter((s) => s.id !== id))
+            mutate((prev) => prev && prev.filter((s) => s.snowflake !== id))
         }
     }
 
@@ -79,7 +90,7 @@ function ReadingSessionCard(props: {
         <div class="p-6">
             <div class="flex flex-row justify-between mb-2">
                 <p class="text-lg font-semibold truncate">{props.session.bookTitle}</p>
-                <p class="text-xs">{props.session.language}</p>
+                <p class="text-xs">{props.session.bookLanguage}</p>
             </div>
             <div class="md:w-[50%] grid grid-cols-2 gap-2 my-4 items-start text-sm">
                 <div>
@@ -102,7 +113,7 @@ function ReadingSessionCard(props: {
                     </button>
                     <button
                         class="button-alt"
-                        onClick={() => props.deleteSession?.(props.session.id)}
+                        onClick={() => props.deleteSession?.(props.session.snowflake)}
                     >
                         <IconTrash />
                     </button>

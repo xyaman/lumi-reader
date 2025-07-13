@@ -32,13 +32,13 @@ export type Bookshelf = {
 }
 
 export type ReadingSession = {
-    id: number // unique session id (snowflake/timestamp)
+    snowflake: number // unique session id (snowflake/timestamp)
     userId?: number | null // null or undefined for local users
 
-    bookLocalId: number // reference to ReaderSourceLightRecord or similar
-    bookUniqueId: string // reference to the real source (ex. epub identifier)
+    bookLocalId?: number // reference to ReaderSourceLightRecord or similar
+    bookId: string // reference to the real source (ex. epub identifier)
     bookTitle: string
-    language: string
+    bookLanguage: string
 
     startTime: number // unix timestamp
     endTime?: number | null // unix timestamp
@@ -85,7 +85,7 @@ interface LumiDbSchema extends DBSchema {
         key: number
         value: ReadingSession
         indexes: {
-            bookUniqueId: string
+            bookId: string
         }
     }
 }
@@ -121,9 +121,9 @@ export class LumiDb {
 
                     if (!db.objectStoreNames.contains(STORE_READING_SESSIONS)) {
                         const store = db.createObjectStore(STORE_READING_SESSIONS, {
-                            keyPath: "id",
+                            keyPath: "snowflake",
                         })
-                        store.createIndex("bookUniqueId", "bookUniqueId", { unique: false })
+                        store.createIndex("bookId", "bookId", { unique: false })
                     }
                 },
             })
@@ -257,11 +257,11 @@ export class LumiDb {
         const now = Math.floor(Date.now() / 1000)
 
         const session: ReadingSession = {
-            id: now,
+            snowflake: now,
             bookLocalId: book.localId,
-            bookUniqueId: book.uniqueId,
+            bookId: book.uniqueId,
             bookTitle: book.title,
-            language: book.language,
+            bookLanguage: book.language,
             startTime: now,
             totalReadingTime: 0,
             lastActiveTime: now,
@@ -274,6 +274,11 @@ export class LumiDb {
 
         await db.add(STORE_READING_SESSIONS, session)
         return session
+    }
+
+    static async createReadingSessionFromCloud(session: ReadingSession): Promise<void> {
+        const db = await this.getDB()
+        await db.put(STORE_READING_SESSIONS, session)
     }
 
     static async getAllReadingSessions(): Promise<ReadingSession[]> {
@@ -301,10 +306,11 @@ export class LumiDb {
 
     // @throws if id is not passed
     static async updateReadingSession(newSession: Partial<ReadingSession>): Promise<void> {
-        if (!newSession.id) throw new Error("Undefined id. Id must be a valid value")
+        if (!newSession.snowflake)
+            throw new Error("Undefined id/snowflake. Id must be a valid value")
 
         const db = await this.getDB()
-        const currSession = await this.getReadingSessionById(newSession.id)
+        const currSession = await this.getReadingSessionById(newSession.snowflake)
         const updatedSession = { ...currSession }
         for (const key in newSession) {
             if (newSession[key as keyof ReadingSession])

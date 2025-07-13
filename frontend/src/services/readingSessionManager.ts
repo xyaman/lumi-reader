@@ -1,3 +1,4 @@
+import api from "@/lib/api"
 import { LumiDb, ReadingSession } from "@/lib/db"
 import { createSignal } from "solid-js"
 
@@ -21,6 +22,7 @@ export default class ReadingSessionManager {
         if (this.activeSession()) return
         const session = await LumiDb.createReadingSession(source)
         this.setActiveSession(session)
+        api.createReadingSession(session)
     }
 
     async finishSession(): Promise<void> {
@@ -29,7 +31,9 @@ export default class ReadingSessionManager {
         // remove the session from the database if characters count is 0
         // or if updateTime is undefined
         if (session.currChars === session.initialChars) {
-            return await LumiDb.deleteReadingSession(session.id)
+            await LumiDb.deleteReadingSession(session.snowflake)
+            await api.deleteReadingSession(session.snowflake)
+            return
         }
 
         if (!session.isPaused) {
@@ -86,5 +90,6 @@ export default class ReadingSessionManager {
 
         this.setActiveSession(updatedSession)
         await LumiDb.updateReadingSession(updatedSession)
+        await api.updateReadingSession(session.snowflake, session)
     }
 }

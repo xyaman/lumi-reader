@@ -76,3 +76,33 @@ export function timeAgo(unixTimestamp?: number): string {
         }
     }
 }
+
+// Converts camelCase keys to snake_case recursively
+export function camelToSnake(obj: any): any {
+    if (Array.isArray(obj)) {
+        return obj.map(camelToSnake)
+    } else if (obj && typeof obj === "object") {
+        return Object.fromEntries(
+            Object.entries(obj).map(([key, value]) => [
+                key.replace(/([A-Z])/g, "_$1").toLowerCase(),
+                camelToSnake(value),
+            ]),
+        )
+    }
+    return obj
+}
+
+// Converts snake_case keys to camelCase recursively
+export function snakeToCamel(obj: any): any {
+    if (Array.isArray(obj)) {
+        return obj.map(snakeToCamel)
+    } else if (obj && typeof obj === "object") {
+        return Object.fromEntries(
+            Object.entries(obj).map(([key, value]) => [
+                key.replace(/_([a-z])/g, (_, c) => c.toUpperCase()),
+                snakeToCamel(value),
+            ]),
+        )
+    }
+    return obj
+}

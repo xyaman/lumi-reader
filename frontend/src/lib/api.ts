@@ -1,3 +1,6 @@
+import { ReadingSession } from "./db"
+import { camelToSnake, snakeToCamel } from "./utils"
+
 const API_URL = import.meta.env.PROD ? "https://api.lumireader.app" : "http://localhost:3000"
 const API_VERSION = "v1"
 
@@ -577,6 +580,99 @@ async function fetchUsersByQuery(query: string): Promise<IUsersQueryResponse> {
     return data
 }
 
+async function getAllReadingSessions(): Promise<ReadingSession[]> {
+    const url = `${API_URL}/${API_VERSION}/reading_sessions`
+    let res: Response
+    try {
+        res = await fetch(url, {
+            method: "GET",
+            credentials: "include",
+        })
+    } catch {
+        throw new Error("Network error")
+    }
+    const data = await res.json()
+    if (!res.ok) {
+        throw new Error(data?.error ? data.error : `Fetch failed: ${res.statusText}`)
+    }
+    return snakeToCamel(data.sessions)
+}
+
+async function createReadingSession(body: ReadingSession): Promise<ReadingSession> {
+    const url = `${API_URL}/${API_VERSION}/reading_sessions/`
+    const cookie = await getCsrfCookie()
+    if (!cookie) throw new Error("Can't validate the connection")
+    let res: Response
+    try {
+        res = await fetch(url, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "X-CSRF-TOKEN": cookie,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ reading_session: camelToSnake(body) }),
+        })
+    } catch {
+        throw new Error("Network error")
+    }
+    const data = await res.json()
+    if (!res.ok) {
+        throw new Error(data?.error ? data.error : `Update failed: ${res.statusText}`)
+    }
+    return snakeToCamel(data)
+}
+
+async function updateReadingSession(
+    id: number,
+    body: Partial<ReadingSession>,
+): Promise<ReadingSession> {
+    const url = `${API_URL}/${API_VERSION}/reading_sessions/${id}`
+    const cookie = await getCsrfCookie()
+    if (!cookie) throw new Error("Can't validate the connection")
+    let res: Response
+    try {
+        res = await fetch(url, {
+            method: "PATCH",
+            credentials: "include",
+            headers: {
+                "X-CSRF-TOKEN": cookie,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ reading_session: camelToSnake(body) }),
+        })
+    } catch {
+        throw new Error("Network error")
+    }
+    const data = await res.json()
+    if (!res.ok) {
+        throw new Error(data?.error ? data.error : `Update failed: ${res.statusText}`)
+    }
+    return snakeToCamel(data)
+}
+
+async function deleteReadingSession(id: number): Promise<void> {
+    const url = `${API_URL}/${API_VERSION}/reading_sessions/${id}`
+    const cookie = await getCsrfCookie()
+    if (!cookie) throw new Error("Can't validate the connection")
+    let res: Response
+    try {
+        res = await fetch(url, {
+            method: "DELETE",
+            credentials: "include",
+            headers: {
+                "X-CSRF-TOKEN": cookie,
+            },
+        })
+    } catch {
+        throw new Error("Network error")
+    }
+    if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data?.error ? data.error : `Delete failed: ${res.statusText}`)
+    }
+}
+
 export default {
     register,
     login,
@@ -594,4 +690,9 @@ export default {
     fetchUserStatusBatch,
     fetchUserStatus,
     fetchUsersByQuery,
+    // reading sessions
+    getAllReadingSessions,
+    createReadingSession,
+    updateReadingSession,
+    deleteReadingSession,
 }

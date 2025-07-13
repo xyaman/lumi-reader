@@ -235,7 +235,11 @@ export default function HomePage(props: { children?: JSX.Element }) {
                             <Resizable.Handle class="group basis-3 px-0.75">
                                 <div class="size-full rounded-sm transition-colors group-data-active:bg-base02 group-data-dragging:bg-base03" />
                             </Resizable.Handle>
-                            <Resizable.Panel initialSize={0.8} minSize={0.7}>
+                            <Resizable.Panel
+                                initialSize={0.8}
+                                minSize={0.7}
+                                class="overflow-y-auto"
+                            >
                                 <div class="p-10">{props.children}</div>
                             </Resizable.Panel>
                         </Resizable>
