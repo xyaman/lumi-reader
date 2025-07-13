@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_12_014148) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_13_031210) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -47,6 +47,24 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_12_014148) do
     t.index ["followed_id"], name: "index_follows_on_followed_id"
     t.index ["follower_id", "followed_id"], name: "index_follows_on_follower_id_and_followed_id", unique: true
     t.index ["follower_id"], name: "index_follows_on_follower_id"
+  end
+
+  create_table "reading_sessions", force: :cascade do |t|
+    t.integer "snowflake", null: false
+    t.integer "user_id", null: false
+    t.string "book_id", null: false
+    t.string "book_title", null: false
+    t.string "book_language", null: false
+    t.integer "start_time", null: false
+    t.integer "end_time"
+    t.integer "total_reading_time", null: false
+    t.string "status", default: "active", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["start_time"], name: "index_reading_sessions_on_start_time"
+    t.index ["status"], name: "index_reading_sessions_on_status"
+    t.index ["user_id", "snowflake"], name: "index_reading_sessions_on_user_id_and_snowflake", unique: true
+    t.index ["user_id"], name: "index_reading_sessions_on_user_id"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -90,6 +108,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_12_014148) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "follows", "users", column: "followed_id"
   add_foreign_key "follows", "users", column: "follower_id"
+  add_foreign_key "reading_sessions", "users"
   add_foreign_key "sessions", "users"
   add_foreign_key "user_daily_activities", "users"
 end

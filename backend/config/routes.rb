@@ -7,6 +7,8 @@ Rails.application.routes.draw do
   get "csrf", to: "application#csrf"
 
   namespace :v1 do
+    resources :reading_sessions
+
     resource :session, only: [ :create, :show, :destroy ] do
       resources :follows, only: [ :update, :destroy ]
 
@@ -32,7 +34,4 @@ Rails.application.routes.draw do
   if Rails.env.development?
     mount OasRails::Engine => "/api-docs"
   end
-
-  # Defines the root path route ("/")
-  # root "posts#index"
 end
