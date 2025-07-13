@@ -1,5 +1,6 @@
 import { Bookmark, ReaderSource } from "@/lib/readerSource"
 import ReadingSessionManager from "@/services/readingSessionManager"
+import { ISessionStatus, sessionStore } from "@/stores/session"
 import { createContext, JSX, onCleanup, useContext } from "solid-js"
 import { createStore, SetStoreFunction } from "solid-js/store"
 
@@ -90,7 +91,10 @@ export function ReaderProvider(props: { book: ReaderSource; children: JSX.Elemen
         setReaderStore("currIndex", lastIndex)
         setReaderStore("currChars", currChars)
 
-        readingManager.updateReadingProgress(currChars).then(() => console.log("progress updated"))
+        readingManager.updateReadingProgress(
+            currChars,
+            sessionStore.status === ISessionStatus.authenticated,
+        )
 
         return lastIndex
     }

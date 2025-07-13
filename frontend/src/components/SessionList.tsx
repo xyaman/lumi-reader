@@ -4,6 +4,10 @@ import { createResource, createSignal, For, onMount, Show } from "solid-js"
 import { IconEdit, IconTrash } from "./icons"
 import Calendar from "./Calendar"
 import ReadingSessionManager from "@/services/readingSessionManager"
+import Spinner from "./Spiner"
+
+import { useAuthContext } from "@/context/session"
+import api from "@/lib/api"
 
 export function ReadingSessionsPage() {
     const now = new Date()
@@ -84,6 +88,10 @@ export function ReadingSessionsPage() {
 export function ReadingSessionsList(props: {
     range: () => { from: Date | null; to: Date | null }
 }) {
+    const { sessionStore } = useAuthContext()
+    const [isSyncing, setIsSyncing] = createSignal(false)
+    const [syncError, setSyncError] = createSignal<string | null>(null)
+
     const [sessions, { mutate, refetch }] = createResource(props.range, async () => {
         const range = props.range()
         // TODO: Should i return something if its null? what is best UX?
@@ -95,31 +103,64 @@ export function ReadingSessionsList(props: {
         return await LumiDb.getReadingSessionByDateRange(start, end)
     })
 
-    // update sessions with the backend
-    onMount(async () => {
-        const manager = new ReadingSessionManager()
-        if (await manager.syncWithBackend()) {
-            await refetch()
+    const syncSessions = async () => {
+        // if its offline, set connection error
+        if (!sessionStore.user) return
+        try {
+            setIsSyncing(true)
+            const didChange = await ReadingSessionManager.syncWithBackendIfNeeded()
+            if (didChange) await refetch()
+            setSyncError(null)
+        } catch (e) {
+            if (typeof e === "string") {
+                setSyncError(e)
+            } else {
+                setSyncError("connection error")
+            }
+        } finally {
+            setIsSyncing(false)
         }
-    })
+    }
+
+    // update sessions with the backend
+    onMount(() => syncSessions())
 
     const deleteSession = async (id: number) => {
         if (confirm("Are you sure you want to delete this session?")) {
             await LumiDb.deleteReadingSession(id)
             mutate((prev) => prev && prev.filter((s) => s.snowflake !== id))
+
+            // TODO: add the ids to delete the sessions if the fetch fails
+            // ONLY network errors
+            try {
+                await api.deleteReadingSession(id)
+            } catch {}
         }
     }
 
     return (
-        <div class="grid grid-cols-1 gap-6">
-            <For each={sessions() || []}>
-                {(session) => (
-                    <div class="navbar-theme rounded-lg border">
-                        <ReadingSessionCard session={session} deleteSession={deleteSession} />
-                    </div>
-                )}
-            </For>
-        </div>
+        <>
+            <Show when={isSyncing()}>
+                <div class="flex items-center gap-2 mb-2">
+                    <Spinner base16Color="--base05" size={16} />
+                    <span>Syncing with backend…</span>
+                </div>
+            </Show>
+            <Show when={syncError() !== null}>
+                <div class="flex items-center gap-2 mb-2">
+                    <span>Error when syncing with the backend: {syncError()}</span>
+                </div>
+            </Show>
+            <div class="grid grid-cols-1 gap-6">
+                <For each={sessions() || []}>
+                    {(session) => (
+                        <div class="navbar-theme rounded border border-base02">
+                            <ReadingSessionCard session={session} deleteSession={deleteSession} />
+                        </div>
+                    )}
+                </For>
+            </div>
+        </>
     )
 }
 

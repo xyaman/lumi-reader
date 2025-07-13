@@ -7,36 +7,38 @@ import ThemeList from "@/components/Themelist"
 import ThemeEditor from "@/components/ThemeEditor"
 import { ThemeProvider } from "@/context/theme"
 import ReaderSettings from "@/components/reader/ReaderSettings"
+import { lsReadingSessions } from "./services/localStorage"
 
 type Menu = "theme" | "reader" | "sessions"
 
-const LS_AUTOMATICSTART = "reader:sessions:automaticstart"
-
 function SessionSettings() {
-    // default to true
-    const initialValue = localStorage.getItem(LS_AUTOMATICSTART)
-        ? localStorage.getItem(LS_AUTOMATICSTART) === "true"
-        : true
-
-    const [automaticStart, setAutomaticStart] = createSignal(initialValue)
-    createEffect(() => {
-        localStorage.setItem(LS_AUTOMATICSTART, String(automaticStart()))
-    })
+    const automaticStart = () => lsReadingSessions.autoStart()
+    const synchronize = () => lsReadingSessions.autoSync()
 
     return (
         <section>
             <h2 class="text-2xl font-semibold">Session Settings</h2>
             <div class="mt-5 space-y-3">
-                <p>Start sesssion:</p>
                 <div class="flex items-center space-x-2">
                     <input
                         id="automatic-checkbox"
                         type="checkbox"
                         checked={automaticStart()}
-                        onChange={(e) => setAutomaticStart(e.target.checked)}
+                        onChange={(e) => lsReadingSessions.setAutoStart(e.target.checked)}
                     />
                     <label for="automatic-checkbox" class="text-sm font-medium">
-                        Automatic
+                        Start reading session automatically
+                    </label>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <input
+                        id="sync-checkbox"
+                        type="checkbox"
+                        checked={synchronize()}
+                        onChange={(e) => lsReadingSessions.setAutoSync(e.target.checked)}
+                    />
+                    <label for="sync-checkbox" class="text-sm font-medium">
+                        Synchronize with server automatically
                     </label>
                 </div>
             </div>

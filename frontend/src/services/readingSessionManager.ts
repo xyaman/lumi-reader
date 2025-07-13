@@ -2,6 +2,7 @@ import api from "@/lib/api"
 import { LumiDb, ReadingSession } from "@/lib/db"
 import { ISessionStatus, sessionStore } from "@/stores/session"
 import { createSignal } from "solid-js"
+import { lsReadingSessions } from "./localStorage"
 
 interface IPartialSource {
     localId: number
@@ -11,32 +12,39 @@ interface IPartialSource {
     currChars: number
 }
 
-const LS_SYNCTIME = "last_session_sync_time"
-
 export default class ReadingSessionManager {
     activeSession: () => ReadingSession | null
     setActiveSession: (session: ReadingSession | undefined) => void
-    lastSyncTime: number
 
     constructor() {
         ;[this.activeSession, this.setActiveSession] = createSignal<ReadingSession | null>(null)
-        this.lastSyncTime = Number(localStorage.getItem(LS_SYNCTIME) || "0")
     }
 
-    async isSyncNeeded() {
+    /**
+     * Chacks if synchronization with the backend is needed by comparing the last update time.
+     * @returns {Promise<boolean>} True if sync is needed, false otherwise.
+     * @throws Will throw if there is a network error
+     */
+    static async isSyncNeeded(): Promise<boolean> {
+        const lastSyncTime = lsReadingSessions.lastSyncTime()
         if (sessionStore.status === ISessionStatus.unauthenticated) return false
-        try {
-            const metadata = await api.getReadingSessionMetadata()
-            return metadata.lastUpdate > this.lastSyncTime
-        } catch (e) {
-            console.error("error:", e)
-        }
+
+        const metadata = await api.getReadingSessionMetadata()
+        return metadata.lastUpdate > lastSyncTime
     }
 
-    async syncWithBackend() {
+    /**
+     * Synchronizes local reading sessions with the backend.
+     * Downloads new/updated sessions and uploads local changes.
+     * Updates the last sync time on success.
+     * @returns {Promise<boolean>} True if sync occurred, false otherwise.
+     * @throws Will throw if the API request fails or if there is a DB problem
+     */
+    static async syncWithBackendIfNeeded(): Promise<boolean> {
         try {
             if (await this.isSyncNeeded()) {
-                const sessions = await api.getReadingSessionsSince(this.lastSyncTime)
+                let lastSyncTime = lsReadingSessions.lastSyncTime()
+                const sessions = await api.getReadingSessionsSince(lastSyncTime)
 
                 for (const s of sessions) {
                     const localSession = await LumiDb.getReadingSessionById(s.snowflake)
@@ -49,16 +57,22 @@ export default class ReadingSessionManager {
                     }
                 }
 
-                // TODO: upload local changes that havent been uploaded
                 // Update last sync time
-                this.lastSyncTime = Math.floor(Date.now() / 1000)
-                localStorage.setItem("last_session_sync_time", String(this.lastSyncTime))
+                const now = Math.floor(Date.now() / 1000)
+                lsReadingSessions.setLastSyncTime(now)
+
+                // TODO: upload local changes that havent been uploaded
+                const localSessions = await LumiDb.getReadingSessionByDateRange(lastSyncTime, now)
+                for (const ls of localSessions) {
+                    // check if it exists in the backend
+                    // update or create
+                }
 
                 return true
             }
         } catch (e) {
             console.error("failed syncing with the backend", e)
-            return false
+            throw e
         }
 
         return false
@@ -89,7 +103,9 @@ export default class ReadingSessionManager {
         const now = Math.floor(Date.now() / 1000)
         const updatedSession = { ...session, endTime: now }
         this.setActiveSession(updatedSession)
+
         await LumiDb.updateReadingSession(updatedSession)
+        await api.updateReadingSession(updatedSession.snowflake, updatedSession)
         this.setActiveSession(undefined)
     }
 
@@ -122,7 +138,8 @@ export default class ReadingSessionManager {
         await LumiDb.updateReadingSession(updatedSession)
     }
 
-    async updateReadingProgress(charsPosition: number) {
+    // called in reader context
+    async updateReadingProgress(charsPosition: number, syncBackend: boolean = false) {
         const session = this.activeSession()
         if (!session || session.isPaused) return
 
@@ -136,6 +153,6 @@ export default class ReadingSessionManager {
 
         this.setActiveSession(updatedSession)
         await LumiDb.updateReadingSession(updatedSession)
-        await api.updateReadingSession(session.snowflake, session)
+        if (syncBackend) await api.updateReadingSession(session.snowflake, session)
     }
 }

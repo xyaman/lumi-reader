@@ -719,6 +719,7 @@ async function deleteReadingSession(id: number): Promise<void> {
 }
 
 export default {
+    // current user
     register,
     login,
     logout,
@@ -727,10 +728,14 @@ export default {
     updateShareStatus,
     updateCurrentUserStatus,
     fetchProfileInfo,
+
+    // follows
     follow,
     unfollow,
     fetchUserFollows,
     fetchUserFollowers,
+
+    // users
     fetchSessionInfo,
     fetchUserStatusBatch,
     fetchUserStatus,
