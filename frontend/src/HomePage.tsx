@@ -69,13 +69,10 @@ function AddShelfDialog() {
 function Header() {
     const location = useLocation()
     const titles: Record<string, string> = {
-        "/sessions": "Reading sessions",
         "/social": "Social activity",
     }
 
-    const subtitle: Record<string, string | null> = {
-        "/sessions": "Manage your reading progress",
-    }
+    const subtitle: Record<string, string | null> = {}
 
     return (
         <Show when={location.pathname in titles}>

@@ -1,31 +1,83 @@
 import { LumiDb, ReadingSession } from "@/lib/db"
 import { formatTime } from "@/lib/utils"
-import { createResource, createSignal, For, onMount } from "solid-js"
+import { createResource, createSignal, For, onMount, Show } from "solid-js"
 import { IconEdit, IconTrash } from "./icons"
 import Calendar from "./Calendar"
-import api from "@/lib/api"
 import ReadingSessionManager from "@/services/readingSessionManager"
 
 export function ReadingSessionsPage() {
-    const today = new Date()
-
-    const todayStart = new Date(today)
+    const now = new Date()
+    const todayStart = new Date(now)
     todayStart.setHours(0, 0, 0, 0)
+
+    const lastWeekStart = new Date(now)
+    lastWeekStart.setDate(now.getDate() - 6)
+    lastWeekStart.setHours(0, 0, 0, 0)
 
     const [dateRange, setDateRange] = createSignal<{ from: Date | null; to: Date | null }>({
         from: todayStart,
-        to: today,
+        to: now,
     })
+    const [showCalendar, setShowCalendar] = createSignal(false)
+
     return (
-        <div class="px-4 mx-auto">
-            <div class="w-min">
-                <Calendar mode="range" onValueChange={(e) => setDateRange(e)}>
-                    {() => null}
-                </Calendar>
+        <>
+            <header class="mb-8">
+                <h1 class="text-3xl font-bold">Reading sessions</h1>
+                <p>Manage your reading progress</p>
+            </header>
+            <div class="px-4 mx-auto">
+                <div class="flex space-x-2 mb-4">
+                    <button
+                        class="cursor-pointer bg-base01 rounded p-2"
+                        classList={{
+                            "bg-base02":
+                                dateRange().from?.getTime() === todayStart.getTime() &&
+                                dateRange().to?.getTime() === now.getTime() &&
+                                !showCalendar(),
+                        }}
+                        onClick={() => {
+                            setDateRange({ from: todayStart, to: now })
+                            setShowCalendar(false)
+                        }}
+                    >
+                        Today
+                    </button>
+                    <button
+                        class="cursor-pointer bg-base01 rounded p-2"
+                        classList={{
+                            "bg-base02":
+                                dateRange().from?.getTime() === lastWeekStart.getTime() &&
+                                dateRange().to?.getTime() === now.getTime() &&
+                                !showCalendar(),
+                        }}
+                        onClick={() => {
+                            setDateRange({ from: lastWeekStart, to: now })
+                            setShowCalendar(false)
+                        }}
+                    >
+                        Last week
+                    </button>
+                    <button
+                        class="cursor-pointer bg-base01 rounded p-2"
+                        classList={{ "bg-base02": showCalendar() }}
+                        onClick={() => setShowCalendar(true)}
+                    >
+                        Range
+                    </button>
+                </div>
+                <Show when={showCalendar()}>
+                    <div class="w-min">
+                        <Calendar mode="range" onValueChange={(e) => setDateRange(e)}>
+                            {/* TODO */}
+                            {() => null}
+                        </Calendar>
+                    </div>
+                </Show>
+                {/* content */}
+                <ReadingSessionsList range={dateRange} />
             </div>
-            {/* content */}
-            <ReadingSessionsList range={dateRange} />
-        </div>
+        </>
     )
 }
 

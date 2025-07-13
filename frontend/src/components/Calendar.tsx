@@ -2,10 +2,13 @@ import CorvuCalendar, { RootRangeProps, RootChildrenRangeProps } from "@corvu/ca
 import { Index } from "solid-js"
 
 export default function Calendar(props: RootRangeProps) {
+    const now = new Date()
+    const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+
     return (
-        <CorvuCalendar numberOfMonths={2} {...props}>
+        <CorvuCalendar initialMonth={prevMonth} numberOfMonths={2} {...props}>
             {(calendarProps: RootChildrenRangeProps) => (
-                <div class="bg-(--base01) relative my-4 rounded-md p-3 shadow-md md:my-8">
+                <div class="bg-base01 relative my-4 rounded-md p-3 shadow-md md:my-8">
                     <CorvuCalendar.Nav
                         action="prev-month"
                         aria-label="Go to previous month"
