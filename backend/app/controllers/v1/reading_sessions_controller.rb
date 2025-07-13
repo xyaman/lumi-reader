@@ -73,7 +73,8 @@ class V1::ReadingSessionsController < ApplicationController
   # @response Not Found(404) [Hash{error: String}]
   # @response Unauthorized(401) [Hash{error: String}]
   def destroy
-    @reading_session.destroy
+    reading_session = current_user.reading_sessions.find_by(snowflake: params[:id])
+    reading_session.destroy
     render json: { message: "Reading session deleted successfully" }
   end
 
