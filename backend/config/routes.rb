@@ -7,7 +7,12 @@ Rails.application.routes.draw do
   get "csrf", to: "application#csrf"
 
   namespace :v1 do
-    resources :reading_sessions
+    resources :reading_sessions do
+      collection do
+        get "ids", to: "reading_sessions#ids"
+        get "metadata", to: "reading_sessions#metadata"
+      end
+    end
 
     resource :session, only: [ :create, :show, :destroy ] do
       resources :follows, only: [ :update, :destroy ]

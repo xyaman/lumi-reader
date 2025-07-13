@@ -1,7 +1,7 @@
 class V1::ReadingSessionsController < ApplicationController
 
   # @oas_include
-  # @tags Reading Sessions
+  # @tags ReadingSessions
   # @summary Create reading session
   # @parameter reading_session(body) [ReadingSession] Reading session parameters
   # @response Created(201) [ReadingSession]
@@ -16,7 +16,7 @@ class V1::ReadingSessionsController < ApplicationController
   end
 
   # @oas_include
-  # @tags Reading Sessions
+  # @tags ReadingSessions
   # @summary Get reading sessions
   # @parameter start_date(query) [String] Filter sessions from this date (unix timestamp)
   # @parameter end_date(query) [String] Filter sessions to this date (unix timestamp)
@@ -28,9 +28,9 @@ class V1::ReadingSessionsController < ApplicationController
 
     # Filter by date range if provided
     if params[:start_date].present? && params[:end_date].present?
-      start_date = Date.strptime(params[:start_date], "%s")
-      end_date = Date.strptime(params[:end_date], "%s")
-      @reading_sessions = @reading_sessions.for_date_range(start_date, end_date.end_of_day)
+      end_date = params[:end_date]
+      start_date = params[:start_date]
+      @reading_sessions = @reading_sessions.for_date_range(start_date, end_date)
     end
 
     render json: {
@@ -38,8 +38,37 @@ class V1::ReadingSessionsController < ApplicationController
     }
   end
 
+
   # @oas_include
-  # @tags Reading Sessions
+  # @tags ReadingSessions
+  # @summary Get sessions metadata since timestamp
+  # @response Success(200) [Hash{ last_update: Integer }]
+  def metadata
+    last_update = current_user.reading_sessions.last&.updated_at&.to_i || 0
+    render json: {
+      last_update:
+    }
+  end
+
+  # @oas_include
+  # @tags ReadingSessions
+  # @summary retrive reading sessions ids
+  # @parameter start_date(query) [Integer] unix timestamp
+  # @response Success(200) [Hash{ session_ids: Array<Integer>}]
+  def ids
+    reading_sessions = current_user.reading_sessions
+
+    if params[:start_date].present?
+      start_date = params[:start_date]
+      end_date = Time.current.to_i
+      reading_sessions = reading_sessions.for_date_range(start_date, end_date)
+    end
+
+    render json: { session_ids: reading_sessions.pluck(:snowflake) }
+  end
+
+  # @oas_include
+  # @tags ReadingSessions
   # @summary Update reading session
   # @parameter id(path) [Integer] Reading session ID
   # @parameter reading_session(body) [ReadingSession] Reading session parameters to update
@@ -54,7 +83,7 @@ class V1::ReadingSessionsController < ApplicationController
   end
 
   # @oas_include
-  # @tags Reading Sessions
+  # @tags ReadingSessions
   # @summary Delete reading session
   # @parameter id(path) [Integer] Reading session ID
   # @response Success(200) [Hash{message: String}]

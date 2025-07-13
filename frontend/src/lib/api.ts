@@ -580,6 +580,7 @@ async function fetchUsersByQuery(query: string): Promise<IUsersQueryResponse> {
     return data
 }
 
+// -- Reading sessions
 async function getAllReadingSessions(): Promise<ReadingSession[]> {
     const url = `${API_URL}/${API_VERSION}/reading_sessions`
     let res: Response
@@ -596,6 +597,50 @@ async function getAllReadingSessions(): Promise<ReadingSession[]> {
         throw new Error(data?.error ? data.error : `Fetch failed: ${res.statusText}`)
     }
     return snakeToCamel(data.sessions)
+}
+
+async function getReadingSessionsSince(start: number): Promise<ReadingSession[]> {
+    const params = new URLSearchParams()
+    params.append("start_date", String(start))
+    params.append("end_date", String(Math.floor(Date.now() / 1000)))
+    const url = `${API_URL}/${API_VERSION}/reading_sessions?${params.toString()}`
+
+    let res: Response
+    try {
+        res = await fetch(url, {
+            method: "GET",
+            credentials: "include",
+        })
+    } catch {
+        throw new Error("Network error")
+    }
+    const data = await res.json()
+    if (!res.ok) {
+        throw new Error(data?.error ? data.error : `Fetch failed: ${res.statusText}`)
+    }
+    return snakeToCamel(data.sessions)
+}
+
+interface IMetadata {
+    lastUpdate: number
+}
+
+async function getReadingSessionMetadata(): Promise<IMetadata> {
+    const url = `${API_URL}/${API_VERSION}/reading_sessions/metadata`
+    let res: Response
+    try {
+        res = await fetch(url, {
+            method: "GET",
+            credentials: "include",
+        })
+    } catch {
+        throw new Error("Network error")
+    }
+    const data = await res.json()
+    if (!res.ok) {
+        throw new Error(data?.error ? data.error : `Fetch failed: ${res.statusText}`)
+    }
+    return snakeToCamel(data)
 }
 
 async function createReadingSession(body: ReadingSession): Promise<ReadingSession> {
@@ -692,7 +737,9 @@ export default {
     fetchUsersByQuery,
     // reading sessions
     getAllReadingSessions,
+    getReadingSessionsSince,
     createReadingSession,
     updateReadingSession,
     deleteReadingSession,
+    getReadingSessionMetadata,
 }

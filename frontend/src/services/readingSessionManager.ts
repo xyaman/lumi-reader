@@ -1,5 +1,6 @@
 import api from "@/lib/api"
 import { LumiDb, ReadingSession } from "@/lib/db"
+import { ISessionStatus, sessionStore } from "@/stores/session"
 import { createSignal } from "solid-js"
 
 interface IPartialSource {
@@ -10,12 +11,57 @@ interface IPartialSource {
     currChars: number
 }
 
+const LS_SYNCTIME = "last_session_sync_time"
+
 export default class ReadingSessionManager {
     activeSession: () => ReadingSession | null
     setActiveSession: (session: ReadingSession | undefined) => void
+    lastSyncTime: number
 
     constructor() {
         ;[this.activeSession, this.setActiveSession] = createSignal<ReadingSession | null>(null)
+        this.lastSyncTime = Number(localStorage.getItem(LS_SYNCTIME) || "0")
+    }
+
+    async isSyncNeeded() {
+        if (sessionStore.status === ISessionStatus.unauthenticated) return false
+        try {
+            const metadata = await api.getReadingSessionMetadata()
+            return metadata.lastUpdate > this.lastSyncTime
+        } catch (e) {
+            console.error("error:", e)
+        }
+    }
+
+    async syncWithBackend() {
+        try {
+            if (await this.isSyncNeeded()) {
+                const sessions = await api.getReadingSessionsSince(this.lastSyncTime)
+
+                for (const s of sessions) {
+                    const localSession = await LumiDb.getReadingSessionById(s.snowflake)
+                    if (!localSession) {
+                        await LumiDb.createReadingSessionFromCloud(s)
+                    } else {
+                        if (s.updatedAt! > localSession.updatedAt!) {
+                            await LumiDb.updateReadingSession(s)
+                        }
+                    }
+                }
+
+                // TODO: upload local changes that havent been uploaded
+                // Update last sync time
+                this.lastSyncTime = Math.floor(Date.now() / 1000)
+                localStorage.setItem("last_session_sync_time", String(this.lastSyncTime))
+
+                return true
+            }
+        } catch (e) {
+            console.error("failed syncing with the backend", e)
+            return false
+        }
+
+        return false
     }
 
     async startSession(source: IPartialSource) {

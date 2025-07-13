@@ -4,6 +4,7 @@ import { createResource, createSignal, For, onMount } from "solid-js"
 import { IconEdit, IconTrash } from "./icons"
 import Calendar from "./Calendar"
 import api from "@/lib/api"
+import ReadingSessionManager from "@/services/readingSessionManager"
 
 export function ReadingSessionsPage() {
     const today = new Date()
@@ -31,7 +32,7 @@ export function ReadingSessionsPage() {
 export function ReadingSessionsList(props: {
     range: () => { from: Date | null; to: Date | null }
 }) {
-    const [sessions, { mutate }] = createResource(props.range, async () => {
+    const [sessions, { mutate, refetch }] = createResource(props.range, async () => {
         const range = props.range()
         // TODO: Should i return something if its null? what is best UX?
         if (range.from === null) return []
@@ -44,12 +45,10 @@ export function ReadingSessionsList(props: {
 
     // update sessions with the backend
     onMount(async () => {
-        const backendSessions = await api.getAllReadingSessions()
-        backendSessions.forEach(async (s) => {
-            const front = await LumiDb.getReadingSessionById(s.snowflake)
-            if (!front) return LumiDb.createReadingSessionFromCloud(s)
-            if (front.endTime !== s.endTime) await LumiDb.updateReadingSession(s)
-        })
+        const manager = new ReadingSessionManager()
+        if (await manager.syncWithBackend()) {
+            await refetch()
+        }
     })
 
     const deleteSession = async (id: number) => {
