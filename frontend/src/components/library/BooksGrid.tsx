@@ -59,14 +59,14 @@ function BookshelfDialog(props: {
 
         for (const shelf of currentShelves) {
             if (!selected.has(shelf.id)) {
-                await LumiDb.removeBookFromShelf(props.book.localId, shelf.id)
+                await LumiDb.removeBookFromShelf(shelf.id, props.book.localId)
             }
         }
 
         for (const shelfId of selected) {
             const shelf = state.shelves.find((s) => s.id === shelfId)
             if (shelf && !shelf.bookIds.includes(props.book.localId)) {
-                await LumiDb.addBookToShelf(props.book.localId, shelfId)
+                await LumiDb.addBookToShelf(shelfId, props.book.localId)
             }
         }
 
