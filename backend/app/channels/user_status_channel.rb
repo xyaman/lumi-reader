@@ -6,7 +6,6 @@ class UserStatusChannel < ApplicationCable::Channel
 
     update_user_status(online: true)
     schedule_heartbeat_check
-
   end
 
   def update_filter(data)
@@ -44,10 +43,6 @@ class UserStatusChannel < ApplicationCable::Channel
   def schedule_heartbeat_check
     @heartbeat_job = UserHeartbeatJob.set(wait: 2.minutes).perform_later(@current_user_id)
   end
-
-  # def cancel_heartbeat_check
-  #   @heartbeat_job&.delete
-  # end
 
   def filtered_broadcast(raw_payload)
     payload = JSON.parse(raw_payload)
