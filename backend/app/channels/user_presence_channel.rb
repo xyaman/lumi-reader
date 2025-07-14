@@ -2,7 +2,8 @@ class UserPresenceChannel < ApplicationCable::Channel
   def subscribed
     @filtered_user_ids = []
     @current_user_id = current_user&.id
-    stream_from "user_presence:update", ->(payload) { filtered_broadcast(payload) }
+    # stream_from "user_presence:update", ->(payload) { filtered_broadcast(payload) }
+    stream_for current_user
 
     update_user_status(online: true)
     schedule_heartbeat_check
@@ -28,16 +29,13 @@ class UserPresenceChannel < ApplicationCable::Channel
 
     # Update cache
     if online
-      UserCacheService.set_online @current_user_id
+      presence = UserPresence.set_online(@current_user_id)
     else
-      UserCacheService.set_offline @current_user_id
+      presence = UserPresence.set_offline(@current_user_id)
     end
 
     # Broadcast the status change
-    BroadcasterUserStatusJob.perform_later(
-      id: @current_user_id,
-      online: online
-    )
+    BroadcasterUserStatusJob.perform_later(presence)
   end
 
   def schedule_heartbeat_check

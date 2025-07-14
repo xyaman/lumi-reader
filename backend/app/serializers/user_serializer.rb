@@ -9,9 +9,9 @@ class UserSerializer
       }
     end
 
-    def with_online_status(user)
+    def with_presence_status(user)
       basic(user).merge(
-        online: UserCacheService.online?(user.id)
+        status: UserPresence.online?(user.id)
       )
     end
 
@@ -37,7 +37,7 @@ class UserSerializer
     end
 
     def collection_with_status(users)
-      users.map { |user| with_online_status(user) }
+      users.map { |user| with_presence_status(user) }
     end
 
     private

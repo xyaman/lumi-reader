@@ -18,7 +18,7 @@ Rails.application.routes.draw do
 
       patch "avatar", to: "users#update_avatar"
       patch "description", to: "users#update_description"
-      patch "status", to: "user_status#update"
+      patch "presence", to: "user_presence#update"
       patch "share_status", to: "users#update_share_status"
     end
 
@@ -27,12 +27,12 @@ Rails.application.routes.draw do
     get "users/search", to: "users#search"
 
     resources :users, only: [ :create, :show ] do
-      resource :status, only: [ :show ], controller: "user_status"
+      resource :presence, only: [ :show ], controller: "user_presence"
       get "following", to: "follows#following"
       get "followers", to: "follows#followers"
     end
 
-    get "user_status/batch", to: "user_status#batch"
+    get "user_presence/batch", to: "user_presence#batch"
   end
 
   if Rails.env.development?

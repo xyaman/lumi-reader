@@ -7,7 +7,7 @@ import {
     ISessionStore,
 } from "@/stores/session"
 import api from "@/lib/api"
-import { UserActivityManager } from "@/services/userStatus"
+import { UserActivityManager } from "@/services/userPresence"
 
 const AUTH_STORE_KEY = "auth:userinfo"
 

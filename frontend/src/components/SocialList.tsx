@@ -2,17 +2,15 @@ import { useAuthContext } from "@/context/session"
 import api, { PartialUser } from "@/lib/api"
 import { createEffect, createResource, createSignal, For, Show } from "solid-js"
 import consumer from "@/services/websocket"
-import { timeAgo } from "@/lib/utils"
+import { snakeToCamel, timeAgo } from "@/lib/utils"
 
 export default function SocialList() {
     const { sessionStore } = useAuthContext()
 
-    const [viewportFollowings, setViewportFollowings] = createSignal<PartialUser[]>()
     const [follows, { mutate: setFollowers }] = createResource(async () => {
         if (!sessionStore.user) return []
 
         const res = await api.fetchUserFollows(sessionStore.user!.id)
-        setViewportFollowings(res.following)
         const { results } = await api.fetchUserStatusBatch(res.following.map((u) => u.id))
 
         const mapB = new Map(results.map((u) => [u.id, u]))
@@ -25,16 +23,17 @@ export default function SocialList() {
             connected() {
                 console.log("websocket connected")
                 startHeartbeat()
-                updateFilter()
             },
             disconnected() {
                 console.log("websocket disconnected")
                 stopHeartbeatInterval()
             },
             received(data: PartialUser) {
+                let camelData = snakeToCamel(data)
                 setFollowers(
                     (prev) =>
-                        prev && prev.map((u) => ({ ...u, ...(data.id === u.id ? data : {}) })),
+                        prev &&
+                        prev.map((u) => ({ ...u, ...(camelData.id === u.id ? camelData : {}) })),
                 )
             },
         },
@@ -51,17 +50,15 @@ export default function SocialList() {
         if (heartbeatInterval) clearInterval(heartbeatInterval)
     }
 
-    const updateFilter = () => {
-        const users = viewportFollowings()
-        if (!users) return
-        console.log("updating filter")
-        channel.perform("update_filter", { user_ids: users.map((u) => u.id) })
-    }
+    const formatActivity = (kind?: string, name?: string) => {
+        if (!kind || !name) return ""
 
-    createEffect(() => {
-        // TODO: se triggea 2 veces
-        updateFilter()
-    })
+        if (kind === "reading") {
+            return `Reading ${name}`
+        }
+
+        return name
+    }
 
     return (
         <div class="space-y-3">
@@ -69,7 +66,7 @@ export default function SocialList() {
                 {(user) => (
                     <div class="flex items-start">
                         <Show
-                            when={user.avatar_url}
+                            when={user.avatarUrl}
                             fallback={
                                 <div class="bg-(--base01) w-8 h-8 rounded-full flex items-center">
                                     <span class="text-xs font-medium">
@@ -79,14 +76,16 @@ export default function SocialList() {
                             }
                         >
                             <img
-                                src={user.avatar_url}
+                                src={user.avatarUrl}
                                 class="w-8 h-8 rounded-full mt-1 object-cover"
                                 alt="User avatar"
                             />
                         </Show>
                         <div class="flex-1 ml-2 min-w-0">
                             <p class="text-sm">{user.username}</p>
-                            <p class="text-sm truncate">{user.last_activity}</p>
+                            <p class="text-sm truncate">
+                                {formatActivity(user.activityType, user.activityName)}
+                            </p>
                             <p class="text-xs text-base04 mt-1">{timeAgo(user.timestamp)}</p>
                         </div>
                     </div>

@@ -2,17 +2,14 @@ class BroadcasterUserStatusJob < ApplicationJob
   queue_as :default
 
   # TODO: Rename
-  def perform(id:, online:, activity: nil)
-    last_activity = activity.presence || UserCacheService.get_activity(id)
-    timestamp = UserCacheService.get_timestamp(id)
+  def perform(payload)
+    ActionCable.server.broadcast("user_presence:update", payload)
 
-    payload = {
-      id: id,
-      online: online,
-      last_activity: last_activity,
-      timestamp: timestamp
-    }
+    followers = Follow.where(followed_id: payload[:id]).pluck(:follower_id)
 
-    ActionCable.server.broadcast("user_status:update", payload)
+    followers.map do |follower_id|
+      UserPresenceChannel.broadcast_to(User.new(id: follower_id), payload)
+    end
+
   end
 end

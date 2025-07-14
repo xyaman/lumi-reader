@@ -127,6 +127,7 @@ export default function BookReader(): JSX.Element {
     const [currBook, setCurrBook] = createSignal<ReaderSource | null>(null)
 
     // -- helper functions used in effects and onMount
+    let interval: number | null = null
     const initializeReader = async (source: ReaderSource) => {
         setCurrBook(source)
 
@@ -138,7 +139,7 @@ export default function BookReader(): JSX.Element {
         // NOTE: if user is offline or unauthenticated, the
         // function is called, but it won't execute the fetch
         setReadingActivity(source.title)
-        setInterval(() => {
+        interval = setInterval(() => {
             setReadingActivity(source.title)
         }, 30000)
     }
@@ -164,6 +165,7 @@ export default function BookReader(): JSX.Element {
         currBook()?.deinit()
         document.head.querySelector("#book-css")?.remove()
         document.documentElement.removeAttribute("lang")
+        if (interval) clearInterval(interval)
     })
 
     return (

@@ -6,6 +6,6 @@ export type ActivityType = "reading"
 
 export class UserActivityManager {
     static async setPresence(name: ActivityName, activity: ActivityType) {
-        await api.updateCurrentUserStatus(activity)
+        await api.setUserPresence(name, activity)
     }
 }

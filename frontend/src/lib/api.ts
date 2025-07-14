@@ -261,8 +261,8 @@ async function updateDescription(description: string): Promise<IUpdateDescriptio
     return data
 }
 
-async function updateCurrentUserStatus(activty: string): Promise<IUpdateDescriptionResponse> {
-    const url = `${API_URL}/${API_VERSION}/session/status`
+async function setUserPresence(activityName: string, activityType: string): Promise<void> {
+    const url = `${API_URL}/${API_VERSION}/session/presence`
 
     const cookie = await getCsrfCookie()
     if (!cookie) {
@@ -278,7 +278,10 @@ async function updateCurrentUserStatus(activty: string): Promise<IUpdateDescript
                 "X-CSRF-TOKEN": cookie,
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ last_activity: activty }),
+            body: JSON.stringify({
+                activity_name: activityName,
+                activity_type: activityType,
+            }),
         })
     } catch {
         throw new Error("Network error")
@@ -288,7 +291,6 @@ async function updateCurrentUserStatus(activty: string): Promise<IUpdateDescript
     if (!res.ok) {
         throw new Error(data?.error ? data.error : `Update status failed: ${res.statusText}`)
     }
-    return data
 }
 
 export interface IUpdateShareStatus {
@@ -424,12 +426,13 @@ async function unfollow(userId: number): Promise<void> {
 export interface PartialUser {
     id: number
     username: string
-    avatar_url: string
+    avatarUrl: string
 
-    // Status related
-    online?: boolean
-    last_activity?: string
-    timestamp?: number
+    // presence
+    status?: "online" | "offline"
+    activityName?: string
+    activityType?: string
+    activityTimestamp?: Date
 }
 
 export interface IFollowResponse {
@@ -463,7 +466,7 @@ async function fetchUserFollows(userId: number): Promise<IFollowResponse> {
     if (!res.ok) {
         throw new Error(data?.error ? data.error : `User follows fetch failed: ${res.statusText}`)
     }
-    return data
+    return snakeToCamel(data)
 }
 
 /**
@@ -489,7 +492,7 @@ async function fetchUserFollowers(userId: number): Promise<IFollowerResponse> {
     if (!res.ok) {
         throw new Error(data?.error ? data.error : `User followers fetch failed: ${res.statusText}`)
     }
-    return data
+    return snakeToCamel(data)
 }
 
 async function fetchUserStatus(userId: number): Promise<IFollowerResponse> {
@@ -516,7 +519,6 @@ export interface IUserStatusBatchResponse {
     results: Array<{
         id: number
         timestamp: number
-        last_activity: string
     }>
 }
 
@@ -525,7 +527,7 @@ async function fetchUserStatusBatch(userIds: number[]): Promise<IUserStatusBatch
 
     const params = new URLSearchParams()
     userIds.forEach((id) => params.append("user_ids[]", id.toString()))
-    const url = `${API_URL}/${API_VERSION}/user_status/batch?${params.toString()}`
+    const url = `${API_URL}/${API_VERSION}/user_presence/batch?${params.toString()}`
 
     let res: Response
     try {
@@ -543,7 +545,7 @@ async function fetchUserStatusBatch(userIds: number[]): Promise<IUserStatusBatch
             data?.error ? data.error : `User Status batch fetch failed: ${res.statusText}`,
         )
     }
-    return data
+    return snakeToCamel(data)
 }
 
 interface IUsersQueryResponse {
@@ -726,7 +728,7 @@ export default {
     updateAvatar,
     updateDescription,
     updateShareStatus,
-    updateCurrentUserStatus,
+    setUserPresence,
     fetchProfileInfo,
 
     // follows

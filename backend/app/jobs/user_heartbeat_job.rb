@@ -7,14 +7,11 @@ class UserHeartbeatJob < ApplicationJob
     return if Rails.cache.exist?(lock_key)
     Rails.cache.write(lock_key, true, expires_in: 150.seconds)
 
-    last_timestamp = UserCacheService.get_timestamp(id)
-    recently_active = last_timestamp && (Time.current.to_i - last_timestamp) < 120
-
-    if UserCacheService.online?(id) && recently_active
+    if UserPresence.online?(id)
       UserHeartbeatJob.set(wait: 2.minutes).perform_later(id)
     else
-      UserCacheService.set_offline(id)
-      BroadcasterUserStatusJob.perform_later(id: id, online: false)
+      presence = UserPresence.set_offline(id)
+      BroadcasterUserStatusJob.perform_later(presence)
     end
   end
 end
