@@ -1,8 +1,8 @@
-class UserStatusChannel < ApplicationCable::Channel
+class UserPresenceChannel < ApplicationCable::Channel
   def subscribed
     @filtered_user_ids = []
     @current_user_id = current_user&.id
-    stream_from "user_status:update", ->(payload) { filtered_broadcast(payload) }
+    stream_from "user_presence:update", ->(payload) { filtered_broadcast(payload) }
 
     update_user_status(online: true)
     schedule_heartbeat_check

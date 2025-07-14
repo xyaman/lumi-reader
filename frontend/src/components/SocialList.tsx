@@ -20,7 +20,7 @@ export default function SocialList() {
     })
 
     const channel = consumer.subscriptions.create(
-        { channel: "UserStatusChannel" },
+        { channel: "UserPresenceChannel" },
         {
             connected() {
                 console.log("websocket connected")
