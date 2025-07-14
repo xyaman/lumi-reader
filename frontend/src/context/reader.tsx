@@ -1,5 +1,5 @@
 import { Bookmark, ReaderSource } from "@/lib/readerSource"
-import ReadingSessionManager from "@/services/readingSessionManager"
+import ReadingSessionManager from "@/services/readingSession"
 import { ISessionStatus, sessionStore } from "@/stores/session"
 import { createContext, JSX, onCleanup, useContext } from "solid-js"
 import { createStore, SetStoreFunction } from "solid-js/store"

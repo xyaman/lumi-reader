@@ -7,6 +7,7 @@ import {
     ISessionStore,
 } from "@/stores/session"
 import api from "@/lib/api"
+import { UserActivityManager } from "@/services/userStatus"
 
 const AUTH_STORE_KEY = "auth:userinfo"
 
@@ -19,13 +20,13 @@ interface ISessionContext {
 
     // helpers (api)
     fetchCurrentUser: () => Promise<void>
-    updateCurrentStatus: (status: string) => Promise<void>
+    setReadingActivity: (bookName: string) => Promise<void>
 }
 const AuthContext = createContext<ISessionContext>()
 
-async function updateCurrentStatus(status: string) {
+async function setReading(bookName: string) {
     if (navigator.onLine && sessionStore.status === ISessionStatus.authenticated) {
-        await api.updateCurrentUserStatus(status)
+        await UserActivityManager.setPresence(bookName, "reading")
     }
 }
 
@@ -116,7 +117,7 @@ export function AuthProvider(props: { children: JSX.Element }) {
             value={{
                 sessionStore: sessionStore,
                 fetchCurrentUser,
-                updateCurrentStatus,
+                setReadingActivity: setReading,
                 startSession,
                 closeSession,
             }}

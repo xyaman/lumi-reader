@@ -3,7 +3,7 @@ import { formatTime } from "@/lib/utils"
 import { createResource, createSignal, For, onMount, Show } from "solid-js"
 import { IconEdit, IconTrash } from "./icons"
 import Calendar from "./Calendar"
-import ReadingSessionManager from "@/services/readingSessionManager"
+import ReadingSessionManager from "@/services/readingSession"
 import Spinner from "./Spiner"
 
 import { useAuthContext } from "@/context/session"

@@ -118,7 +118,7 @@ function GlobalKeymapManager() {
 export default function BookReader(): JSX.Element {
     const params = useParams()
     const id = Number(params.id)
-    const { updateCurrentStatus } = useAuthContext()
+    const { setReadingActivity } = useAuthContext()
 
     const navigate = useNavigate()
     if (!id) navigate("/", { replace: true })
@@ -135,12 +135,11 @@ export default function BookReader(): JSX.Element {
         document.head.appendChild(bookStyle)
         document.documentElement.lang = source.language
 
-        // api-status related call, if user is offline or unauthenticated
-        // the function will be called, but it wont fetch the api
-        // TODO: Don't make calls if user is unauthenticated
-        updateCurrentStatus(`Reading ${source.title}`)
+        // NOTE: if user is offline or unauthenticated, the
+        // function is called, but it won't execute the fetch
+        setReadingActivity(source.title)
         setInterval(() => {
-            updateCurrentStatus(`Reading ${source.title}`)
+            setReadingActivity(source.title)
         }, 30000)
     }
 
