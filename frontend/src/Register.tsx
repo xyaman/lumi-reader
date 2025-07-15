@@ -1,8 +1,8 @@
 import { createEffect, createSignal, Show } from "solid-js"
 import { A, useNavigate } from "@solidjs/router"
-import api from "./lib/api"
 import Navbar from "./components/Navbar"
 import { useAuthContext } from "./context/session"
+import { authApi } from "./api/auth"
 
 function Register() {
     const { sessionStore: authStore, fetchCurrentUser } = useAuthContext()
@@ -29,22 +29,19 @@ function Register() {
             return
         }
         setError("")
-        try {
-            const body = {
-                email: email(),
-                username: username(),
-                password: password(),
-                password_confirmation: confirm(),
-            }
-            await api.register(body)
-            setConfirmationSent(true)
-        } catch (e: unknown) {
-            if (typeof e === "string") {
-                setError(e)
-            } else if (e instanceof Error) {
-                setError(e.message)
-            }
+        const credentials = {
+            email: email(),
+            username: username(),
+            password: password(),
+            password_confirmation: confirm(),
         }
+
+        const res = await authApi.register(credentials)
+        if (res.error) {
+            return setError(res.error.message)
+        }
+
+        setConfirmationSent(true)
     }
 
     return (

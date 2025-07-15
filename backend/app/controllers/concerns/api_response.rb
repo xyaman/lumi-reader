@@ -1,19 +1,36 @@
+# ApiResponse concern provides an unified response format for all API endpoints
+#
+# All API responses follows this structure
+#
+# {
+#   success: boolean  # Indicates if the request was successful
+#   status: string    # HTTP status code as string
+#   data: any         # Optional: Response data payload
+#   errors: array     # Optional: Array of error strings
+# }
 module ApiResponse
   extend ActiveSupport::Concern
 
   private
 
-  # Success responses
+  def api_response(data: nil, errors: nil, status: :ok)
+    response = {
+      success: errors.nil?,
+      status: status.to_s
+    }
+
+    response[:data] = data if data.present?
+    response[:errors] = format_error(errors) if errors.present?
+
+    render json: response, status: status
+  end
+
   def success_response(data, status: :ok)
-    render json: data, status: status
+    api_response(data: data, status: status)
   end
 
   def created_response(data = nil)
-    if data
-      render json: data, status: :created
-    else
-      head :created
-    end
+    api_response(data: data, status: :created)
   end
 
   def no_content_response
@@ -21,29 +38,29 @@ module ApiResponse
   end
 
   # Error responses
-  def error_response(message, status: :unprocessable_entity)
-    render json: { error: message }, status: status
+  def error_response(errors, status: :unprocessable_entity)
+    api_response(errors: errors, status: status)
   end
 
-  def validation_error_response(errors)
-    formatted_errors = errors.is_a?(Array) ? errors : errors.full_messages
-    render json: { errors: formatted_errors }, status: :unprocessable_entity
+  def not_found_response(errors = "Resource not found")
+    api_response(errors: errors, status: :not_found)
   end
 
-  def not_found_response(message = "Resource not found")
-    render json: { error: message }, status: :not_found
+  def unauthorized_response(errors = "Unauthorized")
+    api_response(errors: errors, status: :unauthorized)
   end
 
-  def unauthorized_response(message = "Unauthorized")
-    render json: { error: message }, status: :unauthorized
-  end
-
-  def bad_request_response(message)
-    render json: { error: message }, status: :bad_request
+  def bad_request_response(errors)
+    api_response(errors: errors, status: :bad_request)
   end
 
   # Common error responses
   def user_not_found_response
     not_found_response("User not found")
+  end
+
+  def format_error(errors)
+    return errors if errors.is_a?(Array)
+    [ errors ]
   end
 end

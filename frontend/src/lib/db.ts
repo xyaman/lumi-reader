@@ -276,9 +276,10 @@ export class LumiDb {
         return session
     }
 
-    static async createReadingSessionFromCloud(session: ReadingSession): Promise<void> {
+    // TODO: adjust the model because the backend and frontend data is slightly different
+    static async createReadingSessionFromCloud(session: Partial<ReadingSession>): Promise<void> {
         const db = await this.getDB()
-        await db.put(STORE_READING_SESSIONS, session)
+        await db.put(STORE_READING_SESSIONS, session as ReadingSession)
     }
 
     static async getAllReadingSessions(): Promise<ReadingSession[]> {

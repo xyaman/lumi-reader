@@ -1,135 +1,141 @@
 @import "tailwindcss";
 
 @theme {
-  --animate-fade-in: fade-in 0.3s ease-out both;
-  @keyframes fade-in {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+    --animate-fade-in: fade-in 0.3s ease-out both;
+    @keyframes fade-in {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 
-  --color-base00: var(--base00); /* background */
-  --color-base01: var(--base01); /* lighter background / nav */
-  --color-base02: var(--base02); /* border, cards */
-  --color-base03: var(--base03); /* muted */
-  --color-base04: var(--base04); /* secondary text */
-  --color-base05: var(--base05); /* primary text */
-  --color-base06: var(--base06); /* lighter text (inverse bg) */
-  --color-base07: var(--base07); /* lightest (hover bg) */
-  --color-base08: var(--base08); /* red (error) */
-  --color-base09: var(--base09); /* orange (warning) */
-  --color-base0A: var(--base0A); /* yellow (notice) */
-  --color-base0B: var(--base0B); /* green (success) */
-  --color-base0C: var(--base0C); /* cyan (info) */
-  --color-base0D: var(--base0D); /* blue (links) */
-  --color-base0E: var(--base0E); /* purple (accent) */
-  --color-base0F: var(--base0F); /* brown / override */
+    --color-base00: var(--base00); /* background */
+    --color-base01: var(--base01); /* lighter background / nav */
+    --color-base02: var(--base02); /* border, cards */
+    --color-base03: var(--base03); /* muted */
+    --color-base04: var(--base04); /* secondary text */
+    --color-base05: var(--base05); /* primary text */
+    --color-base06: var(--base06); /* lighter text (inverse bg) */
+    --color-base07: var(--base07); /* lightest (hover bg) */
+    --color-base08: var(--base08); /* red (error) */
+    --color-base09: var(--base09); /* orange (warning) */
+    --color-base0A: var(--base0A); /* yellow (notice) */
+    --color-base0B: var(--base0B); /* green (success) */
+    --color-base0C: var(--base0C); /* cyan (info) */
+    --color-base0D: var(--base0D); /* blue (links) */
+    --color-base0E: var(--base0E); /* purple (accent) */
+    --color-base0F: var(--base0F); /* brown / override */
 }
 
 @layer components {
     .button {
-       @apply cursor-pointer rounded-lg shadow-md bg-base00 hover:bg-base01 border border-base03 text-base05 p-1
+        @apply cursor-pointer rounded-lg shadow-md bg-base00 hover:bg-base01 border border-base03 text-base05 p-1;
     }
 
     .button-alt {
-       @apply cursor-pointer rounded-lg shadow-md bg-base01 hover:bg-base00 border border-base03 text-base05 p-1
+        @apply cursor-pointer rounded-lg shadow-md bg-base01 hover:bg-base00 border border-base03 text-base05 p-1;
     }
 
     .body-alt {
-        @apply bg-base01
+        @apply bg-base01;
     }
 }
 
 html,
 body,
 #root {
-  margin: 0;
-  height: 100%;
-  width: 100%;
+    margin: 0;
+    height: 100%;
+    width: 100%;
 }
 
 body {
-  /* Prevent scrolling in paginated mode iOS */
-  overscroll-behavior: none;
+    /* Prevent scrolling in paginated mode iOS */
+    overscroll-behavior: none;
 }
 
 /* Navbar theme */
 .navbar-theme {
-  color: var(--base05);               /* Primary text */
-  background-color: var(--base01);   /* Nav background */
+    color: var(--base05); /* Primary text */
+    background-color: var(--base01); /* Nav background */
 }
 
 /* Body theme */
 .body-theme {
-  color: var(--base05);
-  background-color: var(--base00);
+    color: var(--base05);
+    background-color: var(--base00);
 }
 
 /* == Buttons == */
 .button-theme-alt {
-  background-color: var(--base01);
-  color: var(--base05);
-  border: 1px solid
-  transition: background-color 0.2s ease;
+    background-color: var(--base01);
+    color: var(--base05);
+    border: 1px solid;
+    transition: background-color 0.2s ease;
 }
 
 .button-theme-alt:hover {
-  background-color: var(--base02);
+    background-color: var(--base02);
 }
 
 /* == Card (Library) == */
 .card-theme {
-  background-color: var(--base01);
-  color: var(--base05);
-  border: 1px solid var(--base02);
-  transition: box-shadow 0.2s ease;
+    background-color: var(--base01);
+    color: var(--base05);
+    border: 1px solid var(--base02);
+    transition: box-shadow 0.2s ease;
 }
 
 .card-theme:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 /* == Progress bar == */
 .progress-theme {
-  background-color: var(--base02);
+    background-color: var(--base02);
 }
 
 .progress-theme::-webkit-progress-bar {
-  background-color: var(--base02);
+    background-color: var(--base02);
 }
 
 /* Blue accent (progress) */
 .progress-theme::-webkit-progress-value {
-  background-color: var(--base0D);
+    background-color: var(--base0D);
 }
 
 /* Firefox */
 .progress-theme::-moz-progress-bar {
-  background-color: var(--base0D);
+    background-color: var(--base0D);
 }
 
 /* Scrollbar: Webkit browsers */
 ::-webkit-scrollbar {
-  width: 8px;
-  background: var(--base01);
+    width: 8px;
+    background: var(--base01);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--base03);
-  border-radius: 4px;
+    background: var(--base03);
+    border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--base04);
+    background: var(--base04);
 }
 
 /* Scrollbar: Firefox */
 * {
-  scrollbar-width: thin;
-  scrollbar-color: var(--base03) var(--base01);
+    scrollbar-width: thin;
+    scrollbar-color: var(--base03) var(--base01);
 }
 
 .sidebar-theme {
-  background-color: var(--base01);      /* Sidebar background */
-  color: var(--base05);                 /* Sidebar text */
-  border-right: 1px solid var(--base02);/* Sidebar border */
+    background-color: var(--base01); /* Sidebar background */
+    color: var(--base05); /* Sidebar text */
+    border-right: 1px solid var(--base02); /* Sidebar border */
 }
 
 .writing-mode-vertical {
@@ -137,16 +143,14 @@ body {
 }
 
 /* TODO: find a less expensive way? */
-#reader-content
-*:has(> img),
-#reader-content
-*:has(> svg) {
-  text-align: center !important;
+#reader-content *:has(> img),
+#reader-content *:has(> svg) {
+    text-align: center !important;
 }
 
 #reader-content svg,
 #reader-content img {
-  max-width: 50% !important;
-  max-height: 80vh !important;
-  display: initial !important;
+    max-width: 50% !important;
+    max-height: 80vh !important;
+    display: initial !important;
 }

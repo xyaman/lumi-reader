@@ -1,9 +1,9 @@
-import type { IProfileInfoResponse } from "@/lib/api"
 import { useNavigate } from "@solidjs/router"
 import { createResource, createSignal, Show } from "solid-js"
 import UserList from "./UserList"
-import api from "@/lib/api"
 import Spinner from "./Spiner"
+import { User } from "@/types/api"
+import { userApi } from "@/api/user"
 
 type UserModalProps = {
     open: boolean
@@ -17,9 +17,15 @@ function UserModal(props: UserModalProps) {
     const [users] = createResource(
         () => props.open,
         async () => {
-            return props.type === "followers"
-                ? (await api.fetchUserFollowers(props.userId)).followers
-                : (await api.fetchUserFollows(props.userId)).following
+            if (props.type === "followers") {
+                const res = await userApi.getFollowers(props.userId)
+                if (res.error) return []
+                else return res.ok.data!.followers
+            } else {
+                const res = await userApi.getFollowing(props.userId)
+                if (res.error) return []
+                else return res.ok.data!.following
+            }
         },
     )
 
@@ -58,7 +64,6 @@ function UserModal(props: UserModalProps) {
     )
 }
 
-type User = IProfileInfoResponse["user"]
 type UserCardProps = {
     user: User
     isOwnProfile: boolean
@@ -85,7 +90,7 @@ export default function UserCard(props: UserCardProps) {
             <div class="relative w-36 h-36 mx-auto">
                 <img
                     class="w-full h-full rounded-full object-cover border border-(--base03)"
-                    src={user().avatar_url}
+                    src={user().avatarUrl}
                     alt="User avatar"
                 />
                 <Show when={props.isOwnProfile}>
@@ -127,11 +132,11 @@ export default function UserCard(props: UserCardProps) {
                 <div class="w-full flex items-center justify-between gap-2 text-xs font-medium">
                     <span
                         class={`flex items-center gap-1 ${
-                            user().share_status ? "text-(--base0B)" : "text-(--base03)"
+                            user().shareStatus ? "text-(--base0B)" : "text-(--base03)"
                         }`}
                     >
-                        {user().share_status ? "Status: Sharing" : "Status: Not sharing"}
-                        {user().share_status ? (
+                        {user().shareStatus ? "Status: Sharing" : "Status: Not sharing"}
+                        {user().shareStatus ? (
                             <svg width="14" height="14" fill="currentColor">
                                 <circle cx="7" cy="7" r="6" />
                             </svg>
@@ -151,7 +156,7 @@ export default function UserCard(props: UserCardProps) {
                         class="button-alt px-2 py-1 text-xs"
                         onClick={props.onToggleShareStatus}
                     >
-                        {user().share_status ? "Hide" : "Share"}
+                        {user().shareStatus ? "Hide" : "Share"}
                     </button>
                 </div>
             </Show>
@@ -163,7 +168,7 @@ export default function UserCard(props: UserCardProps) {
                     role="button"
                     aria-label="View followers"
                 >
-                    {user().followers_count} followers
+                    {user().followersCount} followers
                 </span>
                 ·
                 <span
@@ -173,7 +178,7 @@ export default function UserCard(props: UserCardProps) {
                     role="button"
                     aria-label="View following"
                 >
-                    {user().following_count} following
+                    {user().followingCount} following
                 </span>
             </p>
             <UserModal

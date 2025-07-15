@@ -1,3 +1,4 @@
+import { User } from "@/types/api"
 import { For, Show } from "solid-js"
 
 export type SimpleUser = {
@@ -7,7 +8,7 @@ export type SimpleUser = {
 }
 
 type UserListProps = {
-    users: Partial<SimpleUser>[]
+    users: User[]
     onUserClick?: (userId: number) => void
 }
 
@@ -25,7 +26,7 @@ export default function UserList(props: UserListProps) {
                             onClick={() => props.onUserClick?.(user.id!)}
                         >
                             <img
-                                src={user.avatar_url}
+                                src={user.avatarUrl}
                                 alt={`${user.username} avatar`}
                                 class="w-10 h-10 rounded-full object-cover"
                             />

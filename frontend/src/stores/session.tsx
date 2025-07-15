@@ -1,12 +1,5 @@
+import { type AuthUser } from "@/api/auth"
 import { createStore } from "solid-js/store"
-
-export interface ISessionUser {
-    id: number
-    email: string
-    username: string
-    share_reading_data: boolean
-    avatar_url?: string
-}
 
 export enum ISessionStatus {
     authenticated,
@@ -15,7 +8,7 @@ export enum ISessionStatus {
 }
 
 export interface ISessionStore {
-    user: ISessionUser | null
+    user: AuthUser | null
     status: ISessionStatus
 }
 

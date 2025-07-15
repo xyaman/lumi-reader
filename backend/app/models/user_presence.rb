@@ -31,7 +31,7 @@ class UserPresence
   def self.set_activity(user_id, activity_type, activity_name)
     presence = get(user_id) || {}
     presence[:status] = "online"
-    presence[:activity_timestamp] = Time.current
+    presence[:activity_timestamp] = Time.current.to_i
     presence[:activity_type] = activity_type
     presence[:activity_name] = activity_name
     write(user_id, presence)

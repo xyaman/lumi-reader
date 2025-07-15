@@ -1,13 +1,8 @@
 import { createContext, useContext, JSX, createEffect } from "solid-js"
-import {
-    sessionStore,
-    setSessionStore,
-    ISessionStatus,
-    ISessionUser,
-    ISessionStore,
-} from "@/stores/session"
-import api from "@/lib/api"
+import { sessionStore, setSessionStore, ISessionStatus, ISessionStore } from "@/stores/session"
 import { UserActivityManager } from "@/services/userPresence"
+import { authApi, AuthUser } from "@/api/auth"
+import { ConnectionError } from "@/lib/apiClient"
 
 const AUTH_STORE_KEY = "auth:userinfo"
 
@@ -20,13 +15,14 @@ interface ISessionContext {
 
     // helpers (api)
     fetchCurrentUser: () => Promise<void>
-    setReadingActivity: (bookName: string) => Promise<void>
+    setReadingPresence: (bookName: string) => Promise<void>
 }
 const AuthContext = createContext<ISessionContext>()
 
-async function setReading(bookName: string) {
+async function setReadingPresence(bookName: string) {
+    console.log(sessionStore.status)
     if (navigator.onLine && sessionStore.status === ISessionStatus.authenticated) {
-        await UserActivityManager.setPresence(bookName, "reading")
+        await UserActivityManager.setPresence("reading", bookName)
     }
 }
 
@@ -40,22 +36,27 @@ async function fetchCurrentUser() {
         return
     }
 
-    try {
-        const res = await api.fetchSessionInfo()
-        if (res) {
-            const user: ISessionUser = {
-                id: res.user.id,
-                email: res.user.email,
-                username: res.user.username,
-                share_reading_data: res.user.share_status,
-                avatar_url: res.user.avatar_url,
-            }
-            setSessionStore({ user, status: ISessionStatus.authenticated })
-        } else {
-            setSessionStore({ user: null, status: ISessionStatus.unauthenticated })
+    const res = await authApi.getCurrentUser()
+    if (res.error) {
+        if (res.error instanceof ConnectionError) {
+            setSessionStore("status", ISessionStatus.offline)
         }
-    } catch {
-        setSessionStore("status", ISessionStatus.offline)
+        return
+    }
+
+    if (res.ok.data) {
+        const data = res.ok.data
+        const user: AuthUser = {
+            id: data.user.id,
+            description: "", // TODO
+            email: data.user.email,
+            username: data.user.username,
+            shareStatus: data.user.shareStatus || false,
+            avatarUrl: data.user.avatarUrl,
+        }
+        setSessionStore({ user, status: ISessionStatus.authenticated })
+    } else {
+        setSessionStore({ user: null, status: ISessionStatus.unauthenticated })
     }
 }
 
@@ -117,7 +118,7 @@ export function AuthProvider(props: { children: JSX.Element }) {
             value={{
                 sessionStore: sessionStore,
                 fetchCurrentUser,
-                setReadingActivity: setReading,
+                setReadingPresence,
                 startSession,
                 closeSession,
             }}

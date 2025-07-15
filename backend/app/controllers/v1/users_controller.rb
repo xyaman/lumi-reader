@@ -15,7 +15,7 @@ class V1::UsersController < ApplicationController
       UserMailer.confirmation_email(@user).deliver_later
       success_response({ message: "Please check your email to confirm your account." }, status: :created)
     else
-      validation_error_response(@user.errors)
+      error_response(@user.errors)
     end
   end
 
@@ -57,7 +57,7 @@ class V1::UsersController < ApplicationController
         description: user.description
       })
     else
-      validation_error_response(user.errors)
+      error_response(user.errors)
     end
   end
 
@@ -75,7 +75,7 @@ class V1::UsersController < ApplicationController
         share_status: user.share_status
       })
     else
-      validation_error_response(user.errors)
+      error_response(user.errors)
     end
   end
 

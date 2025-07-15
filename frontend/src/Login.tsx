@@ -1,8 +1,8 @@
 import { createEffect, createSignal, Show } from "solid-js"
 import { A, useLocation, useNavigate } from "@solidjs/router"
-import api from "./lib/api"
 import Navbar from "./components/Navbar"
 import { useAuthContext } from "./context/session"
+import { authApi } from "./api/auth"
 
 function Login() {
     const { sessionStore: authStore, startSession } = useAuthContext()
@@ -38,20 +38,13 @@ function Login() {
     const handleSubmit = async (e: Event) => {
         e.preventDefault()
         setError("")
-        try {
-            const body = {
-                email: email(),
-                password: password(),
-            }
-            await api.login(body)
-            await startSession()
-        } catch (e: unknown) {
-            if (typeof e === "string") {
-                setError(e)
-            } else if (e instanceof Error) {
-                setError(e.message)
-            }
+        const credentials = { email: email(), password: password() }
+        const res = await authApi.login(credentials)
+        if (res.error) {
+            setError(res.error.message)
+            return
         }
+        await startSession()
     }
 
     return (

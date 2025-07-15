@@ -1,4 +1,4 @@
-import { createSignal, JSX, onCleanup, onMount, Show } from "solid-js"
+import { createSignal, JSX, onCleanup, onMount, Show, For } from "solid-js"
 import { useNavigate, useParams } from "@solidjs/router"
 import { ReaderProvider, useReaderContext } from "@/context/reader"
 import { EpubBook } from "@/lib/epub"
@@ -82,14 +82,16 @@ function GlobalKeymapManager() {
                 >
                     <h4 class="mb-4 font-bold text-lg text-(--base0D)">Keyboard Shortcuts</h4>
                     <ul>
-                        {keymaps.map((km) => (
-                            <li class="mb-2 flex items-center">
-                                <span class="font-mono px-2 py-1 rounded bg-(--base02) text-(--base0B)">
-                                    {km.key}
-                                </span>
-                                <span class="ml-2">{km.description}</span>
-                            </li>
-                        ))}
+                        <For each={keymaps}>
+                            {(km) => (
+                                <li class="mb-2 flex items-center">
+                                    <span class="font-mono px-2 py-1 rounded bg-(--base02) text-(--base0B)">
+                                        {km.key}
+                                    </span>
+                                    <span class="ml-2">{km.description}</span>
+                                </li>
+                            )}
+                        </For>
                     </ul>
                     <button
                         class="button-theme rounded mt-4 px-4 py-2"
@@ -118,7 +120,7 @@ function GlobalKeymapManager() {
 export default function BookReader(): JSX.Element {
     const params = useParams()
     const id = Number(params.id)
-    const { setReadingActivity } = useAuthContext()
+    const { setReadingPresence } = useAuthContext()
 
     const navigate = useNavigate()
     if (!id) navigate("/", { replace: true })
@@ -138,9 +140,9 @@ export default function BookReader(): JSX.Element {
 
         // NOTE: if user is offline or unauthenticated, the
         // function is called, but it won't execute the fetch
-        setReadingActivity(source.title)
+        setReadingPresence(source.title)
         interval = setInterval(() => {
-            setReadingActivity(source.title)
+            setReadingPresence(source.title)
         }, 30000)
     }
 

@@ -1,8 +1,9 @@
 import { createSignal, createResource, Show, onMount } from "solid-js"
 import { useNavigate } from "@solidjs/router"
-import UserList, { SimpleUser } from "@/components/UserList"
-import api from "./lib/api"
+import UserList from "@/components/UserList"
 import Navbar from "./components/Navbar"
+import { userApi } from "./api/user"
+import { User } from "./types/api"
 
 export default function UserListPage() {
     const navigate = useNavigate()
@@ -17,8 +18,9 @@ export default function UserListPage() {
     // Fetch users only when searchTerm changes (on Enter)
     const [users] = createResource(searchTerm, async (q) => {
         if (!q) return []
-        const res = await api.fetchUsersByQuery(q)
-        return res.users as SimpleUser[]
+        const res = await userApi.searchUsers(q)
+        if (res.error) throw res.error
+        return res.ok.data!.users as User[]
     })
 
     const handleUserClick = (userId: number) => {

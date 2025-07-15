@@ -411,7 +411,7 @@ export default function ReaderContent() {
                 <div
                     id="reader-content"
                     class={contentClass()}
-                    style="font-size: var(--reader-font-size); line-height: var(--reader-line-height);"
+                    style={{"font-size":"var(--reader-font-size)","line-height":"var(--reader-line-height)"}}
                 >
                     <Show
                         when={!isPaginated()}

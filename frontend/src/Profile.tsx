@@ -2,11 +2,13 @@ import { A, useNavigate, useParams } from "@solidjs/router"
 import Navbar from "./components/Navbar"
 import { IconExit, IconSearch, IconSettings } from "./components/icons"
 import { createEffect, createResource, Match, Show, Switch } from "solid-js"
-import api from "./lib/api"
 import { useAuthContext } from "./context/session"
 import Spinner from "./components/Spiner"
 import { createStore } from "solid-js/store"
 import UserCard from "./components/UserCard"
+import { authApi } from "@/api/auth"
+import { userApi } from "@/api/user"
+import { User } from "./types/api"
 
 function Profile() {
     const params = useParams()
@@ -24,8 +26,12 @@ function Profile() {
 
     // --- User Resource ---
     const [user, { mutate: mutateUser }] = createResource(userId, async () => {
-        const data = await api.fetchProfileInfo(userId())
-        return data.user
+        const data = await userApi.getProfile(userId())
+        if (data.error) {
+            console.log(data.error.message)
+            return {} as User
+        }
+        return data.ok.data!.user
     })
 
     // --- Follow Status ---
@@ -33,42 +39,51 @@ function Profile() {
     const [isFollowing, { mutate: setIsFollowing }] = createResource(
         () => (!isOwnProfile() && authStore.user ? true : null),
         async () => {
-            const res = await api.fetchUserFollowers(userId())
-            return res.followers.some((u) => u.id === authStore.user?.id)
+            const res = await userApi.getFollowers(userId())
+            if (res.error) {
+                console.log(res.error.message)
+                return false
+            }
+            return res.ok.data!.followers.some((u) => u.id === authStore.user?.id)
         },
     )
 
     const toggleFollow = async () => {
         if (!userId() || isOwnProfile()) return
         if (isFollowing()) {
-            await api.unfollow(userId())
-            setIsFollowing(false)
-            mutateUser((u) => u && { ...u, followers_count: u.followers_count - 1 })
+            const res = await userApi.unfollow(userId())
+            if (res.ok) {
+                setIsFollowing(false)
+                mutateUser((u) => u && { ...u, followersCount: u.followersCount! - 1 })
+            }
         } else {
-            await api.follow(userId())
-            setIsFollowing(true)
-            mutateUser((u) => u && { ...u, followers_count: u.followers_count + 1 })
+            const res = await userApi.follow(userId())
+            if (res.ok) {
+                setIsFollowing(true)
+                mutateUser((u) => u && { ...u, followersCount: u.followersCount! + 1 })
+            }
         }
     }
 
     // --- Share Status ---
     const toggleShareStatus = async () => {
         if (!user()) return
-        try {
-            await api.updateShareStatus(!user()?.share_status)
-            mutateUser((u) => u && { ...u, share_status: !u.share_status })
-        } catch {}
+        const res = await userApi.updateShareStatus(!user()?.shareStatus)
+        if (res.ok) {
+            mutateUser((u) => u && { ...u, shareStatus: !u.shareStatus })
+        }
     }
 
     // --- Avatar Change ---
     const changeAvatar = async (file: File) => {
-        try {
-            const avatar_url = (await api.updateAvatar(file)).avatar_url
-            mutateUser((u) => u && { ...u, avatar_url })
-        } catch (e) {
-            console.error("Failed to upload avatar", e)
-            alert("Failed to upload avatar.")
+        const res = await userApi.updateAvatar(file)
+        if (res.error) {
+            console.error("Failed to upload avatar", res.error.message)
+            alert("Failed to upload avatar. " + res.error.message)
+            return
         }
+        const avatarUrl = res.ok.data!.avatarUrl
+        mutateUser((u) => u && { ...u, avatarUrl })
     }
 
     // --- Description Editing ---
@@ -96,18 +111,20 @@ function Profile() {
     const saveDesc = async () => {
         setDescStore("loading", true)
         setDescStore("error", null)
-        try {
-            await api.updateDescription(descStore.value)
+
+        const res = await userApi.updateDescription(descStore.value)
+        if (res.error) {
+            return setDescStore("error", "Failed to update description.")
+        } else {
             mutateUser((u) => u && { ...u, description: descStore.value })
             setDescStore("editing", false)
-        } catch {
-            setDescStore("error", "Failed to update description.")
         }
+
         setDescStore("loading", false)
     }
 
     const logout = () => {
-        api.logout()
+        authApi.logout()
         closeSession()
         navigate("/login")
     }

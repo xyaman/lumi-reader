@@ -247,7 +247,7 @@ function ReadingSessionSidebar() {
                         <div
                             class="bg-(--base0B) h-2.5 rounded-full"
                             style={{ width: `${progress()}%` }}
-                        ></div>
+                         />
                     </div>
                     <p class="text-sm mt-2">{progress()} % completed</p>
                 </div>

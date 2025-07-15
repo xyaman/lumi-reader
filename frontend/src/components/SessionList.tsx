@@ -7,7 +7,7 @@ import ReadingSessionManager from "@/services/readingSession"
 import Spinner from "./Spiner"
 
 import { useAuthContext } from "@/context/session"
-import api from "@/lib/api"
+import { readingSessionsApi } from "@/api/readingSessions"
 
 export function ReadingSessionsPage() {
     const now = new Date()
@@ -132,9 +132,7 @@ export function ReadingSessionsList(props: {
 
             // TODO: add the ids to delete the sessions if the fetch fails
             // ONLY network errors
-            try {
-                await api.deleteReadingSession(id)
-            } catch {}
+            await readingSessionsApi.delete(id)
         }
     }
 

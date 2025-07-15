@@ -1,17 +1,20 @@
 import { useAuthContext } from "@/context/session"
-import api, { PartialUser } from "@/lib/api"
 import { createResource, For, Show } from "solid-js"
 import consumer from "@/services/websocket"
 import { snakeToCamel, timeAgo } from "@/lib/utils"
+import { userApi } from "@/api/user"
+import { User } from "@/types/api"
 
 export default function SocialList() {
     const { sessionStore } = useAuthContext()
 
     const [follows, { mutate: setFollowers }] = createResource(async () => {
         if (!sessionStore.user) return []
+        const res = await userApi.getFollowing(sessionStore.user!.id, true)
+        if (res.error) throw res.error
 
-        const res = await api.fetchUserFollows(sessionStore.user!.id, true)
-        return res.following
+        console.log(res.ok.data)
+        return res.ok.data!.following
     })
 
     const channel = consumer.subscriptions.create(
@@ -25,8 +28,8 @@ export default function SocialList() {
                 console.log("websocket disconnected")
                 stopHeartbeatInterval()
             },
-            received(data: PartialUser) {
-                let camelData = snakeToCamel(data)
+            received(data: User) {
+                const camelData = snakeToCamel(data)
                 setFollowers(
                     (prev) =>
                         prev &&
@@ -89,7 +92,9 @@ export default function SocialList() {
                                     user.presence?.activityName,
                                 )}
                             </p>
-                            <p class="text-xs text-base04 mt-1">{timeAgo(user.timestamp)}</p>
+                            <p class="text-xs text-base04 mt-1">
+                                {timeAgo(user.presence?.activityTimestamp)}
+                            </p>
                         </div>
                     </div>
                 )}

@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal, Show } from "solid-js"
+import { createMemo, createSignal, Show } from "solid-js"
 import { ITheme } from "@/theme"
 import Navbar from "@/components/Navbar"
 import { IconToc } from "@/components/icons"
