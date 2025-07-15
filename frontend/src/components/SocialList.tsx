@@ -68,22 +68,30 @@ export default function SocialList() {
             <For each={follows() || []}>
                 {(user) => (
                     <div class="flex items-start">
-                        <Show
-                            when={user.avatarUrl}
-                            fallback={
-                                <div class="bg-(--base01) w-8 h-8 rounded-full flex items-center">
-                                    <span class="text-xs font-medium">
-                                        {user.username.charAt(0).toUpperCase()}
-                                    </span>
-                                </div>
-                            }
-                        >
-                            <img
-                                src={user.avatarUrl}
-                                class="w-8 h-8 rounded-full mt-1 object-cover"
-                                alt="User avatar"
+                        <div class="relative">
+                            {/* Avatar */}
+                            <Show
+                                when={user.avatarUrl}
+                                fallback={
+                                    <div class="bg-(--base01) w-8 h-8 rounded-full flex items-center">
+                                        <span class="text-xs font-medium">
+                                            {user.username.charAt(0).toUpperCase()}
+                                        </span>
+                                    </div>
+                                }
+                            >
+                                <img
+                                    src={user.avatarUrl}
+                                    class="w-8 h-8 rounded-full mt-1 object-cover"
+                                    alt="User avatar"
+                                />
+                            </Show>
+                            <div
+                                class={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ${user.presence?.status === "online" ? "bg-base0B" : "bg-base04"}`}
                             />
-                        </Show>
+                        </div>
+
+                        {/* Presence */}
                         <div class="flex-1 ml-2 min-w-0">
                             <p class="text-sm">{user.username}</p>
                             <p class="text-sm truncate">
