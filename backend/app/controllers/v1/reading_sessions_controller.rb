@@ -33,9 +33,7 @@ class V1::ReadingSessionsController < ApplicationController
       @reading_sessions = @reading_sessions.for_date_range(start_date, end_date)
     end
 
-    render json: {
-      sessions: @reading_sessions.map { |session| session_json(session) }
-    }
+    success_response({ sessions: @reading_sessions.map { |session| session_json(session) } })
   end
 
 
@@ -45,9 +43,7 @@ class V1::ReadingSessionsController < ApplicationController
   # @response Success(200) [Hash{ last_update: Integer }]
   def metadata
     last_update = current_user.reading_sessions.last&.updated_at&.to_i || 0
-    render json: {
-      last_update:
-    }
+    success_response({ last_update: last_update })
   end
 
   # @oas_include
@@ -59,9 +55,9 @@ class V1::ReadingSessionsController < ApplicationController
   def update
     @reading_session = current_user.reading_sessions.find_by(snowflake: params[:id])
     if @reading_session&.update(reading_session_params)
-      render json: { session: session_json(@reading_session) }
+      success_response({ session: session_json(@reading_session) })
     else
-      render json: { errors: @reading_session.errors.full_messages }, status: :unprocessable_entity
+      error_response(@reading_session.errors.full_messages)
     end
   end
 
