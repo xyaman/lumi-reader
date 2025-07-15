@@ -112,6 +112,7 @@ export function ReadingSessionsList(props: {
             if (didChange) await refetch()
             setSyncError(null)
         } catch (e) {
+            console.error(e)
             if (typeof e === "string") {
                 setSyncError(e)
             } else {

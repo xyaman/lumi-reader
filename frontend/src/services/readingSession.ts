@@ -30,6 +30,7 @@ export default class ReadingSessionManager {
         if (sessionStore.status === ISessionStatus.unauthenticated) return false
 
         const metadata = await readingSessionsApi.getMetadata()
+        console.log(metadata)
         if (metadata.ok) {
             return metadata.ok.data!.lastUpdate > lastSyncTime
         }
@@ -56,6 +57,7 @@ export default class ReadingSessionManager {
                 return false
             }
 
+            console.log(res)
             const sessions = res.ok.data!.sessions
 
             for (const s of sessions) {
@@ -78,7 +80,6 @@ export default class ReadingSessionManager {
                 // check if it exists in the backend
                 // update or create
             }
-
             return true
         }
         return false

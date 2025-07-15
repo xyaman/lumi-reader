@@ -1,11 +1,12 @@
 import { ApiClient } from "@/lib/apiClient"
+import { camelToSnake } from "@/lib/utils"
 import { type ReadingSession } from "@/types/api"
 
 export const readingSessionsApi = {
     async create(session: Partial<ReadingSession>) {
         return ApiClient.request<ReadingSession>("/reading_sessions", {
             method: "POST",
-            body: JSON.stringify({ reading_session: session }),
+            body: JSON.stringify({ reading_session: camelToSnake(session) }),
         })
     },
 
@@ -22,7 +23,7 @@ export const readingSessionsApi = {
     async update(id: number, session: Partial<ReadingSession>) {
         return ApiClient.request<ReadingSession>(`/reading_sessions/${id}`, {
             method: "PATCH",
-            body: JSON.stringify({ reading_session: session }),
+            body: JSON.stringify({ reading_session: camelToSnake(session) }),
         })
     },
 
