@@ -1,6 +1,6 @@
 import { useAuthContext } from "@/context/session"
 import api, { PartialUser } from "@/lib/api"
-import { createEffect, createResource, createSignal, For, Show } from "solid-js"
+import { createResource, For, Show } from "solid-js"
 import consumer from "@/services/websocket"
 import { snakeToCamel, timeAgo } from "@/lib/utils"
 
@@ -10,11 +10,8 @@ export default function SocialList() {
     const [follows, { mutate: setFollowers }] = createResource(async () => {
         if (!sessionStore.user) return []
 
-        const res = await api.fetchUserFollows(sessionStore.user!.id)
-        const { results } = await api.fetchUserStatusBatch(res.following.map((u) => u.id))
-
-        const mapB = new Map(results.map((u) => [u.id, u]))
-        return res.following.map((u) => ({ ...u, ...(mapB.get(u.id) || {}) }))
+        const res = await api.fetchUserFollows(sessionStore.user!.id, true)
+        return res.following
     })
 
     const channel = consumer.subscriptions.create(
@@ -33,7 +30,10 @@ export default function SocialList() {
                 setFollowers(
                     (prev) =>
                         prev &&
-                        prev.map((u) => ({ ...u, ...(camelData.id === u.id ? camelData : {}) })),
+                        prev.map((u) => ({
+                            ...u,
+                            presence: { ...(camelData.id === u.id ? camelData : {}) },
+                        })),
                 )
             },
         },
@@ -84,7 +84,10 @@ export default function SocialList() {
                         <div class="flex-1 ml-2 min-w-0">
                             <p class="text-sm">{user.username}</p>
                             <p class="text-sm truncate">
-                                {formatActivity(user.activityType, user.activityName)}
+                                {formatActivity(
+                                    user.presence?.activityType,
+                                    user.presence?.activityName,
+                                )}
                             </p>
                             <p class="text-xs text-base04 mt-1">{timeAgo(user.timestamp)}</p>
                         </div>

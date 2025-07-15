@@ -429,10 +429,12 @@ export interface PartialUser {
     avatarUrl: string
 
     // presence
-    status?: "online" | "offline"
-    activityName?: string
-    activityType?: string
-    activityTimestamp?: Date
+    presence?: {
+        status?: "online" | "offline"
+        activityName?: string
+        activityType?: string
+        activityTimestamp?: Date
+    }
 }
 
 export interface IFollowResponse {
@@ -449,8 +451,9 @@ export interface IFollowerResponse {
  * @returns {Promise<IFollowResponse>} The list of following users.
  * @throws {Error} If the network request fails or the response is not OK.
  */
-async function fetchUserFollows(userId: number): Promise<IFollowResponse> {
-    const url = `${API_URL}/${API_VERSION}/users/${userId}/following/`
+async function fetchUserFollows(userId: number, includePresence = false): Promise<IFollowResponse> {
+    const presence = includePresence ? 1 : 0
+    const url = `${API_URL}/${API_VERSION}/users/${userId}/following?presence=${presence}`
 
     let res: Response
     try {

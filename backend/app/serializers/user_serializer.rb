@@ -9,12 +9,6 @@ class UserSerializer
       }
     end
 
-    def with_presence_status(user)
-      basic(user).merge(
-        status: UserPresence.online?(user.id)
-      )
-    end
-
     def detailed(user, current_user: nil)
       result = basic(user).merge(
         description: user.description,
@@ -36,8 +30,9 @@ class UserSerializer
       users.map { |user| basic(user) }
     end
 
-    def collection_with_status(users)
-      users.map { |user| with_presence_status(user) }
+    def collection_with_presence(users)
+      presences = UserPresence.get_batch_hash(users)
+      users.map { |user| basic(user).merge(presence: presences[user.id]) }
     end
 
     private

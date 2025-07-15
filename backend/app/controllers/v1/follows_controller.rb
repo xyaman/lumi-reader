@@ -4,13 +4,18 @@ class V1::FollowsController < ApplicationController
   # @oas_include
   # @tags Follows
   # @summary List users that the specified user is following
+  # @parameter presence(query) [String] if presence is 1, it will send also the following status
   # @response Success(200) [Hash{following: Array<Hash{id: Integer, username: String, email: String}>}}]
   def following
     @user = User.find_by(id: params[:user_id])
     return user_not_found_response unless @user
 
     following_users = @user.following.includes(avatar_attachment: :blob)
-    serialized_users = UserSerializer.collection_with_status(following_users)
+    if params[:presence]&.to_i == 1
+      serialized_users = UserSerializer.collection_with_presence(following_users)
+    else
+      serialized_users = UserSerializer.collection(following_users)
+    end
 
     success_response({ following: serialized_users })
   end

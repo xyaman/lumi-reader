@@ -56,6 +56,16 @@ class UserPresence
     end
   end
 
+  def self.get_batch_hash(users)
+      cache_keys = users.map { |user| cache_key(user.id) }
+      presences = Rails.cache.read_multi(*cache_keys)
+      users.each_with_object({}) do |user, result|
+        key = cache_key(user.id)
+        presence = presences[key] || {}
+        result[user.id] = presence
+      end
+  end
+
   def self.write(user_id, data)
     Rails.cache.write(cache_key(user_id), data, expires_in: PRESENCE_EXPIRATION)
   end
