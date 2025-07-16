@@ -1,7 +1,14 @@
 import { LumiDb, ReadingSession } from "@/lib/db"
 import { formatTime } from "@/lib/utils"
 import { createResource, createSignal, For, onMount, Show } from "solid-js"
-import { IconCalendar, IconSettings } from "./components/icons"
+import {
+    IconArrowPath,
+    IconCalendar,
+    IconClock,
+    IconLanguage,
+    IconSettings,
+    IconTick,
+} from "./components/icons"
 import Calendar from "./components/Calendar"
 
 import { useAuthContext } from "@/context/session"
@@ -111,6 +118,7 @@ export function ReadingSessionsPage() {
                             class="cursor-pointer bg-base01 rounded p-2"
                             classList={{ "bg-base02": selectedOpt() === "range" }}
                             onClick={() => {
+                                setSelectedOpt("range")
                                 setShowCalendar(true)
                             }}
                         >
@@ -119,7 +127,7 @@ export function ReadingSessionsPage() {
                     </div>
 
                     {/* group toggle and status */}
-                    <div class="flex items-center space-x-2">
+                    <div class="flex items-center space-x-2 mt-8 md:mt-0">
                         <span>Group by book</span>
                         <label class="relative inline-flex items-center cursor-pointer">
                             <input
@@ -130,8 +138,14 @@ export function ReadingSessionsPage() {
                             />
                             <div class="w-11 h-6 bg-base04 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-base0D"></div>
                         </label>
-                        <div class="flex items-center space-x-2 px-3 py-2 bg-base01 rounded-full border-2 border-base0D">
-                            <IconSettings />
+                        <div
+                            class="flex items-center space-x-2 px-3 py-2 bg-base01 rounded-full border-2"
+                            classList={{
+                                "border-base08": syncError() !== null,
+                                "border-base0D": syncError() === null,
+                            }}
+                        >
+                            {isSyncing() ? <IconArrowPath rotation /> : <IconTick />}
                             <span>Synced</span>
                         </div>
                     </div>
@@ -191,7 +205,8 @@ export function ReadingSessionsList(props: { sessions: ReadingSession[]; groupBy
             </h2>
             <div class="grid grid-cols-1 gap-6">
                 <For each={internalSessions()}>
-                    {(session) => <ReadingSessionCard session={session} />}
+                    {/* {(session) => <ReadingSessionCard session={session} />} */}
+                    {(session) => <GroupCard group={session} />}
                 </For>
             </div>
         </div>
@@ -199,6 +214,8 @@ export function ReadingSessionsList(props: { sessions: ReadingSession[]; groupBy
 }
 
 function ReadingSessionCard(props: { session: GroupSession }) {
+    const [showNested, setShowNested] = createSignal(false)
+
     const totalChars = () => props.session.currChars - props.session.initialChars
     const readingSpeed = () => {
         const time = props.session.totalReadingTime
@@ -207,33 +224,127 @@ function ReadingSessionCard(props: { session: GroupSession }) {
     }
 
     return (
-        <div class="bg-base01 rounded border border-base02 p-6 overflow-hidden">
-            <div class="flex items-center space-x-4 mb-4">
-                <div class="min-w-16 min-h-16 bg-base03 rounded-lg flex items-center justify-center">
-                    <IconCalendar />
+        <>
+            <div class="bg-base01 rounded border border-base02 p-6 overflow-hidden">
+                <div class="flex items-center space-x-4 mb-4">
+                    <div class="min-w-16 min-h-16 bg-base03 rounded-lg flex items-center justify-center">
+                        <IconCalendar />
+                    </div>
+                    <div class="min-w-0">
+                        <p class="font-semibold truncate">{props.session.bookTitle}</p>
+                        <p class="text-xs text-base04">{props.session.bookLanguage}</p>
+                    </div>
                 </div>
-                <div class="min-w-0">
-                    <p class="font-semibold truncate">{props.session.bookTitle}</p>
-                    <p class="text-xs text-base04">{props.session.bookLanguage}</p>
+                <div class="flex items-center space-x-6">
+                    <div>
+                        <p class="text-sm text-gray-500">Total Time</p>
+                        <p class="font-bold">{formatTime(props.session.totalReadingTime)}</p>
+                    </div>
+
+                    <div>
+                        <p class="text-sm text-base04">Sessions</p>
+                        <p class="font-bold">{props.session.internals?.length || "-"}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-base04">Characters</p>
+                        <p class="font-bold">{totalChars()} chars</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-base04">Avg. Speed</p>
+                        <p class="font-bold">{readingSpeed()} chars/h</p>
+                    </div>
                 </div>
             </div>
-            <div class="flex items-center space-x-6">
-                <div>
-                    <p class="text-sm text-gray-500">Total Time</p>
-                    <p class="font-bold">{formatTime(props.session.totalReadingTime)}</p>
-                </div>
+        </>
+    )
+}
 
-                <div>
-                    <p class="text-sm text-base04">Sessions</p>
-                    <p class="font-bold">{props.session.internals?.length || "-"}</p>
+function GroupCard(props: { group: GroupSession }) {
+    const [showNested, setShowNested] = createSignal(false)
+
+    const totalChars = () => props.group.currChars - props.group.initialChars
+    const readingSpeed = () => {
+        const time = props.group.totalReadingTime
+        if (totalChars() === 0 || time === 0) return 0
+        return Math.ceil((totalChars() * 3600) / time)
+    }
+    return (
+        <>
+            <div
+                class="bg-base01 rounded border border-base02 p-6 overflow-hidden"
+                onClick={() => setShowNested((p) => !p)}
+            >
+                <div class="flex justify-between">
+                    <div>
+                        <h3 class="text-xl font-bold truncate">{props.group.bookTitle}</h3>
+                        <div class="flex items-center space-x-4 mt-2">
+                            <div class="flex items-center space-x-4 mt-2">
+                                <span class="text-sm text-base04 flex items-center">
+                                    <IconLanguage class="mr-1" />
+                                    {props.group.bookLanguage}
+                                </span>
+                                <span class="text-sm text-base04 flex items-center">
+                                    <IconClock class="mr-1" />
+                                    {formatTime(props.group.totalReadingTime)}
+                                </span>
+                                <span class="text-sm text-base04 flex items-center">
+                                    <IconCalendar class="mr-1" />
+                                    {props.group.internals?.length || 1}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-2 md:mt-0">
+                        <div class="flex space-x-2">
+                            <span class="bg-base03 px-2 py-1 rounded text-sm">
+                                {totalChars()} chars
+                            </span>
+                            <span class="bg-base03 px-2 py-1 rounded text-sm">
+                                {readingSpeed()} cph
+                            </span>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <p class="text-sm text-base04">Characters</p>
-                    <p class="font-bold">{totalChars()} chars</p>
+            </div>
+            <Show when={showNested()}>
+                <div class=" pl-4 md:pl-8 border-l-2 border-base02">
+                    <For each={props.group.internals}>
+                        {(session) => <IndividualSessions session={session} />}
+                    </For>
                 </div>
+            </Show>
+        </>
+    )
+}
+
+function IndividualSessions(props: { session: ReadingSession }) {
+    return (
+        <div class="bg-base01 rounded border border-base02 p-4 overflow-hidden mb-2">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
                 <div>
-                    <p class="text-sm text-base04">Avg. Speed</p>
-                    <p class="font-bold">{readingSpeed()} chars/h</p>
+                    <h3>Session on {props.session.startTime}</h3>
+                    <div class="flex items-center space-x-4 mt-1">
+                        <span class="text-sm flex items-center">
+                            <IconClock />
+                            2h 15m 00s
+                        </span>
+                        <span class="text-sm flex items-center">
+                            <IconTick />
+                            28430 chars
+                        </span>
+                        <span class="text-sm flex items-center">
+                            <IconTick />
+                            356 cph
+                        </span>
+                    </div>
+                </div>
+                <div class="mt-2 md:mt-0 flex space-x-2">
+                    <button class="px-3 py-1 bg-[var(--base15)] text-white rounded-md text-sm font-medium">
+                        Edit
+                    </button>
+                    <button class="px-3 py-1 bg-[var(--base11)] text-white rounded-md text-sm font-medium">
+                        Delete
+                    </button>
                 </div>
             </div>
         </div>

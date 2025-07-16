@@ -17,6 +17,64 @@ export function IconToc() {
     )
 }
 
+export function IconLanguage(props: { class?: string }) {
+    return (
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class={"w-5 h-5 " + (props.class || "")}
+        >
+            <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="m10.5 21 5.25-11.25L21 21m-9-3h7.5M3 5.621a48.474 48.474 0 0 1 6-.371m0 0c1.12 0 2.233.038 3.334.114M9 5.25V3m3.334 2.364C11.176 10.658 7.69 15.08 3 17.502m9.334-12.138c.896.061 1.785.147 2.666.257m-4.589 8.495a18.023 18.023 0 0 1-3.827-5.802"
+            />
+        </svg>
+    )
+}
+
+export function IconTick() {
+    return (
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class="size-6"
+        >
+            <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+            />
+        </svg>
+    )
+}
+
+export function IconArrowPath(props: { rotation?: boolean }) {
+    return (
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class="size-6"
+            classList={{ "animate-spin": props.rotation }}
+        >
+            <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
+            />
+        </svg>
+    )
+}
+
 export function IconHome() {
     return (
         <svg
@@ -55,7 +113,7 @@ export function IconUsers() {
     )
 }
 
-export function IconCalendar() {
+export function IconCalendar(props: { class?: string }) {
     return (
         <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -63,7 +121,7 @@ export function IconCalendar() {
             viewBox="0 0 24 24"
             stroke-width="1.5"
             stroke="currentColor"
-            class="size-6"
+            class={"w-5 h-5 " + (props.class || "")}
         >
             <path
                 stroke-linecap="round"
@@ -112,7 +170,7 @@ export function IconFilter() {
     )
 }
 
-export function IconClock() {
+export function IconClock(props: { class?: string }) {
     return (
         <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -120,7 +178,7 @@ export function IconClock() {
             viewBox="0 0 24 24"
             stroke-width="1.5"
             stroke="currentColor"
-            class="size-6"
+            class={"h-5 w-5 " + (props.class || "")}
         >
             <path
                 stroke-linecap="round"
