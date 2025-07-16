@@ -39,8 +39,13 @@ export function ReadingSessionsPage() {
         return uniqueBooks.size
     }
 
-    const longestReadingSession = () =>
-        formatTime(Math.max(...(sessions()?.map((s) => s.totalReadingTime) ?? [0])))
+    const longestReadingSession = () => {
+        const times = sessions()?.map((s) => s.totalReadingTime)
+        if (!times) return "-"
+        const max = Math.max(...times)
+        if (!isFinite(max) || isNaN(max)) return "-"
+        return formatTime(max)
+    }
 
     const now = new Date()
     const todayStart = new Date(now)
