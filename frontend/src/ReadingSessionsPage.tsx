@@ -72,8 +72,7 @@ export function ReadingSessionsPage() {
         const start = Math.floor(range.from.getTime() / 1000)
         const end = Math.floor(range.to.getTime() / 1000)
 
-        let sessions = await LumiDb.getReadingSessionByDateRange(start, end)
-        return sessions
+        return await LumiDb.getReadingSessionByDateRange(start, end)
     })
 
     return (
@@ -91,6 +90,7 @@ export function ReadingSessionsPage() {
                             classList={{ "bg-base02": selectedOpt() === "today" }}
                             onClick={() => {
                                 setSelectedOpt("today")
+                                setDateRange({ from: todayStart, to: now })
                                 setShowCalendar(false)
                             }}
                         >
@@ -100,6 +100,7 @@ export function ReadingSessionsPage() {
                             class="cursor-pointer bg-base01 rounded p-2"
                             classList={{ "bg-base02": selectedOpt() === "this week" }}
                             onClick={() => {
+                                setDateRange({ from: lastWeekStart, to: now })
                                 setSelectedOpt("this week")
                                 setShowCalendar(false)
                             }}
@@ -164,15 +165,20 @@ export function ReadingSessionsPage() {
     )
 }
 
+type GroupSession = ReadingSession & {
+    internals?: ReadingSession[]
+}
+
 export function ReadingSessionsList(props: { sessions: ReadingSession[]; groupByBook?: boolean }) {
     const internalSessions = () => {
         if (!props.groupByBook) return props.sessions
-        let groupSessions: Record<string, ReadingSession> = {}
+        let groupSessions: Record<string, GroupSession> = {}
         props.sessions.forEach((s) => {
             if (groupSessions[s.bookTitle]) {
                 groupSessions[s.bookTitle].totalReadingTime += s.totalReadingTime
+                groupSessions[s.bookTitle].internals!.push(s)
             } else {
-                groupSessions[s.bookTitle] = s
+                groupSessions[s.bookTitle] = { ...s, internals: [s] }
             }
         })
         return Object.values(groupSessions)
@@ -192,14 +198,21 @@ export function ReadingSessionsList(props: { sessions: ReadingSession[]; groupBy
     )
 }
 
-function ReadingSessionCard(props: { session: ReadingSession }) {
+function ReadingSessionCard(props: { session: GroupSession }) {
+    const totalChars = () => props.session.currChars - props.session.initialChars
+    const readingSpeed = () => {
+        const time = props.session.totalReadingTime
+        if (totalChars() === 0 || time === 0) return 0
+        return Math.ceil((totalChars() * 3600) / time)
+    }
+
     return (
-        <div class="bg-base01 rounded border border-base02 p-6">
+        <div class="bg-base01 rounded border border-base02 p-6 overflow-hidden">
             <div class="flex items-center space-x-4 mb-4">
-                <div class="w-16 h-16 bg-base03 rounded-lg flex items-center justify-center">
+                <div class="min-w-16 min-h-16 bg-base03 rounded-lg flex items-center justify-center">
                     <IconCalendar />
                 </div>
-                <div>
+                <div class="min-w-0">
                     <p class="font-semibold truncate">{props.session.bookTitle}</p>
                     <p class="text-xs text-base04">{props.session.bookLanguage}</p>
                 </div>
@@ -212,19 +225,15 @@ function ReadingSessionCard(props: { session: ReadingSession }) {
 
                 <div>
                     <p class="text-sm text-base04">Sessions</p>
-                    <p class="font-bold">〇〇</p>
+                    <p class="font-bold">{props.session.internals?.length || "-"}</p>
                 </div>
                 <div>
                     <p class="text-sm text-base04">Characters</p>
-                    <p class="font-bold">45k</p>
+                    <p class="font-bold">{totalChars()} chars</p>
                 </div>
                 <div>
                     <p class="text-sm text-base04">Avg. Speed</p>
-                    <p class="font-bold">〇〇</p>
-                </div>
-                <div>
-                    <p class="text-sm text-base04">Last Read</p>
-                    <p class="font-bold">〇〇</p>
+                    <p class="font-bold">{readingSpeed()} chars/h</p>
                 </div>
             </div>
         </div>
