@@ -9,7 +9,7 @@ import Profile from "./Profile"
 import UserSearch from "./SearchPage"
 import { AuthProvider } from "./context/session"
 
-import { ReadingSessionsPage } from "./components/SessionList"
+import { ReadingSessionsPage } from "./ReadingSessionsPage"
 import HomePage from "./HomePage"
 import SocialList from "./components/SocialList"
 

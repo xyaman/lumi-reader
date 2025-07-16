@@ -3,6 +3,7 @@ import { ISessionStatus, sessionStore } from "@/stores/session"
 import { createSignal } from "solid-js"
 import { lsReadingSessions } from "./localStorage"
 import { readingSessionsApi } from "@/api/readingSessions"
+import { AsyncResult, ok } from "@/lib/result"
 
 interface IPartialSource {
     localId: number
@@ -25,39 +26,39 @@ export default class ReadingSessionManager {
      * @returns {Promise<boolean>} True if sync is needed, false otherwise.
      * @throws Will throw if there is a network error
      */
-    static async isSyncNeeded(): Promise<boolean> {
+    static async isSyncNeeded(): AsyncResult<boolean, Error> {
         const lastSyncTime = lsReadingSessions.lastSyncTime()
-        if (sessionStore.status === ISessionStatus.unauthenticated) return false
+        if (sessionStore.status === ISessionStatus.unauthenticated) return ok(false)
 
         const metadata = await readingSessionsApi.getMetadata()
         console.log(metadata)
         if (metadata.ok) {
-            return metadata.ok.data!.lastUpdate > lastSyncTime
+            return ok(metadata.ok.data!.lastUpdate > lastSyncTime)
         }
 
-        // TODO: Handle error
-        return false
+        return metadata
     }
 
     /**
      * Synchronizes local reading sessions with the backend.
      * Downloads new/updated sessions and uploads local changes.
      * Updates the last sync time on success.
-     * @returns {Promise<boolean>} True if sync occurred, false otherwise.
-     * @throws Will throw if the API request fails or if there is a DB problem
      */
-    static async syncWithBackendIfNeeded(): Promise<boolean> {
-        if (await this.isSyncNeeded()) {
+    static async syncWithBackendIfNeeded(): AsyncResult<boolean, Error> {
+        const isSyncNeeded = await this.isSyncNeeded()
+        if (isSyncNeeded.error) {
+            return isSyncNeeded
+        }
+
+        if (isSyncNeeded.ok) {
             const now = Math.floor(Date.now() / 1000)
             const lastSyncTime = lsReadingSessions.lastSyncTime()
             const res = await readingSessionsApi.getByDateRange(lastSyncTime, now)
 
             if (res.error) {
-                console.error("error when fetching data", res.error)
-                return false
+                return res
             }
 
-            console.log(res)
             const sessions = res.ok.data!.sessions
 
             for (const s of sessions) {
@@ -80,9 +81,10 @@ export default class ReadingSessionManager {
                 // check if it exists in the backend
                 // update or create
             }
-            return true
+            return ok(true)
         }
-        return false
+
+        return ok(false)
     }
 
     async startSession(source: IPartialSource) {
