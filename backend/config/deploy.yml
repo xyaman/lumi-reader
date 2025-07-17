@@ -7,7 +7,8 @@ image: bolti/lumibackend
 # Deploy to these servers.
 servers:
   web:
-    - 100.96.184.114
+    # - 100.96.184.114
+    - awow
 
   # job:
   #   hosts:
