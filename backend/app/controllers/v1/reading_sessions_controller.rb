@@ -6,7 +6,7 @@ class V1::ReadingSessionsController < ApplicationController
   # @parameter reading_session(body) [ReadingSession] Reading session parameters
   # @response Created(201) [ReadingSession]
   def create
-    @reading_session = current_user.reading_sessions.build(reading_session_params)
+    @reading_session = current_user.reading_sessions.new(reading_session_params)
 
     if @reading_session.save
       render json: { session: session_json(@reading_session) }, status: :created
@@ -39,11 +39,29 @@ class V1::ReadingSessionsController < ApplicationController
 
   # @oas_include
   # @tags ReadingSessions
-  # @summary Get sessions metadata since timestamp
-  # @response Success(200) [Hash{ last_update: Integer }]
-  def metadata
-    last_update = current_user.reading_sessions.last&.updated_at&.to_i || 0
-    success_response({ last_update: last_update })
+  # @summary Report differences in reading sessions between client and server
+  # @parameter last_sync_time(query) [Integer] Last sync timestamp (unix)
+  # @parameter local_sessions_ids(query) [Array<String>] List of local session snowflake IDs
+  # @response Success(200) [Hash{modified_sessions: Array<ReadingSession>, remote_only_sessions: Array<ReadingSession>, sync_timestamp: Integer}]
+  def diff
+    last_sync = params[:last_sync_time]&.to_i || 0
+    local_sessions_ids = params[:local_sessions_ids] || []
+
+    # Get all modified sessions since last_sync
+    modified_sessions = current_user.reading_sessions
+      .where.not(snowflake: local_sessions_ids)
+      .where("updated_at > ?", Time.at(last_sync))
+
+    # Get sessions that doesn't exist in this device
+    remote_only_sessions = current_user.reading_sessions
+      .where.not(snowflake: local_sessions_ids)
+      .where("created_at > ?", Time.at(last_sync))
+
+    success_response({
+      modified_sessions: modified_sessions.map { |s| session_json(s) },
+      remote_only_sessions: remote_only_sessions.map { |s| session_json(s) },
+      sync_timestamp: Time.current.to_i
+    })
   end
 
   # @oas_include
@@ -53,12 +71,60 @@ class V1::ReadingSessionsController < ApplicationController
   # @parameter reading_session(body) [ReadingSession] Reading session parameters to update
   # @response Success(200) [ReadingSession]
   def update
-    @reading_session = current_user.reading_sessions.find_by(snowflake: params[:id])
-    if @reading_session&.update(reading_session_params)
-      success_response({ session: session_json(@reading_session) })
+    reading_session = current_user.reading_sessions.find_by(snowflake: params[:id])
+    return error_response("Session not found", status: :not_found) unless reading_session
+
+    if reading_session.update(reading_session_params)
+      success_response({ session: session_json(reading_session) })
     else
-      error_response(@reading_session.errors.full_messages)
+      error_response(reading_session.errors.full_messages)
     end
+  end
+
+  # @oas_include
+  # @tags ReadingSessions
+  # @summary Batch update reading sessions
+  # @parameter sessions(body) [Array<ReadingSession>] Array of reading session objects to update or create
+  # @response Success(200) [Hash{results: Array<Hash{snowflake: String, status: String, server_version?: ReadingSession, client_version?: ReadingSession}>}]
+  def batch_update
+    return error_response("sessions is empty") unless params[:sessions].present?
+    # TODO: Validate array
+
+    results = []
+
+    params[:sessions].each do |client_session|
+      session = current_user.reading_sessions.find_by(snowflake: client_session.snowflake)
+      if session
+        # check for conflicts using updated_at timestamps
+        if client_session[:updated_at] < session.updated_at
+          # server version is newer, conflict detected
+          results << {
+            snowflake: session.snowflake,
+            status: "conflict",
+            server_version: session_json(session),
+            client_version: session_json(client_session)
+          }
+        else
+          # safe to update
+          session.update(client_session)
+
+          results << {
+            snowflake: session.snowflake,
+            status: "updated"
+          }
+        end
+      else
+        # the session doesnt exist in the server - create it
+        current_user.reading_sessions.create(client_session)
+
+        results << {
+          snowflake: client_session.snowflake,
+          status: "created"
+        }
+      end
+    end
+
+    success_response({ results: results })
   end
 
   # @oas_include
@@ -104,7 +170,7 @@ class V1::ReadingSessionsController < ApplicationController
       :start_time,
       :end_time,
       :total_reading_time,
-      :status,
+      :status
     )
   end
 end
