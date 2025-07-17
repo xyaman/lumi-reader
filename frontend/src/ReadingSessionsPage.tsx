@@ -6,8 +6,8 @@ import {
     IconCalendar,
     IconClock,
     IconLanguage,
-    IconSettings,
     IconTick,
+    IconTrendingUp,
 } from "./components/icons"
 import Calendar from "./components/Calendar"
 
@@ -205,57 +205,16 @@ export function ReadingSessionsList(props: { sessions: ReadingSession[]; groupBy
             </h2>
             <div class="grid grid-cols-1 gap-6">
                 <For each={internalSessions()}>
-                    {/* {(session) => <ReadingSessionCard session={session} />} */}
-                    {(session) => <GroupCard group={session} />}
+                    {(session) =>
+                        props.groupByBook ? (
+                            <GroupCard group={session} />
+                        ) : (
+                            <IndividualSessions session={session} />
+                        )
+                    }
                 </For>
             </div>
         </div>
-    )
-}
-
-function ReadingSessionCard(props: { session: GroupSession }) {
-    const [showNested, setShowNested] = createSignal(false)
-
-    const totalChars = () => props.session.currChars - props.session.initialChars
-    const readingSpeed = () => {
-        const time = props.session.totalReadingTime
-        if (totalChars() === 0 || time === 0) return 0
-        return Math.ceil((totalChars() * 3600) / time)
-    }
-
-    return (
-        <>
-            <div class="bg-base01 rounded border border-base02 p-6 overflow-hidden">
-                <div class="flex items-center space-x-4 mb-4">
-                    <div class="min-w-16 min-h-16 bg-base03 rounded-lg flex items-center justify-center">
-                        <IconCalendar />
-                    </div>
-                    <div class="min-w-0">
-                        <p class="font-semibold truncate">{props.session.bookTitle}</p>
-                        <p class="text-xs text-base04">{props.session.bookLanguage}</p>
-                    </div>
-                </div>
-                <div class="flex items-center space-x-6">
-                    <div>
-                        <p class="text-sm text-gray-500">Total Time</p>
-                        <p class="font-bold">{formatTime(props.session.totalReadingTime)}</p>
-                    </div>
-
-                    <div>
-                        <p class="text-sm text-base04">Sessions</p>
-                        <p class="font-bold">{props.session.internals?.length || "-"}</p>
-                    </div>
-                    <div>
-                        <p class="text-sm text-base04">Characters</p>
-                        <p class="font-bold">{totalChars()} chars</p>
-                    </div>
-                    <div>
-                        <p class="text-sm text-base04">Avg. Speed</p>
-                        <p class="font-bold">{readingSpeed()} chars/h</p>
-                    </div>
-                </div>
-            </div>
-        </>
     )
 }
 
@@ -271,11 +230,11 @@ function GroupCard(props: { group: GroupSession }) {
     return (
         <>
             <div
-                class="bg-base01 rounded border border-base02 p-6 overflow-hidden"
+                class="cursor-pointer bg-base01 hover:bg-base02 rounded border border-base02 p-6 overflow-hidden"
                 onClick={() => setShowNested((p) => !p)}
             >
                 <div class="flex justify-between">
-                    <div>
+                    <div class="max-w-[70%]">
                         <h3 class="text-xl font-bold truncate">{props.group.bookTitle}</h3>
                         <div class="flex items-center space-x-4 mt-2">
                             <div class="flex items-center space-x-4 mt-2">
@@ -318,31 +277,47 @@ function GroupCard(props: { group: GroupSession }) {
 }
 
 function IndividualSessions(props: { session: ReadingSession }) {
+    const dateFromTimestamp = (unixtimestamp: number) => {
+        const date = new Date(unixtimestamp * 1000)
+        const month = date.toLocaleString("en-US", { month: "short" })
+        const day = date.getDate().toString().padStart(2, "0")
+        const hours = date.getHours().toString().padStart(2, "0")
+        const minutes = date.getMinutes().toString().padStart(2, "0")
+        return `${month} ${day} ${hours}:${minutes}`
+    }
+
+    const totalChars = () => props.session.currChars - props.session.initialChars
+    const readingSpeed = () => {
+        const time = props.session.totalReadingTime
+        if (totalChars() === 0 || time === 0) return 0
+        return Math.ceil((totalChars() * 3600) / time)
+    }
+
     return (
         <div class="bg-base01 rounded border border-base02 p-4 overflow-hidden mb-2">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between">
                 <div>
-                    <h3>Session on {props.session.startTime}</h3>
+                    <h3>Session on {dateFromTimestamp(props.session.startTime)}</h3>
                     <div class="flex items-center space-x-4 mt-1">
-                        <span class="text-sm flex items-center">
-                            <IconClock />
-                            2h 15m 00s
+                        <span class="text-sm text-base04 flex items-center">
+                            <IconClock class="mr-1" />
+                            {formatTime(props.session.totalReadingTime)}
                         </span>
-                        <span class="text-sm flex items-center">
-                            <IconTick />
-                            28430 chars
+                        <span class="text-sm text-base04 flex items-center">
+                            <IconTick class="mr-1" />
+                            {props.session.currChars - props.session.initialChars} chars
                         </span>
-                        <span class="text-sm flex items-center">
-                            <IconTick />
-                            356 cph
+                        <span class="text-sm text-base04 flex items-center">
+                            <IconTrendingUp class="mr-1" />
+                            {readingSpeed()} cph
                         </span>
                     </div>
                 </div>
                 <div class="mt-2 md:mt-0 flex space-x-2">
-                    <button class="px-3 py-1 bg-[var(--base15)] text-white rounded-md text-sm font-medium">
+                    <button class="cursor-pointer px-3 py-1 bg-base03 rounded-md text-sm font-medium">
                         Edit
                     </button>
-                    <button class="px-3 py-1 bg-[var(--base11)] text-white rounded-md text-sm font-medium">
+                    <button class="cursor-pointer px-3 py-1 bg-base03 hover:bg-base08 rounded-md text-sm font-medium">
                         Delete
                     </button>
                 </div>
