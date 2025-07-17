@@ -1,8 +1,8 @@
-import js from "@eslint/js";
-import globals from "globals";
-import tseslint from "typescript-eslint";
-import { defineConfig } from "eslint/config";
-import solid from "eslint-plugin-solid/configs/recommended";
+import js from "@eslint/js"
+import globals from "globals"
+import tseslint from "typescript-eslint"
+import { defineConfig } from "eslint/config"
+import solid from "eslint-plugin-solid/configs/recommended"
 
 export default defineConfig([
     {
@@ -16,4 +16,4 @@ export default defineConfig([
     },
     solid,
     tseslint.configs.recommended,
-]);
+])
