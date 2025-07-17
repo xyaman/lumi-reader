@@ -37,6 +37,8 @@ export interface ReadingSession {
     startTime: number
     endTime?: number | null
     totalReadingTime: number
-    status: "active" | "finished"
+
+    // TODO: status
+    status?: "active" | "finished"
     updatedAt?: number | null
 }

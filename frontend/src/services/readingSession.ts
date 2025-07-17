@@ -1,9 +1,8 @@
 import { LumiDb, ReadingSession } from "@/lib/db"
-import { ISessionStatus, sessionStore } from "@/stores/session"
 import { createSignal } from "solid-js"
 import { lsReadingSessions } from "./localStorage"
 import { readingSessionsApi } from "@/api/readingSessions"
-import { AsyncResult, ok } from "@/lib/result"
+import { AsyncResult, err, ok } from "@/lib/result"
 
 interface IPartialSource {
     localId: number
@@ -21,70 +20,53 @@ export default class ReadingSessionManager {
         ;[this.activeSession, this.setActiveSession] = createSignal<ReadingSession | null>(null)
     }
 
-    /**
-     * Chacks if synchronization with the backend is needed by comparing the last update time.
-     * @returns {Promise<boolean>} True if sync is needed, false otherwise.
-     * @throws Will throw if there is a network error
-     */
-    static async isSyncNeeded(): AsyncResult<boolean, Error> {
+    static async syncWithBackend(): AsyncResult<boolean, Error> {
+        if (!navigator.onLine) {
+            return err(new Error("offline"))
+        }
+
+        // 1. get local changes since last sync
+        const now = Math.floor(Date.now() / 1000)
         const lastSyncTime = lsReadingSessions.lastSyncTime()
-        if (sessionStore.status === ISessionStatus.unauthenticated) return ok(false)
+        const localIds = await LumiDb.getAllReadingSessionIds()
 
-        const metadata = await readingSessionsApi.getMetadata()
-        console.log(metadata)
-        if (metadata.ok) {
-            return ok(metadata.ok.data!.lastUpdate > lastSyncTime)
+        // 2. get remote diffs
+        const diffRes = await readingSessionsApi.diff(lastSyncTime, localIds)
+        if (diffRes.error) {
+            return diffRes
         }
 
-        return metadata
-    }
-
-    /**
-     * Synchronizes local reading sessions with the backend.
-     * Downloads new/updated sessions and uploads local changes.
-     * Updates the last sync time on success.
-     */
-    static async syncWithBackendIfNeeded(): AsyncResult<boolean, Error> {
-        const isSyncNeeded = await this.isSyncNeeded()
-        if (isSyncNeeded.error) {
-            return isSyncNeeded
+        // 3.1 Update local sessions
+        const remoteOnlySessions = diffRes.ok.data!.remoteOnlySessions
+        if (remoteOnlySessions.length === 0) {
+            return ok(false)
         }
 
-        if (isSyncNeeded.ok) {
-            const now = Math.floor(Date.now() / 1000)
-            const lastSyncTime = lsReadingSessions.lastSyncTime()
-            const res = await readingSessionsApi.getByDateRange(lastSyncTime, now)
-
-            if (res.error) {
-                return res
-            }
-
-            const sessions = res.ok.data!.sessions
-
-            for (const s of sessions) {
-                const localSession = await LumiDb.getReadingSessionById(s.snowflake)
-                if (!localSession) {
-                    await LumiDb.createReadingSessionFromCloud(s)
-                } else {
-                    if (s.updatedAt! > localSession.updatedAt!) {
-                        await LumiDb.updateReadingSession(s)
-                    }
-                }
-            }
-
-            // Update last sync time
-            lsReadingSessions.setLastSyncTime(now)
-
-            // TODO: upload local changes that havent been uploaded
-            const localSessions = await LumiDb.getReadingSessionByDateRange(lastSyncTime, now)
-            for (const ls of localSessions) {
-                // check if it exists in the backend
-                // update or create
-            }
-            return ok(true)
+        for (const rs of remoteOnlySessions) {
+            await LumiDb.createReadingSessionFromCloud(rs)
         }
 
-        return ok(false)
+        // 3.  Handle different types of changes
+        if (localIds.length > 0) {
+            const localOnlySessions = await Promise.all(
+                localIds.map((id) => LumiDb.getReadingSessionById(id)),
+            )
+            const updateRes = await readingSessionsApi.batchUpdate(
+                localOnlySessions.filter((s) => s !== undefined),
+            )
+            if (updateRes.error) {
+                return updateRes
+            }
+            console.log(updateRes.ok.data)
+        }
+
+        // 3.2 Conflicts (ignore for now)
+        // TODO
+
+        // 3.3 Updated (Nothing to do?)
+        // 3.4 Created (Nothing to do?)
+        lsReadingSessions.setLastSyncTime(diffRes.ok.data!.syncTimestamp)
+        return ok(true)
     }
 
     async startSession(source: IPartialSource) {

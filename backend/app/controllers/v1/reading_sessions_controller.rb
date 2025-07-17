@@ -41,21 +41,21 @@ class V1::ReadingSessionsController < ApplicationController
   # @tags ReadingSessions
   # @summary Report differences in reading sessions between client and server
   # @parameter last_sync_time(query) [Integer] Last sync timestamp (unix)
-  # @parameter local_sessions_ids(query) [Array<String>] List of local session snowflake IDs
+  # @parameter local_sessions_ids(query) [Array<number>] List of local session snowflake IDs
   # @response Success(200) [Hash{modified_sessions: Array<ReadingSession>, remote_only_sessions: Array<ReadingSession>, sync_timestamp: Integer}]
   def diff
+    # note: Array(nil) returns []
+    local_sessions_ids = Array(params[:local_sessions_ids]).map(&:to_i)
     last_sync = params[:last_sync_time]&.to_i || 0
-    local_sessions_ids = params[:local_sessions_ids] || []
 
     # Get all modified sessions since last_sync
     modified_sessions = current_user.reading_sessions
-      .where.not(snowflake: local_sessions_ids)
       .where("updated_at > ?", Time.at(last_sync))
 
     # Get sessions that doesn't exist in this device
     remote_only_sessions = current_user.reading_sessions
       .where.not(snowflake: local_sessions_ids)
-      .where("created_at > ?", Time.at(last_sync))
+    # .where("created_at > ?", Time.at(last_sync))
 
     success_response({
       modified_sessions: modified_sessions.map { |s| session_json(s) },
@@ -85,7 +85,7 @@ class V1::ReadingSessionsController < ApplicationController
   # @tags ReadingSessions
   # @summary Batch update reading sessions
   # @parameter sessions(body) [Array<ReadingSession>] Array of reading session objects to update or create
-  # @response Success(200) [Hash{results: Array<Hash{snowflake: String, status: String, server_version?: ReadingSession, client_version?: ReadingSession}>}]
+  # @response Success(200) [Hash{results: Array<Hash{snowflake: Integer, status: String, server_version?: ReadingSession, client_version?: ReadingSession}>}]
   def batch_update
     return error_response("sessions is empty") unless params[:sessions].present?
     # TODO: Validate array
@@ -93,20 +93,24 @@ class V1::ReadingSessionsController < ApplicationController
     results = []
 
     params[:sessions].each do |client_session|
-      session = current_user.reading_sessions.find_by(snowflake: client_session.snowflake)
+      permitted = client_session.permit(:snowflake, :book_id, :book_title, :book_language, :start_time, :end_time, :total_reading_time, :status)
+      # frontend always sends integer from timestamps
+      permitted[:updated_at] = Time.at(client_session[:updated_at])
+      session = current_user.reading_sessions.find_by(snowflake: client_session[:snowflake])
+
       if session
         # check for conflicts using updated_at timestamps
-        if client_session[:updated_at] < session.updated_at
+        if client_session[:updated_at].to_i < session.updated_at.to_i
           # server version is newer, conflict detected
           results << {
             snowflake: session.snowflake,
             status: "conflict",
             server_version: session_json(session),
-            client_version: session_json(client_session)
+            client_version: client_session
           }
-        else
+        elsif session.updated_at.to_i < client_session[:updated_at].to_i
           # safe to update
-          session.update(client_session)
+          session.update(permitted)
 
           results << {
             snowflake: session.snowflake,
@@ -115,10 +119,10 @@ class V1::ReadingSessionsController < ApplicationController
         end
       else
         # the session doesnt exist in the server - create it
-        current_user.reading_sessions.create(client_session)
+        current_user.reading_sessions.create(permitted)
 
         results << {
-          snowflake: client_session.snowflake,
+          snowflake: client_session[:snowflake],
           status: "created"
         }
       end
@@ -157,7 +161,7 @@ class V1::ReadingSessionsController < ApplicationController
       end_time: session.end_time,
       total_reading_time: session.total_reading_time,
       status: session.status,
-      updated_at: session.updated_at
+      updated_at: session.updated_at.to_i # TODO: is this the right approach?
     }
   end
 

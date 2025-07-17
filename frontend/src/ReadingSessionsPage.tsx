@@ -23,7 +23,7 @@ export function ReadingSessionsPage() {
         if (!sessionStore.user) return
         setIsSyncing(true)
         setSyncError(null)
-        const didChange = await ReadingSessionManager.syncWithBackendIfNeeded()
+        const didChange = await ReadingSessionManager.syncWithBackend()
         if (didChange.error) {
             console.error(didChange.error)
             setSyncError(didChange.error.message)

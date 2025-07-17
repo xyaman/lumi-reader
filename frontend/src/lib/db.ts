@@ -292,6 +292,11 @@ export class LumiDb {
         return db.get(STORE_READING_SESSIONS, id)
     }
 
+    static async getAllReadingSessionIds(): Promise<number[]> {
+        const db = await this.getDB()
+        return await db.getAllKeys(STORE_READING_SESSIONS)
+    }
+
     static async getReadingSessionByDateRange(start: number, end: number, limit = 20, offset = 0) {
         const db = await this.getDB()
         const range = IDBKeyRange.bound(start, end, false, false)

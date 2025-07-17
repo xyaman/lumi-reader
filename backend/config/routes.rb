@@ -10,7 +10,7 @@ Rails.application.routes.draw do
     resources :reading_sessions do
       collection do
         get "diff", to: "reading_sessions#diff"
-        get "batch_update", to: "reading_sessions#batch_update"
+        post "batch_update", to: "reading_sessions#batch_update"
       end
     end
 
