@@ -1,10 +1,11 @@
 import { LumiDb, ReadingSession } from "@/lib/db"
 import { formatTime } from "@/lib/utils"
-import { createResource, createSignal, For, onMount, Show } from "solid-js"
+import { createResource, createSignal, For, Match, onMount, Show, Switch } from "solid-js"
 import {
     IconArrowPath,
     IconCalendar,
     IconClock,
+    IconError,
     IconLanguage,
     IconTick,
     IconTrendingUp,
@@ -145,8 +146,23 @@ export function ReadingSessionsPage() {
                                 "border-base0D": syncError() === null,
                             }}
                         >
-                            {isSyncing() ? <IconArrowPath rotation /> : <IconTick />}
-                            <span>Synced</span>
+                            <Switch
+                                fallback={
+                                    <>
+                                        <IconTick />
+                                        <span>Synced</span>
+                                    </>
+                                }
+                            >
+                                <Match when={isSyncing()}>
+                                    <IconArrowPath rotation />
+                                    <span>Syncing</span>
+                                </Match>
+                                <Match when={syncError()}>
+                                    <IconError class="text-base08" />
+                                    <span>Error</span>
+                                </Match>
+                            </Switch>
                         </div>
                     </div>
                 </div>
@@ -268,7 +284,9 @@ function GroupCard(props: { group: GroupSession }) {
             <Show when={showNested()}>
                 <div class=" pl-4 md:pl-8 border-l-2 border-base02">
                     <For each={props.group.internals}>
-                        {(session) => <IndividualSessions session={session} />}
+                        {(session) => (
+                            <IndividualSessions grouped={showNested()} session={session} />
+                        )}
                     </For>
                 </div>
             </Show>
@@ -276,7 +294,7 @@ function GroupCard(props: { group: GroupSession }) {
     )
 }
 
-function IndividualSessions(props: { session: ReadingSession }) {
+function IndividualSessions(props: { grouped?: boolean; session: ReadingSession }) {
     const dateFromTimestamp = (unixtimestamp: number) => {
         const date = new Date(unixtimestamp * 1000)
         const month = date.toLocaleString("en-US", { month: "short" })
@@ -297,6 +315,9 @@ function IndividualSessions(props: { session: ReadingSession }) {
         <div class="bg-base01 rounded border border-base02 p-4 overflow-hidden mb-2">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between">
                 <div>
+                    {!props.grouped && (
+                        <h2 class="mb-2 text-sm truncate">{props.session.bookTitle}</h2>
+                    )}
                     <h3>Session on {dateFromTimestamp(props.session.startTime)}</h3>
                     <div class="flex items-center space-x-4 mt-1">
                         <span class="text-sm text-base04 flex items-center">
