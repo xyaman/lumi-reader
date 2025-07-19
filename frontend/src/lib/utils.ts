@@ -4,6 +4,10 @@ export function assert(condition: unknown, message = "Assertion failed"): assert
     }
 }
 
+export function isTouchDevice() {
+    return window.matchMedia("(pointer: coarse)").matches
+}
+
 export function formatTime(secs: number) {
     const h = Math.floor(secs / 3600)
     const m = Math.floor((secs % 3600) / 60)

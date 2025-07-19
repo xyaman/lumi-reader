@@ -2,21 +2,7 @@ import { createMemo, createSignal, For, onCleanup, onMount } from "solid-js"
 import { ReaderSourceLightRecord } from "@/lib/db"
 import { useLibraryContext } from "@/context/library"
 import BookCard from "./BookCard"
-
-// Detects if the device is touch-capable for UI adaptation.
-// This hook is called on every resize event
-function useTouchDetection() {
-    const [isTouch, setIsTouch] = createSignal(false)
-    const checkTouch = () => setIsTouch(window.matchMedia("(pointer: coarse)").matches)
-
-    onMount(() => {
-        checkTouch()
-        window.addEventListener("resize", checkTouch)
-        onCleanup(() => window.removeEventListener("resize", checkTouch))
-    })
-
-    return isTouch
-}
+import { isTouchDevice } from "@/lib/utils"
 
 // Main grid for displaying all books.
 export default function BooksGrid() {
@@ -24,7 +10,7 @@ export default function BooksGrid() {
 
     // Track which book is hovered/touched.
     const [hoveredBookId, setHoveredBookId] = createSignal<number | null>(null)
-    const isTouch = useTouchDetection()
+    const isTouch = isTouchDevice()
 
     // Hide actions when clicking outside any book card.
     onMount(() => {
@@ -39,7 +25,7 @@ export default function BooksGrid() {
 
     // Handle tap/click on book for touch devices.
     const handleBookClick = (e: MouseEvent, book: ReaderSourceLightRecord) => {
-        if (isTouch()) {
+        if (isTouch) {
             if (hoveredBookId() !== book.localId) {
                 e.preventDefault()
                 setHoveredBookId(book.localId)
@@ -65,10 +51,8 @@ export default function BooksGrid() {
                 {(book) => (
                     <BookCard
                         book={book}
-                        hoveredBookId={hoveredBookId}
-                        setHoveredBookId={setHoveredBookId}
-                        isTouch={isTouch}
-                        handleBookClick={handleBookClick}
+                        hovered={hoveredBookId() === book.localId}
+                        onClick={(e) => handleBookClick(e, book)}
                     />
                 )}
             </For>

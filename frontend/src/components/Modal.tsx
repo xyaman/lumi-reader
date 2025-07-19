@@ -1,8 +1,8 @@
 import { createEffect, JSX, onCleanup, Show } from "solid-js"
 import { Portal } from "solid-js/web"
 
-type ModalProps = {
-    children: JSX.Element
+export type ModalProps = {
+    children?: JSX.Element
     show?: boolean
     onDismiss?: () => void
 }
