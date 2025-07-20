@@ -18,7 +18,7 @@ class UserSerializer
       )
 
       if current_user.present?
-        result[:following] = Follow.exists?(follower_id: current_user.id, followed_id: user.id)
+        result[:following] = current_user.following.exists?(user.id)
       else
         result[:following] = false
       end
