@@ -4,6 +4,7 @@ import consumer from "@/services/websocket"
 import { snakeToCamel, timeAgo } from "@/lib/utils"
 import { userApi } from "@/api/user"
 import { User } from "@/types/api"
+import UserAvatar from "./UserAvatar"
 
 export default function SocialList() {
     const { sessionStore } = useAuthContext()
@@ -70,22 +71,7 @@ export default function SocialList() {
                     <div class="flex items-start">
                         <div class="relative">
                             {/* Avatar */}
-                            <Show
-                                when={user.avatarUrl}
-                                fallback={
-                                    <div class="bg-(--base01) w-8 h-8 rounded-full flex items-center">
-                                        <span class="text-xs font-medium">
-                                            {user.username.charAt(0).toUpperCase()}
-                                        </span>
-                                    </div>
-                                }
-                            >
-                                <img
-                                    src={user.avatarUrl}
-                                    class="w-8 h-8 rounded-full mt-1 object-cover"
-                                    alt="User avatar"
-                                />
-                            </Show>
+                            <UserAvatar user={user} w={10} h={10} />
                             <div
                                 class={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ${user.presence?.status === "online" ? "bg-base0B" : "bg-base04"}`}
                             />

@@ -7,6 +7,7 @@ import { LibraryProvider, useLibraryContext } from "./context/library"
 import SocialList from "./components/SocialList"
 import Dialog from "@corvu/dialog"
 import { LumiDb } from "./lib/db"
+import UserAvatar from "./components/UserAvatar"
 
 function useIsMobile() {
     const [isMobile, setIsMobile] = createSignal(window.innerWidth <= 768)
@@ -106,22 +107,7 @@ function Sidebar() {
                 <div class="p-2 border-b border-base02">
                     <div class="flex items-center space-x-3 p-2 rounded hover:bg-base02">
                         {/* User Avatar */}
-                        <Show
-                            when={sessionStore.user?.avatarUrl}
-                            fallback={
-                                <div class="bg-(--base01) w-8 h-8 rounded-full flex items-center">
-                                    <span class="text-xs font-medium">
-                                        {sessionStore.user?.username.charAt(0).toUpperCase()}
-                                    </span>
-                                </div>
-                            }
-                        >
-                            <img
-                                src={sessionStore.user?.avatarUrl}
-                                class="w-10 h-10 rounded-full"
-                                alt="User avatar"
-                            />
-                        </Show>
+                        <UserAvatar h={10} w={10} user={sessionStore.user!} />
                         {/* Name  */}
                         <p class="font-semibold">{sessionStore.user?.username}</p>
                     </div>
@@ -244,13 +230,13 @@ export default function HomePage(props: { children?: JSX.Element }) {
                 }
             >
                 {/* Mobile version */}
-                <div class="p-10 overflow-auto" style={{"height":"calc(100vh - 60px)"}}>
+                <div class="p-10 overflow-auto" style={{ height: "calc(100vh - 60px)" }}>
                     <Header />
                     {props.children}
                 </div>
                 <div
                     class="fixed bottom-0 left-0 right-0 bg-base01 border-t border-base02 flex justify-around items-center p-2 md:hidden"
-                    style={{"height":"56px"}}
+                    style={{ height: "56px" }}
                 >
                     <A
                         href="/"
