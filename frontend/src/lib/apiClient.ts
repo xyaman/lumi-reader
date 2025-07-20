@@ -35,14 +35,16 @@ export class ApiClient {
             return err(new ConnectionError("Missing CSRF token"))
         }
 
+        const isFormData = options.body instanceof FormData
+
         let response
         try {
             response = await fetch(url, {
                 ...options,
                 credentials: "include",
                 headers: {
-                    "Content-Type": "application/json",
                     "X-CSRF-TOKEN": csrfToken || "",
+                    ...(isFormData ? {} : { "Content-Type": "application/json" }),
                     ...options.headers,
                 },
             })

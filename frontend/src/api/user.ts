@@ -38,7 +38,6 @@ export const userApi = {
         return ApiClient.request<{ avatarUrl: string }>("/session/avatar", {
             method: "PATCH",
             body: formData,
-            headers: {},
         })
     },
 
