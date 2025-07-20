@@ -245,6 +245,7 @@ export class LumiDb {
         await this.updateBookshelf(shelf)
     }
 
+    // Reading Sesssion
     static async createReadingSession(book: {
         localId: number
         uniqueId: string
@@ -327,6 +328,30 @@ export class LumiDb {
 
         updatedSession.updatedAt = Math.floor(Date.now() / 1000)
         await db.put(STORE_READING_SESSIONS, updatedSession as ReadingSession)
+    }
+
+    static async getRecentReadingSessions(page: number) {
+        const db = await this.getDB()
+        const tx = db.transaction(STORE_READING_SESSIONS, "readonly")
+        const store = tx.objectStore(STORE_READING_SESSIONS)
+
+        const results: ReadingSession[] = []
+        let cursor = await store.openCursor(null, "prev")
+        let skipped = 0
+        const offset = page * 6 // page size is 20
+
+        while (cursor && results.length < 6) {
+            if (skipped < offset) {
+                skipped++
+            } else {
+                results.push(cursor.value)
+            }
+
+            cursor = await cursor.continue()
+        }
+
+        await tx.done
+        return results
     }
 
     static async deleteReadingSession(id: number): Promise<void> {

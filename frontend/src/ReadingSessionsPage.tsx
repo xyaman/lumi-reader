@@ -234,7 +234,7 @@ export function ReadingSessionsList(props: { sessions: ReadingSession[]; groupBy
     )
 }
 
-function GroupCard(props: { group: GroupSession }) {
+export function GroupCard(props: { group: GroupSession }) {
     const [showNested, setShowNested] = createSignal(false)
 
     const totalChars = () => props.group.currChars - props.group.initialChars
@@ -294,7 +294,7 @@ function GroupCard(props: { group: GroupSession }) {
     )
 }
 
-function IndividualSessions(props: { grouped?: boolean; session: ReadingSession }) {
+export function IndividualSessions(props: { grouped?: boolean; session: ReadingSession }) {
     const dateFromTimestamp = (unixtimestamp: number) => {
         const date = new Date(unixtimestamp * 1000)
         const month = date.toLocaleString("en-US", { month: "short" })

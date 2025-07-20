@@ -12,6 +12,7 @@ import { AuthProvider } from "./context/session"
 import { ReadingSessionsPage } from "./ReadingSessionsPage"
 import HomePage from "./HomePage"
 import SocialList from "./components/SocialList"
+import UserPage from "./UserPage"
 
 const settingsFilter: MatchFilters = {
     name: ["theme", "reader", "sessions"],
@@ -28,13 +29,14 @@ function App() {
                     <Route path="/" component={BookLibrary} />
                     <Route path="/sessions" component={ReadingSessionsPage} />
                     <Route path="/social" component={SocialList} />
+                    <Route path="/users/:id?" component={UserPage} />
                 </Route>
                 <Route path="/reader/:id?" component={BookReader} matchFilters={settingsFilter} />
                 <Route path="/settings/:name?" component={Settings} />
                 <Route path="/register" component={Register} />
                 <Route path="/login" component={Login} />
                 <Route path="/users/search" component={UserSearch} />
-                <Route path="/users/:id?" component={Profile} />
+                <Route path="/usersold/:id?" component={Profile} />
             </Router>
         </AuthProvider>
     )

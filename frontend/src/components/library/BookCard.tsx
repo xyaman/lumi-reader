@@ -57,7 +57,7 @@ export default function BookCard(props: {
             </A>
             {/* Info button */}
             <button
-                class="button absolute cursor-pointer top-2 w-8 h-8 border-none opacity-0 group-hover:opacity-100 hover:ring-2 hover:ring-(--base08) rounded-full flex items-center justify-center transition-opacity right-11"
+                class="bg-base02 absolute cursor-pointer top-2 w-8 h-8 border-none opacity-0 group-hover:opacity-100 hover:ring-2 hover:ring-(--base08) rounded-full flex items-center justify-center transition-opacity right-11"
                 classList={{ "opacity-100": buttonsVisible() }}
                 onClick={() => setModalOpen(props.book)}
             >
@@ -66,7 +66,7 @@ export default function BookCard(props: {
 
             {/* Delete button */}
             <button
-                class="button absolute cursor-pointer top-2 w-8 h-8 border-none opacity-0 group-hover:opacity-100 hover:ring-2 hover:ring-(--base08) rounded-full flex items-center justify-center transition-opacity right-2"
+                class="bg-base02 absolute cursor-pointer top-2 w-8 h-8 border-none opacity-0 group-hover:opacity-100 hover:ring-2 hover:ring-(--base08) rounded-full flex items-center justify-center transition-opacity right-2"
                 classList={{ "opacity-100": buttonsVisible() }}
                 onClick={handleDeleteBook}
             >

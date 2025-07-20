@@ -25,6 +25,9 @@ export interface User {
     followingCount?: number
     followersCount?: number
     shareStatus?: boolean
+    // present if the user is logged in
+    following?: boolean
+
     presence?: Presence
 }
 

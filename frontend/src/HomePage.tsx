@@ -222,6 +222,7 @@ export default function HomePage(props: { children?: JSX.Element }) {
                                 initialSize={0.8}
                                 minSize={0.7}
                                 class="overflow-y-auto"
+                                id="main-container"
                             >
                                 <div class="p-10">{props.children}</div>
                             </Resizable.Panel>
@@ -230,7 +231,11 @@ export default function HomePage(props: { children?: JSX.Element }) {
                 }
             >
                 {/* Mobile version */}
-                <div class="p-10 overflow-auto" style={{ height: "calc(100vh - 60px)" }}>
+                <div
+                    id="main-container"
+                    class="p-10 overflow-auto"
+                    style={{ height: "calc(100vh - 60px)" }}
+                >
                     <Header />
                     {props.children}
                 </div>
