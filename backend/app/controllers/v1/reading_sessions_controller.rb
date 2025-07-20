@@ -156,9 +156,11 @@ class V1::ReadingSessionsController < ApplicationController
       user_id: session.user_id,
       book_id: session.book_id,
       book_title: session.book_title,
-      language: session.book_language,
+      book_language: session.book_language,
       start_time: session.start_time,
       end_time: session.end_time,
+      initial_chars: session.initial_chars,
+      curr_chars: session.curr_chars,
       total_reading_time: session.total_reading_time,
       status: session.status,
       updated_at: session.updated_at.to_i # TODO: is this the right approach?
@@ -173,6 +175,8 @@ class V1::ReadingSessionsController < ApplicationController
       :book_language,
       :start_time,
       :end_time,
+      :initial_chars,
+      :curr_chars,
       :total_reading_time,
       :status
     )

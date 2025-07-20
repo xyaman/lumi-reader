@@ -11,6 +11,9 @@ class CreateReadingSessions < ActiveRecord::Migration[8.0]
       t.integer :start_time, null: false # unix timestamp
       t.integer :end_time, null: true # unix timestamp
 
+      t.integer :initial_chars, null: false
+      t.integer :curr_chars, null: false
+
       t.integer :total_reading_time, null: false
       t.string :status, null: false, default: 'active'  # finished, active
       t.timestamps

@@ -57,6 +57,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_13_031210) do
     t.string "book_language", null: false
     t.integer "start_time", null: false
     t.integer "end_time"
+    t.integer "initial_chars", null: false
+    t.integer "curr_chars", null: false
     t.integer "total_reading_time", null: false
     t.string "status", default: "active", null: false
     t.datetime "created_at", null: false
