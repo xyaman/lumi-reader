@@ -1,4 +1,5 @@
-import { LumiDb, ReadingSession } from "@/lib/db"
+import { LumiDb } from "@/lib/db"
+import { ReadingSession } from "@/types/api"
 import { formatTime } from "@/lib/utils"
 import { createResource, createSignal, For, Match, onMount, Show, Switch } from "solid-js"
 import {

@@ -11,7 +11,10 @@ Rails.application.routes.draw do
       collection do
         get "diff", to: "reading_sessions#diff"
         post "batch_update", to: "reading_sessions#batch_update"
+        get "recent/:user_id", to: "reading_sessions#recent"
       end
+
+
     end
 
     resource :session, only: [ :create, :show, :destroy ] do

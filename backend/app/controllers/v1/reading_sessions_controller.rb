@@ -1,4 +1,5 @@
 class V1::ReadingSessionsController < ApplicationController
+  allow_unauthenticated_access only: %i[ recent ]
 
   # @oas_include
   # @tags ReadingSessions
@@ -24,18 +25,42 @@ class V1::ReadingSessionsController < ApplicationController
   # @response Success(200) [Hash{sessions: Array<ReadingSession>}]
   # @response Unauthorized(401) [Hash{error: String}]
   def index
-    @reading_sessions = current_user.reading_sessions
+    reading_sessions = current_user.reading_sessions
 
     # Filter by date range if provided
     if params[:start_date].present? && params[:end_date].present?
       end_date = params[:end_date]
       start_date = params[:start_date]
-      @reading_sessions = @reading_sessions.for_date_range(start_date, end_date)
+      reading_sessions = reading_sessions.for_date_range(start_date, end_date)
     end
 
-    success_response({ sessions: @reading_sessions.map { |session| session_json(session) } })
+    success_response({ sessions: reading_sessions.map { |session| session_json(session) } })
   end
 
+  # @oas_include
+  # @tags ReadingSessions
+  # @summary Get recent reading sessions for a user
+  # @parameter user_id(query) [Integer] User ID to fetch sessions for
+  # @parameter page(query) [Integer] Page number for pagination (optional)
+  # @response Success(200) [Hash{sessions: Array<ReadingSession>, pagy: Hash{page: Integer, pages: Integer, count: Integer}}]
+  def recent
+    return error_response("id parameter missing") unless params[:user_id]
+
+    user = User.find_by(id: params[:user_id].to_i)
+    return user_not_found_response unless user
+
+    reading_sessions = user.reading_sessions.order(updated_at: :desc)
+    pagy, paginated_sessions = pagy(reading_sessions, items: 20, page: params[:page].to_i || 1)
+    success_response({
+      sessions: paginated_sessions.map { |session| session_json(session) },
+      pagy: {
+        page: pagy.page,
+        pages: pagy.pages,
+        count: pagy.count
+      }
+    })
+
+  end
 
   # @oas_include
   # @tags ReadingSessions

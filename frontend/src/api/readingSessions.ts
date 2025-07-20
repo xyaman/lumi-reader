@@ -31,6 +31,13 @@ export const readingSessionsApi = {
         return ApiClient.request<{ sessions: ReadingSession[] }>("/reading_sessions")
     },
 
+    async getRecent(userId: number, page: number = 1) {
+        return ApiClient.request<{
+            sessions: ReadingSession[]
+            pagy: { page: number; pages: number }
+        }>(`/reading_sessions/recent/${userId}?page=${page}`)
+    },
+
     async getByDateRange(startDate: number, endDate: number) {
         return ApiClient.request<{ sessions: ReadingSession[] }>(
             `/reading_sessions?start_date=${startDate}&end_date=${endDate}`,

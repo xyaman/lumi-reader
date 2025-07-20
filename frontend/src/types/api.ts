@@ -39,6 +39,8 @@ export interface ReadingSession {
     bookLanguage: string
     startTime: number
     endTime?: number | null
+    initialChars: number
+    currChars: number
     totalReadingTime: number
 
     // TODO: status

@@ -13,10 +13,12 @@ import {
 } from "solid-js"
 import UserAvatar from "@/components/UserAvatar"
 import { userApi } from "./api/user"
-import { User } from "./types/api"
-import { LumiDb, ReadingSession } from "./lib/db"
+import { User, ReadingSession } from "./types/api"
+import { LumiDb } from "./lib/db"
 import { IndividualSessions } from "./ReadingSessionsPage"
 import { createStore } from "solid-js/store"
+import { readingSessionsApi } from "./api/readingSessions"
+import Spinner from "./components/Spiner"
 
 type UserDescriptionProps = {
     user: User
@@ -52,6 +54,7 @@ export default function UserPage() {
         sessions: [] as ReadingSession[],
         loading: false,
         page: 0,
+        pages: 1,
     })
 
     const [user, { mutate: mutateUser }] = createResource(userId, async () => {
@@ -89,7 +92,9 @@ export default function UserPage() {
     const loadMoreSessions = async () => {
         if (readingStore.loading) return
         setReadingStore("loading", true)
+
         if (isOwnId()) {
+            // local sessions
             const res = await LumiDb.getRecentReadingSessions(readingStore.page)
             if (res.length === 0) {
                 setReadingStore("loading", false)
@@ -98,6 +103,19 @@ export default function UserPage() {
             setReadingStore("sessions", (sessions) => [...sessions, ...res])
             setReadingStore("page", (page) => page + 1)
         } else {
+            // backend sessions (other users)
+            // it means we are at the end
+            if (readingStore.page >= readingStore.pages) return
+
+            // backend pages starts at 1 (pagy ruby)
+            const res = await readingSessionsApi.getRecent(userId(), readingStore.page + 1)
+            if (res.ok) {
+                setReadingStore("sessions", res.ok.data!.sessions)
+                setReadingStore("page", (page) => page + 1)
+                setReadingStore("pages", res.ok.data!.pagy.pages)
+            } else {
+                console.error(res.error)
+            }
         }
 
         setReadingStore("loading", false)
@@ -230,9 +248,14 @@ export default function UserPage() {
                     <h2 class="text-2xl font-bold mb-6 p-2 border-b border-base03">
                         Recent Reading Activity
                     </h2>
-                    <For each={readingStore.sessions ?? []}>
-                        {(session) => <IndividualSessions session={session} />}
-                    </For>
+                    <Show
+                        when={!readingStore.loading}
+                        fallback={<Spinner size={40} base16Color="--base05" />}
+                    >
+                        <For each={readingStore.sessions ?? []}>
+                            {(session) => <IndividualSessions session={session} />}
+                        </For>
+                    </Show>
                 </section>
             </Show>
         </div>
