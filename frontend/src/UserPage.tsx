@@ -108,6 +108,20 @@ export default function UserPage() {
         setEditDescription(v)
     }
 
+    const onAvatarChange = async (f: File) => {
+        if (f.size / 1000000 > 2) {
+            alert("Max file size: 2MB")
+            return
+        }
+
+        const res = await userApi.updateAvatar(f)
+        if (res.error) {
+            console.error(res.error)
+        } else {
+            mutateUser({ ...user()!, avatarUrl: res.ok.data!.avatarUrl })
+        }
+    }
+
     // -- buttons handlers
     const handleFollow = async () => {
         let res
@@ -145,7 +159,7 @@ export default function UserPage() {
                 <section>
                     <div class="flex gap-8">
                         {/* Avatar */}
-                        <UserAvatar user={user()!} w={40} h={40} />
+                        <UserAvatar user={user()!} w={40} h={40} onAvatarChange={onAvatarChange} />
 
                         {/* Profile info */}
                         <div class="flex-1">
