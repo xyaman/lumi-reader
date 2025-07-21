@@ -17,7 +17,7 @@ const LS_KEYS = {
     DIR: "library:direction",
 } as const
 
-type SortField = "lastModifiedDate" | "creationDate"
+type SortField = "updatedAt" | "createdAt"
 type SortDirection = "asc" | "desc"
 type Shelf = { id: number; name: string; bookIds: number[] }
 
@@ -46,7 +46,7 @@ const LibraryContext = createContext<ILibraryContext>({
         shelves: [],
         activeShelf: null,
         covers: {},
-        sort: "lastModifiedDate",
+        sort: "updatedAt",
         dir: "desc",
     },
     setState: () => {},
@@ -68,7 +68,7 @@ export function LibraryProvider(props: { children: JSX.Element }) {
         shelves: [],
         covers: {},
         activeShelf: null,
-        sort: (localStorage.getItem(LS_KEYS.SORT) as SortField) ?? "lastModifiedDate",
+        sort: (localStorage.getItem(LS_KEYS.SORT) as SortField) ?? "updatedAt",
         dir: (localStorage.getItem(LS_KEYS.DIR) as SortDirection) ?? "desc",
     })
 

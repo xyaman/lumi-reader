@@ -25,9 +25,10 @@ export class ConnectionError extends Error {
 export type ApiResult<T> = AsyncResult<ApiResponse<T>, ApiError | ConnectionError>
 
 export class ApiClient {
-    static async request<T>(endpoint: string, options: RequestInit = {}): ApiResult<T> {
-        const url = `${API_URL}/${API_VERSION}${endpoint}`
-
+    static async rawRequest(
+        url: string,
+        options: RequestInit = {},
+    ): AsyncResult<Response, ApiError | ConnectionError> {
         // All requests methods, except GET, needs the csrfToken. Even for not
         // unprotected routes. The backend puts this cookie on every request
         const csrfToken = await this.getCsrfToken()
@@ -51,6 +52,16 @@ export class ApiClient {
         } catch (e: any) {
             return err(new ConnectionError(e?.message || "Network Error"))
         }
+
+        return ok(response)
+    }
+
+    static async request<T>(endpoint: string, options: RequestInit = {}): ApiResult<T> {
+        const url = `${API_URL}/${API_VERSION}${endpoint}`
+        const rawResponse = await this.rawRequest(url, options)
+        if (rawResponse.error) return rawResponse
+
+        const response = rawResponse.ok
 
         let data
         try {

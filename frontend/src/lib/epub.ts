@@ -43,11 +43,11 @@ export class EpubBook implements ReaderSource {
 
     localId!: number
     uniqueId!: string
-    creationDate: number = Date.now()
-    lastModifiedDate: number = Date.now()
+    createdAt: number = Math.floor(Date.now() / 1000)
+    updatedAt: number = Math.floor(Date.now() / 1000)
     title!: string
     language!: string
-    creator: string[] = []
+    creator!: string
     totalChars!: number
     currChars: number = 0
     currParagraph: number = 0
@@ -63,8 +63,8 @@ export class EpubBook implements ReaderSource {
         const book = new EpubBook()
         book.localId = record.localId
         book.uniqueId = record.uniqueId
-        book.creationDate = record.creationDate
-        book.lastModifiedDate = record.lastModifiedDate
+        book.createdAt = record.createdAt
+        book.updatedAt = record.updatedAt
         book.title = record.title
         book.language = record.language
         book.creator = record.creator
@@ -119,7 +119,7 @@ export class EpubBook implements ReaderSource {
         }
         const metadata = extractMetadata(pkgDocumentXml)
         book.title = metadata.title
-        book.creator = metadata.creator
+        book.creator = metadata.creator.join(" ")
         book.language = metadata.language
         book.uniqueId = metadata.identifier
 
@@ -181,8 +181,8 @@ export class EpubBook implements ReaderSource {
             uniqueId: this.uniqueId,
             title: this.title,
             creator: this.creator,
-            lastModifiedDate: this.lastModifiedDate,
-            creationDate: this.creationDate,
+            updatedAt: this.updatedAt,
+            createdAt: this.createdAt,
             language: this.language,
             totalChars: this.totalChars,
             currChars: this.currChars,

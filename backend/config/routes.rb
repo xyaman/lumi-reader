@@ -13,9 +13,13 @@ Rails.application.routes.draw do
         post "batch_update", to: "reading_sessions#batch_update"
         get "recent/:user_id", to: "reading_sessions#recent"
       end
-
-
     end
+
+    resources :synced_books, only: [ :index ]
+    delete "synced_books/:unique_id", to: "synced_books#destroy"
+    patch "synced_books/:unique_id", to: "synced_books#update"
+    post "synced_books/sync", to: "synced_books#sync"
+    post "synced_books/upload/:unique_id", to: "synced_books#upload_data"
 
     resource :session, only: [ :create, :show, :destroy ] do
       resources :follows, only: [ :update, :destroy ]

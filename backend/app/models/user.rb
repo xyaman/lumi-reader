@@ -2,6 +2,7 @@ class User < ApplicationRecord
   has_secure_password
   has_many :sessions, dependent: :destroy
   has_many :reading_sessions, dependent: :destroy
+  has_many :synced_books, dependent: :destroy
 
   normalizes :email, with: ->(e) { e.strip.downcase }
   validates :email, presence: true, uniqueness: true
@@ -20,6 +21,11 @@ class User < ApplicationRecord
   # Class method
   def self.find_by_username(query)
     where("LOWER(username) LIKE ?", "%#{sanitize_sql_like(query.downcase)}%")
+  end
+
+  # synced books related
+  def sync_limit
+    5
   end
 
   # email confirmation

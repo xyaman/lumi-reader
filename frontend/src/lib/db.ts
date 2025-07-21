@@ -1,28 +1,21 @@
 import { openDB, DBSchema, IDBPDatabase } from "idb"
 import type { Bookmark, SourceImage, NavigationItem, Section } from "./readerSource"
+import { SyncedBook } from "@/api/syncedBooks"
 
-export type ReaderSourceLightRecord = {
-    kind: string
+export type ReaderSourceLightRecord = SyncedBook & {
     localId: number
-    uniqueId: string
-    title: string
-    creator: string[]
-    language: string
     coverImage?: SourceImage
-    lastModifiedDate: number
-    creationDate: number
-    totalChars: number
-    currChars: number
-    currParagraph: number
 }
 
-export type ReaderSourceRecord = Omit<ReaderSourceLightRecord, "coverImage"> & {
+export type ReaderSourceData = {
     sections: Section[]
     nav: NavigationItem[]
     bookmarks: Bookmark[]
     images: SourceImage[]
     css: string
 }
+
+export type ReaderSourceRecord = Omit<ReaderSourceLightRecord, "coverImage"> & ReaderSourceData
 
 export type Bookshelf = {
     id: number
@@ -66,6 +59,9 @@ interface LumiDbSchema extends DBSchema {
     [STORE_RECORDS]: {
         key: number
         value: ReaderSourceRecord
+        indexes: {
+            uniqueId: string
+        }
     }
 
     [STORE_LIGHT]: {
@@ -98,10 +94,11 @@ export class LumiDb {
             this.dbPromise = openDB<LumiDbSchema>(DB_NAME, DB_VERSION, {
                 upgrade(db) {
                     if (!db.objectStoreNames.contains(STORE_RECORDS)) {
-                        db.createObjectStore(STORE_RECORDS, {
+                        const store = db.createObjectStore(STORE_RECORDS, {
                             keyPath: "localId",
                             autoIncrement: true,
                         })
+                        store.createIndex("uniqueId", "uniqueId", { unique: true })
                     }
 
                     if (!db.objectStoreNames.contains(STORE_LIGHT)) {
@@ -133,17 +130,18 @@ export class LumiDb {
 
     static async saveBookRecord(source: ReaderSourceRecord): Promise<void> {
         const db = await this.getDB()
-        source.lastModifiedDate = Date.now()
+        source.updatedAt = Math.floor(Date.now() / 1000)
 
         // Prepare lightRecord, omitting localId if not present
         const lightRecord = {
             kind: source.kind,
             title: source.title,
             uniqueId: source.uniqueId,
+            language: source.language,
             creator: source.creator,
             coverImage: source.images[0],
-            lastModifiedDate: source.lastModifiedDate,
-            creationDate: source.creationDate,
+            updatedAt: source.updatedAt,
+            createdAt: source.createdAt,
             totalChars: source.totalChars,
             currChars: source.currChars,
             currParagraph: source.currParagraph,
@@ -189,6 +187,11 @@ export class LumiDb {
     static async getBookById(localId: number): Promise<ReaderSourceRecord | undefined> {
         const db = await this.getDB()
         return db.get(STORE_RECORDS, localId)
+    }
+
+    static async getBookByUniqueId(uniqueId: string): Promise<ReaderSourceRecord | undefined> {
+        const db = await this.getDB()
+        return db.getFromIndex(STORE_RECORDS, "uniqueId", uniqueId)
     }
 
     static async getLightBookById(localId: number): Promise<ReaderSourceLightRecord | undefined> {

@@ -1,3 +1,4 @@
+# TODO: Remove
 class UserDailyActivity < ApplicationRecord
   belongs_to :user
 

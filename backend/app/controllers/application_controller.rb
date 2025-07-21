@@ -6,10 +6,14 @@ class ApplicationController < ActionController::API
   include Authentication
   include ApiResponse
 
-
-  protect_from_forgery with: :exception
   before_action :set_csrf_cookie
   allow_unauthenticated_access only: %i[ csrf ]
+
+  if Rails.env.test?
+    protect_from_forgery with: :null_session
+  else
+    protect_from_forgery with: :exception
+  end
 
   # GET /csrf
   def csrf

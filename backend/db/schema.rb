@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_13_031210) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_21_031024) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -78,15 +78,20 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_13_031210) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
-  create_table "user_daily_activities", force: :cascade do |t|
+  create_table "synced_books", force: :cascade do |t|
     t.integer "user_id", null: false
-    t.date "date", null: false
-    t.integer "characters_read", default: 0
-    t.integer "reading_time", default: 0
+    t.string "kind", null: false
+    t.string "unique_id", null: false
+    t.string "title", null: false
+    t.string "creator", null: false
+    t.string "language", null: false
+    t.integer "total_chars", null: false
+    t.integer "curr_chars", default: 0, null: false
+    t.integer "curr_paragraph", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["user_id", "date"], name: "index_user_daily_activities_on_user_id_and_date", unique: true
-    t.index ["user_id"], name: "index_user_daily_activities_on_user_id"
+    t.index ["unique_id"], name: "index_synced_books_on_unique_id"
+    t.index ["user_id"], name: "index_synced_books_on_user_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -100,8 +105,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_13_031210) do
     t.datetime "confirmation_sent_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "follows_count", default: 0, null: false
-    t.integer "followers_count", default: 0, null: false
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
   end
@@ -112,5 +115,5 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_13_031210) do
   add_foreign_key "follows", "users", column: "follower_id"
   add_foreign_key "reading_sessions", "users"
   add_foreign_key "sessions", "users"
-  add_foreign_key "user_daily_activities", "users"
+  add_foreign_key "synced_books", "users"
 end
