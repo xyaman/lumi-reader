@@ -1,11 +1,13 @@
-import { createEffect, createSignal } from "solid-js"
-import { IconFilter, IconUpload } from "./components/icons"
+import { createEffect, createSignal, For } from "solid-js"
+import { IconCloud, IconFilter, IconUpload } from "./components/icons"
 import BooksGrid from "./components/library/BooksGrid"
 import { useLibraryContext } from "./context/library"
 import { LumiDb, ReaderSourceLightRecord } from "./lib/db"
 import { EpubBook } from "./lib/epub"
 
 import Popover from "@corvu/popover"
+import Modal from "./components/Modal"
+import Checkbox from "./components/Checkbox"
 
 function SortPopover() {
     const { setSortParams, state } = useLibraryContext()
@@ -79,8 +81,42 @@ function SortPopover() {
     )
 }
 
+function SyncModal(props: {
+    show: boolean
+    onDismiss?: () => void
+    books: ReaderSourceLightRecord[]
+}) {
+    return (
+        <Modal show={props.show} onDismiss={props.onDismiss}>
+            <h2 class="mb-4 font-semibold text-xl">Manage Content Sync</h2>
+            <div class="bg-base02 p-4 rounded-lg mb-6">
+                <p class="font-medium mb-2">
+                    Your sync limit: <span class="text-base0D">3 books</span> (Free Plan)
+                </p>
+                <p class="text-sm text-[var(--base05)]">
+                    Upgrade to sync more books simultaneously.
+                </p>
+            </div>
+            <p class="mt-2 text-sm text-base04">
+                <span>Select books to sync content</span>
+            </p>
+            <div class="mt-4 border border-base03 rounded-md divide-y divide-base03 max-h-64 overflow-y-auto">
+                <For each={props.books}>
+                    {(book) => (
+                        <label class="flex items-center px-4 py-3 space-x-3 cursor-pointer hover:bg-base02 transition-colors">
+                            <span class="text-base05 truncate">{book.title}</span>
+                            <Checkbox class="ml-auto" checked={false} onChange={() => {}} />
+                        </label>
+                    )}
+                </For>
+            </div>
+        </Modal>
+    )
+}
+
 export default function BookLibrary() {
-    const { setState } = useLibraryContext()
+    const { state, setState } = useLibraryContext()
+    const [showModal, setShowModal] = createSignal(false)
 
     const handleUpload = async (e: Event) => {
         const files = Array.from((e.target as HTMLInputElement).files || [])
@@ -111,6 +147,13 @@ export default function BookLibrary() {
                 <div class="flex flex-col md:flex-row justify-between">
                     <h1 class="text-3xl font-bold mb-2 md:mb-0">Your Library</h1>
                     <div class="flex space-y-2 md:space-y-0 space-x-2 ml-auto">
+                        <button
+                            class="max-h-[40px] cursor-pointer bg-base02 hover:bg-base03 px-4 rounded-md flex items-center"
+                            onClick={() => setShowModal(true)}
+                        >
+                            <IconCloud />
+                            <span class="ml-2">Sync</span>
+                        </button>
                         <label class="max-h-[40px] cursor-pointer relative rounded-md bg-base02 hover:bg-base03 px-4 py-2 flex items-center">
                             <input
                                 type="file"
@@ -120,13 +163,18 @@ export default function BookLibrary() {
                                 class="absolute inset-0 opacity-0 cursor-pointer"
                             />
                             <IconUpload />
-                            <span class="cursor-pointer ml-2">Upload Book</span>
+                            <span class="cursor-pointer ml-2">Upload</span>
                         </label>
                         <SortPopover />
                     </div>
                 </div>
             </header>
             <BooksGrid />
+            <SyncModal
+                show={showModal()}
+                onDismiss={() => setShowModal(false)}
+                books={state.books}
+            />
         </>
     )
 }

@@ -73,6 +73,7 @@ export default function BookCard(props: {
                 <IconTrash />
             </button>
 
+            {/* TODO: move modal to the library page */}
             <BookshelfModal
                 book={props.book}
                 show={modalOpen() !== null}

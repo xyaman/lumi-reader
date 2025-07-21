@@ -15,6 +15,7 @@ import Calendar from "./components/Calendar"
 
 import { useAuthContext } from "@/context/session"
 import ReadingSessionManager from "./services/readingSession"
+import Checkbox from "./components/Checkbox"
 
 export function ReadingSessionsPage() {
     const { sessionStore } = useAuthContext()
@@ -131,15 +132,10 @@ export function ReadingSessionsPage() {
                     {/* group toggle and status */}
                     <div class="flex items-center space-x-2 mt-8 md:mt-0">
                         <span>Group by book</span>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input
-                                type="checkbox"
-                                class="sr-only peer"
-                                checked={groupByBook()}
-                                onChange={() => setGroupByBook((p) => !p)}
-                            />
-                            <div class="w-11 h-6 bg-base04 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-base0D"></div>
-                        </label>
+                        <Checkbox
+                            checked={groupByBook()}
+                            onChange={() => setGroupByBook((p) => !p)}
+                        />
                         <div
                             class="flex items-center space-x-2 px-3 py-2 bg-base01 rounded-full border-2"
                             classList={{

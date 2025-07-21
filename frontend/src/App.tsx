@@ -5,7 +5,6 @@ import Settings from "@/Settings"
 import { getSelectedTheme, setGlobalTheme } from "./theme"
 import Register from "./Register"
 import Login from "./Login"
-import Profile from "./Profile"
 import UserSearch from "./SearchPage"
 import { AuthProvider } from "./context/session"
 
@@ -36,7 +35,6 @@ function App() {
                 <Route path="/register" component={Register} />
                 <Route path="/login" component={Login} />
                 <Route path="/users/search" component={UserSearch} />
-                <Route path="/usersold/:id?" component={Profile} />
             </Router>
         </AuthProvider>
     )
