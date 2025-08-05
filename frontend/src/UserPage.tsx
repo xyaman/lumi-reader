@@ -1,16 +1,5 @@
 import { useNavigate, useParams } from "@solidjs/router"
-import { useAuthContext } from "@/context/session"
-import {
-    createEffect,
-    createResource,
-    createSignal,
-    For,
-    Match,
-    onCleanup,
-    onMount,
-    Show,
-    Switch,
-} from "solid-js"
+import { createEffect, createResource, createSignal, For, Match, onCleanup, onMount, Show, Switch } from "solid-js"
 import UserAvatar from "@/components/UserAvatar"
 import { userApi } from "./api/user"
 import { User, ReadingSession } from "./types/api"
@@ -19,6 +8,7 @@ import { IndividualSessions } from "./ReadingSessionsPage"
 import { createStore } from "solid-js/store"
 import { readingSessionsApi } from "./api/readingSessions"
 import Spinner from "./components/Spiner"
+import { useAuthState } from "./context/auth"
 
 type UserDescriptionProps = {
     user: User
@@ -41,12 +31,13 @@ function UserDescription(props: UserDescriptionProps) {
 }
 
 export default function UserPage() {
-    const { sessionStore } = useAuthContext()
+    const authState = useAuthState()
+
     const params = useParams()
     const navigate = useNavigate()
 
-    const userId = () => Number(params.id ?? sessionStore.user?.id)
-    const isOwnId = () => sessionStore.user?.id == userId()
+    const userId = () => Number(params.id ?? authState.user?.id)
+    const isOwnId = () => authState.user?.id == userId()
 
     const [editDescription, setEditDescription] = createSignal<string | null>(null)
     const [isLoading, setIsLoading] = createSignal(false)
@@ -187,29 +178,20 @@ export default function UserPage() {
                                 <Switch>
                                     <Match when={editDescription() !== null}>
                                         <div class="flex gap-2">
-                                            <button
-                                                class="button text-center"
-                                                onClick={() => setEditDescription(null)}
-                                            >
+                                            <button class="button text-center" onClick={() => setEditDescription(null)}>
                                                 Cancel
                                             </button>
-                                            <button
-                                                class="button text-center"
-                                                onClick={handleSaveDescription}
-                                            >
+                                            <button class="button text-center" onClick={handleSaveDescription}>
                                                 Save
                                             </button>
                                         </div>
                                     </Match>
-                                    <Match when={sessionStore.user && isOwnId()}>
-                                        <button
-                                            class="button text-center"
-                                            onClick={() => setEditDescription("")}
-                                        >
+                                    <Match when={authState.user && isOwnId()}>
+                                        <button class="button text-center" onClick={() => setEditDescription("")}>
                                             Edit description
                                         </button>
                                     </Match>
-                                    <Match when={sessionStore.user && !isOwnId()}>
+                                    <Match when={authState.user && !isOwnId()}>
                                         <button class="button text-center" onClick={handleFollow}>
                                             {user()!.following ? "Unfollow" : "Follow"}
                                         </button>
@@ -228,15 +210,11 @@ export default function UserPage() {
                             {/* Stats */}
                             <div class="flex gap-8">
                                 <div>
-                                    <span class="block text-2xl font-bold">
-                                        {user()!.followersCount || 0}
-                                    </span>
+                                    <span class="block text-2xl font-bold">{user()!.followersCount || 0}</span>
                                     <span class="text-sm">Followers</span>
                                 </div>
                                 <div>
-                                    <span class="block text-2xl font-bold">
-                                        {user()!.followingCount || 0}
-                                    </span>
+                                    <span class="block text-2xl font-bold">{user()!.followingCount || 0}</span>
                                     <span class="text-sm">Following</span>
                                 </div>
                             </div>
@@ -245,13 +223,8 @@ export default function UserPage() {
                 </section>
                 {/* Sessions/Activity */}
                 <section class="mt-12">
-                    <h2 class="text-2xl font-bold mb-6 p-2 border-b border-base03">
-                        Recent Reading Activity
-                    </h2>
-                    <Show
-                        when={!readingStore.loading}
-                        fallback={<Spinner size={40} base16Color="--base05" />}
-                    >
+                    <h2 class="text-2xl font-bold mb-6 p-2 border-b border-base03">Recent Reading Activity</h2>
+                    <Show when={!readingStore.loading} fallback={<Spinner size={40} base16Color="--base05" />}>
                         <For each={readingStore.sessions ?? []}>
                             {(session) => <IndividualSessions session={session} />}
                         </For>

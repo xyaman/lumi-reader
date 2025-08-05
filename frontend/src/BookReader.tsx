@@ -7,15 +7,14 @@ import ReaderNavbar from "@/components/reader/ReaderNavbar"
 import { SettingsSidebar, ReaderLeftSidebar } from "@/components/reader/ReaderSidebar"
 import ReaderContent from "@/components/reader/ReaderContent"
 import { LumiDb } from "./lib/db"
-import { useAuthContext } from "./context/session"
 import { ReaderSource } from "./lib/readerSource"
+import { UserActivityManager } from "./services/userPresence"
 
 // CharacterCounter toggles visibility on click, always clickable
 function CharacterCounter() {
     const [show, setShow] = createSignal(true)
     const { readerStore } = useReaderContext()
-    const currPercentage = () =>
-        ((100 * readerStore.currChars) / readerStore.book.totalChars).toFixed(2)
+    const currPercentage = () => ((100 * readerStore.currChars) / readerStore.book.totalChars).toFixed(2)
 
     return (
         <span
@@ -93,10 +92,7 @@ function GlobalKeymapManager() {
                             )}
                         </For>
                     </ul>
-                    <button
-                        class="button-theme rounded mt-4 px-4 py-2"
-                        onClick={() => setModalOpen(false)}
-                    >
+                    <button class="button-theme rounded mt-4 px-4 py-2" onClick={() => setModalOpen(false)}>
                         Close
                     </button>
                 </div>
@@ -120,7 +116,6 @@ function GlobalKeymapManager() {
 export default function BookReader(): JSX.Element {
     const params = useParams()
     const id = Number(params.id)
-    const { setReadingPresence } = useAuthContext()
 
     const navigate = useNavigate()
     if (!id) navigate("/", { replace: true })
@@ -140,9 +135,9 @@ export default function BookReader(): JSX.Element {
 
         // NOTE: if user is offline or unauthenticated, the
         // function is called, but it won't execute the fetch
-        setReadingPresence(source.title)
+        UserActivityManager.setPresence("reading", source.title)
         interval = setInterval(() => {
-            setReadingPresence(source.title)
+            UserActivityManager.setPresence("reading", source.title)
         }, 30000)
     }
 

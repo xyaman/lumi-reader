@@ -1,5 +1,4 @@
 import Resizable from "@corvu/resizable"
-import { useAuthContext } from "./context/session"
 import { onCleanup, createSignal, For, JSX, Show, onMount } from "solid-js"
 import { A, useLocation } from "@solidjs/router"
 import { IconCalendar, IconHome, IconSettings, IconUsers } from "./components/icons"
@@ -8,6 +7,7 @@ import SocialList from "./components/SocialList"
 import Dialog from "@corvu/dialog"
 import { LumiDb } from "./lib/db"
 import UserAvatar from "./components/UserAvatar"
+import { useAuthState } from "./context/auth"
 
 function useIsMobile() {
     const [isMobile, setIsMobile] = createSignal(window.innerWidth <= 768)
@@ -88,13 +88,13 @@ function Header() {
 function Sidebar() {
     const location = useLocation()
 
-    const { sessionStore } = useAuthContext()
+    const authState = useAuthState()
     const { state, setState } = useLibraryContext()
     return (
         <div class="bg-base01 border border-base02 h-full w-full">
             {/* User */}
             <Show
-                when={sessionStore.user}
+                when={authState.user}
                 fallback={
                     <div class="p-4 border-b border-base02">
                         <A href="/register">
@@ -107,9 +107,9 @@ function Sidebar() {
                 <div class="p-2 border-b border-base02">
                     <div class="flex items-center space-x-3 p-2 rounded hover:bg-base02">
                         {/* User Avatar */}
-                        <UserAvatar h={10} w={10} user={sessionStore.user!} />
+                        <UserAvatar h={10} w={10} user={authState.user!} />
                         {/* Name  */}
-                        <p class="font-semibold">{sessionStore.user?.username}</p>
+                        <p class="font-semibold">{authState.user?.username}</p>
                     </div>
                 </div>
             </Show>
@@ -208,11 +208,7 @@ export default function HomePage(props: { children?: JSX.Element }) {
                 fallback={
                     <div class="size-full">
                         <Resizable class="size-full">
-                            <Resizable.Panel
-                                initialSize={0.2}
-                                minSize={0.1}
-                                class="overflow-hidden"
-                            >
+                            <Resizable.Panel initialSize={0.2} minSize={0.1} class="overflow-hidden">
                                 <Sidebar />
                             </Resizable.Panel>
                             <Resizable.Handle class="group basis-3 px-0.75">
@@ -231,11 +227,7 @@ export default function HomePage(props: { children?: JSX.Element }) {
                 }
             >
                 {/* Mobile version */}
-                <div
-                    id="main-container"
-                    class="p-10 overflow-auto"
-                    style={{ height: "calc(100vh - 60px)" }}
-                >
+                <div id="main-container" class="p-10 overflow-auto" style={{ height: "calc(100vh - 60px)" }}>
                     <Header />
                     {props.children}
                 </div>
@@ -243,32 +235,16 @@ export default function HomePage(props: { children?: JSX.Element }) {
                     class="fixed bottom-0 left-0 right-0 bg-base01 border-t border-base02 flex justify-around items-center p-2 md:hidden"
                     style={{ height: "56px" }}
                 >
-                    <A
-                        href="/"
-                        class="p-2"
-                        classList={{ "text-base0D": location.pathname === "/" }}
-                    >
+                    <A href="/" class="p-2" classList={{ "text-base0D": location.pathname === "/" }}>
                         <IconHome />
                     </A>
-                    <A
-                        href="/sessions"
-                        class="p-2"
-                        classList={{ "text-base0D": location.pathname === "/sessions" }}
-                    >
+                    <A href="/sessions" class="p-2" classList={{ "text-base0D": location.pathname === "/sessions" }}>
                         <IconCalendar />
                     </A>
-                    <A
-                        href="/social"
-                        class="p-2"
-                        classList={{ "text-base0D": location.pathname === "/social" }}
-                    >
+                    <A href="/social" class="p-2" classList={{ "text-base0D": location.pathname === "/social" }}>
                         <IconUsers />
                     </A>
-                    <A
-                        href="/settings"
-                        class="p-2"
-                        classList={{ "text-base0D": location.pathname === "/settings" }}
-                    >
+                    <A href="/settings" class="p-2" classList={{ "text-base0D": location.pathname === "/settings" }}>
                         <IconSettings />
                     </A>
                 </div>

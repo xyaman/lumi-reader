@@ -1,18 +1,17 @@
-import { createEffect, createSignal, Show } from "solid-js"
+import { createSignal, onMount, Show } from "solid-js"
 import { A, useNavigate } from "@solidjs/router"
 import Navbar from "./components/Navbar"
-import { useAuthContext } from "./context/session"
 import { authApi } from "./api/auth"
+import { useAuthState } from "./context/auth"
 
 function Register() {
-    const { sessionStore: authStore, fetchCurrentUser } = useAuthContext()
+    const authStore = useAuthState()
 
-    createEffect(() => {
-        if (authStore.user) {
+    onMount(() => {
+        if (authStore.status === "authenticated") {
             const navigate = useNavigate()
             navigate("/users", { replace: true })
         }
-        fetchCurrentUser()
     })
 
     const [email, setEmail] = createSignal("")
@@ -59,14 +58,11 @@ function Register() {
                         when={!confirmationSent()}
                         fallback={
                             <div class="text-center">
-                                <h2 class="text-2xl font-bold mb-4 text-[var(--base07)]">
-                                    Confirm your email
-                                </h2>
+                                <h2 class="text-2xl font-bold mb-4 text-[var(--base07)]">Confirm your email</h2>
                                 <p class="mb-4 text-[var(--base05)]">
-                                    We've sent a confirmation link to{" "}
-                                    <span class="font-semibold">{email()}</span>.<br />
-                                    Please check your inbox and follow the instructions to activate
-                                    your account.
+                                    We've sent a confirmation link to <span class="font-semibold">{email()}</span>.
+                                    <br />
+                                    Please check your inbox and follow the instructions to activate your account.
                                 </p>
                                 <A href="/login" class="text-[var(--base0D)] hover:underline">
                                     Go to Login
@@ -74,9 +70,7 @@ function Register() {
                             </div>
                         }
                     >
-                        <h2 class="text-3xl font-bold text-center text-[var(--base07)] mb-6">
-                            Create Account
-                        </h2>
+                        <h2 class="text-3xl font-bold text-center text-[var(--base07)] mb-6">Create Account</h2>
 
                         <form class="space-y-4" onSubmit={handleSubmit}>
                             <input

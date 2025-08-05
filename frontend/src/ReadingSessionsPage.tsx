@@ -13,17 +13,17 @@ import {
 } from "./components/icons"
 import Calendar from "./components/Calendar"
 
-import { useAuthContext } from "@/context/session"
 import ReadingSessionManager from "./services/readingSession"
 import Checkbox from "./components/Checkbox"
+import { useAuthState } from "./context/auth"
 
 export function ReadingSessionsPage() {
-    const { sessionStore } = useAuthContext()
+    const authState = useAuthState()
     const [isSyncing, setIsSyncing] = createSignal(false)
     const [syncError, setSyncError] = createSignal<string | null>(null)
 
     const syncSessions = async () => {
-        if (!sessionStore.user) return
+        if (!authState.user) return
         setIsSyncing(true)
         setSyncError(null)
         const didChange = await ReadingSessionManager.syncWithBackend()
@@ -40,8 +40,7 @@ export function ReadingSessionsPage() {
     // update sessions with the backend
     onMount(() => syncSessions())
 
-    const totalReadingTime = () =>
-        formatTime(sessions()?.reduce((a, b) => a + b.totalReadingTime, 0) || 0)
+    const totalReadingTime = () => formatTime(sessions()?.reduce((a, b) => a + b.totalReadingTime, 0) || 0)
 
     const totalBooks = () => {
         const allSessions = sessions() || []
@@ -132,10 +131,7 @@ export function ReadingSessionsPage() {
                     {/* group toggle and status */}
                     <div class="flex items-center space-x-2 mt-8 md:mt-0">
                         <span>Group by book</span>
-                        <Checkbox
-                            checked={groupByBook()}
-                            onChange={() => setGroupByBook((p) => !p)}
-                        />
+                        <Checkbox checked={groupByBook()} onChange={() => setGroupByBook((p) => !p)} />
                         <div
                             class="flex items-center space-x-2 px-3 py-2 bg-base01 rounded-full border-2"
                             classList={{
@@ -213,17 +209,11 @@ export function ReadingSessionsList(props: { sessions: ReadingSession[]; groupBy
 
     return (
         <div>
-            <h2 class="text-xl font-semibold mb-4">
-                {props.groupByBook ? "Books" : "All Sessions"}
-            </h2>
+            <h2 class="text-xl font-semibold mb-4">{props.groupByBook ? "Books" : "All Sessions"}</h2>
             <div class="grid grid-cols-1 gap-6">
                 <For each={internalSessions()}>
                     {(session) =>
-                        props.groupByBook ? (
-                            <GroupCard group={session} />
-                        ) : (
-                            <IndividualSessions session={session} />
-                        )
+                        props.groupByBook ? <GroupCard group={session} /> : <IndividualSessions session={session} />
                     }
                 </For>
             </div>
@@ -268,12 +258,8 @@ export function GroupCard(props: { group: GroupSession }) {
                     </div>
                     <div class="mt-2 md:mt-0">
                         <div class="flex space-x-2">
-                            <span class="bg-base03 px-2 py-1 rounded text-sm">
-                                {totalChars()} chars
-                            </span>
-                            <span class="bg-base03 px-2 py-1 rounded text-sm">
-                                {readingSpeed()} cph
-                            </span>
+                            <span class="bg-base03 px-2 py-1 rounded text-sm">{totalChars()} chars</span>
+                            <span class="bg-base03 px-2 py-1 rounded text-sm">{readingSpeed()} cph</span>
                         </div>
                     </div>
                 </div>
@@ -281,9 +267,7 @@ export function GroupCard(props: { group: GroupSession }) {
             <Show when={showNested()}>
                 <div class=" pl-4 md:pl-8 border-l-2 border-base02">
                     <For each={props.group.internals}>
-                        {(session) => (
-                            <IndividualSessions grouped={showNested()} session={session} />
-                        )}
+                        {(session) => <IndividualSessions grouped={showNested()} session={session} />}
                     </For>
                 </div>
             </Show>
@@ -312,9 +296,7 @@ export function IndividualSessions(props: { grouped?: boolean; session: ReadingS
         <div class="bg-base01 rounded border border-base02 p-4 overflow-hidden mb-2">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between">
                 <div>
-                    {!props.grouped && (
-                        <h2 class="mb-2 text-sm truncate">{props.session.bookTitle}</h2>
-                    )}
+                    {!props.grouped && <h2 class="mb-2 text-sm truncate">{props.session.bookTitle}</h2>}
                     <h3>Session on {dateFromTimestamp(props.session.startTime)}</h3>
                     <div class="flex items-center space-x-4 mt-1">
                         <span class="text-sm text-base04 flex items-center">
@@ -332,9 +314,7 @@ export function IndividualSessions(props: { grouped?: boolean; session: ReadingS
                     </div>
                 </div>
                 <div class="mt-2 md:mt-0 flex space-x-2">
-                    <button class="cursor-pointer px-3 py-1 bg-base03 rounded-md text-sm font-medium">
-                        Edit
-                    </button>
+                    <button class="cursor-pointer px-3 py-1 bg-base03 rounded-md text-sm font-medium">Edit</button>
                     <button class="cursor-pointer px-3 py-1 bg-base03 hover:bg-base08 rounded-md text-sm font-medium">
                         Delete
                     </button>

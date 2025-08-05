@@ -2,22 +2,23 @@ import { MatchFilters, Route, Router } from "@solidjs/router"
 import BookLibrary from "@/BookLibrary"
 import BookReader from "@/BookReader"
 import Settings from "@/Settings"
-import { getSelectedTheme, setGlobalTheme } from "./theme"
-import Register from "./Register"
-import Login from "./Login"
-import UserSearch from "./SearchPage"
-import { AuthProvider } from "./context/session"
+import { getSelectedTheme, setGlobalTheme } from "@/theme"
+import Register from "@/Register"
+import UserSearch from "@/SearchPage"
+import AuthProvider from "@/context/auth"
 
-import { ReadingSessionsPage } from "./ReadingSessionsPage"
-import HomePage from "./HomePage"
-import SocialList from "./components/SocialList"
-import UserPage from "./UserPage"
+import { ReadingSessionsPage } from "@/ReadingSessionsPage"
+import HomePage from "@/HomePage"
+import SocialList from "@/components/SocialList"
+import UserPage from "@/UserPage"
+
+import { Login } from "@/pages/auth"
 
 const settingsFilter: MatchFilters = {
     name: ["theme", "reader", "sessions"],
 }
 
-function App() {
+export function App() {
     const theme = getSelectedTheme()
     setGlobalTheme(theme)
 
@@ -39,5 +40,3 @@ function App() {
         </AuthProvider>
     )
 }
-
-export default App

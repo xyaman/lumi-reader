@@ -1,20 +1,18 @@
-import { useAuthContext } from "@/context/session"
-import { createResource, For, Show } from "solid-js"
+import { createResource, For } from "solid-js"
 import consumer from "@/services/websocket"
 import { snakeToCamel, timeAgo } from "@/lib/utils"
 import { userApi } from "@/api/user"
 import { User } from "@/types/api"
 import UserAvatar from "./UserAvatar"
+import { useAuthState } from "@/context/auth"
 
 export default function SocialList() {
-    const { sessionStore } = useAuthContext()
+    const authState = useAuthState()
 
     const [follows, { mutate: setFollowers }] = createResource(async () => {
-        if (!sessionStore.user) return []
-        const res = await userApi.getFollowing(sessionStore.user!.id, true)
+        if (!authState.user) return []
+        const res = await userApi.getFollowing(authState.user!.id, true)
         if (res.error) throw res.error
-
-        console.log(res.ok.data)
         return res.ok.data!.following
     })
 
@@ -81,14 +79,9 @@ export default function SocialList() {
                         <div class="flex-1 ml-2 min-w-0">
                             <p class="text-sm">{user.username}</p>
                             <p class="text-sm truncate">
-                                {formatActivity(
-                                    user.presence?.activityType,
-                                    user.presence?.activityName,
-                                )}
+                                {formatActivity(user.presence?.activityType, user.presence?.activityName)}
                             </p>
-                            <p class="text-xs text-base04 mt-1">
-                                {timeAgo(user.presence?.activityTimestamp)}
-                            </p>
+                            <p class="text-xs text-base04 mt-1">{timeAgo(user.presence?.activityTimestamp)}</p>
                         </div>
                     </div>
                 )}
