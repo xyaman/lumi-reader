@@ -3,7 +3,6 @@ import BookLibrary from "@/BookLibrary"
 import BookReader from "@/BookReader"
 import Settings from "@/Settings"
 import { getSelectedTheme, setGlobalTheme } from "@/theme"
-import Register from "@/Register"
 import UserSearch from "@/SearchPage"
 import AuthProvider from "@/context/auth"
 
@@ -12,7 +11,7 @@ import HomePage from "@/HomePage"
 import SocialList from "@/components/SocialList"
 import UserPage from "@/UserPage"
 
-import { Login } from "@/pages/auth"
+import { Login, Register } from "@/pages/auth"
 
 const settingsFilter: MatchFilters = {
     name: ["theme", "reader", "sessions"],
