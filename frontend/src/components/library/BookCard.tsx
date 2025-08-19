@@ -1,10 +1,10 @@
 import { IconFolderOpen, IconTrash } from "@/components/icons"
-import { LumiDb, ReaderSourceLightRecord } from "@/lib/db"
+import { ReaderSourceLightRecord } from "@/lib/db"
 import { A } from "@solidjs/router"
-import { useLibraryContext } from "@/context/library"
 import { createEffect, createSignal, For } from "solid-js"
 import Modal, { ModalProps } from "../Modal"
 import { isTouchDevice } from "@/lib/utils"
+import { useLibraryDispatch, useLibraryState } from "@/context/library"
 
 // Renders a single book card with cover, title, progress, and actions.
 export default function BookCard(props: {
@@ -12,7 +12,8 @@ export default function BookCard(props: {
     hovered: boolean
     onClick: (e: MouseEvent) => void
 }) {
-    const { state, setState } = useLibraryContext()
+    const libraryState = useLibraryState()
+    const libraryDispatch = useLibraryDispatch()
     const [modalOpen, setModalOpen] = createSignal<ReaderSourceLightRecord | null>(null)
 
     // Reading progress as percent.
@@ -25,11 +26,7 @@ export default function BookCard(props: {
     const handleDeleteBook = async (e: MouseEvent) => {
         e.preventDefault()
         if (!confirm("Are you sure you want to delete this book?")) return
-        await LumiDb.deleteBookById(props.book.localId)
-        setState(
-            "books",
-            state.books.filter((book) => book.localId !== props.book.localId),
-        )
+        await libraryDispatch.deleteBook(props.book.localId)
     }
 
     const handleModalDismiss = () => setModalOpen(null)
@@ -39,7 +36,7 @@ export default function BookCard(props: {
             <A href={`/reader/${props.book.localId}`} onClick={props.onClick}>
                 <div class="bg-base01 shadow-lg hover:shadow-xl transition-shadow rounded overflow-hidden">
                     <img
-                        src={state.covers[props.book.localId]}
+                        src={libraryState.coverUrls[props.book.localId]}
                         alt={props.book.title}
                         class="w-full h-48 object-cover"
                     />
@@ -47,10 +44,7 @@ export default function BookCard(props: {
                         <p class="font-semibold truncate">{props.book.title}</p>
                         <p class="text-sm text-base04 truncate">{props.book.creator}</p>
                         <div class="bg-base02 w-full rounded mt-2">
-                            <div
-                                class="bg-base0D h-[4px] rounded"
-                                style={{ width: `${progressPercentage}%` }}
-                            />
+                            <div class="bg-base0D h-[4px] rounded" style={{ width: `${progressPercentage}%` }} />
                         </div>
                     </div>
                 </div>
@@ -74,11 +68,7 @@ export default function BookCard(props: {
             </button>
 
             {/* TODO: move modal to the library page */}
-            <BookshelfModal
-                book={props.book}
-                show={modalOpen() !== null}
-                onDismiss={handleModalDismiss}
-            />
+            <BookshelfModal book={props.book} show={modalOpen() !== null} onDismiss={handleModalDismiss} />
         </div>
     )
 }
@@ -87,14 +77,15 @@ type BookshelfModalProps = ModalProps & {
     book: ReaderSourceLightRecord
 }
 function BookshelfModal(props: BookshelfModalProps) {
-    const { state, setState } = useLibraryContext()
+    const libraryState = useLibraryState()
+    const libraryDispatch = useLibraryDispatch()
 
     // Initialize checked shelves for the book.
     const [selectedShelves, setSelectedShelves] = createSignal(new Set<number>())
 
     // update every time book changes?
     createEffect(() => {
-        const bookShelves = state.shelves
+        const bookShelves = libraryState.shelves
             .filter((shelf) => shelf.bookIds.includes(props.book.localId))
             .map((shelf) => shelf.id)
         setSelectedShelves(new Set(bookShelves))
@@ -109,42 +100,25 @@ function BookshelfModal(props: BookshelfModalProps) {
     }
 
     // Save shelf changes to DB and state.
+    // TODO: improve logic
     const handleSave = async () => {
         const selected = selectedShelves()
-        const currentShelves = state.shelves.filter((shelf) =>
-            shelf.bookIds.includes(props.book.localId),
-        )
 
-        for (const shelf of currentShelves) {
+        // Remove book from shelves where it's no longer selected
+        for (const shelf of libraryState.shelves.filter((shelf) => shelf.bookIds.includes(props.book.localId))) {
             if (!selected.has(shelf.id)) {
-                await LumiDb.removeBookFromShelf(shelf.id, props.book.localId)
+                libraryDispatch.toggleBookInShelf(shelf.id, props.book.localId)
             }
         }
 
+        // Add book to newly selected shelves
         for (const shelfId of selected) {
-            const shelf = state.shelves.find((s) => s.id === shelfId)
+            const shelf = libraryState.shelves.find((s) => s.id === shelfId)
             if (shelf && !shelf.bookIds.includes(props.book.localId)) {
-                await LumiDb.addBookToShelf(shelfId, props.book.localId)
+                libraryDispatch.toggleBookInShelf(shelf.id, props.book.localId)
             }
         }
 
-        // Update shelves in state.
-        const updatedShelves = state.shelves.map((shelf) => {
-            const shouldInclude = selected.has(shelf.id)
-            const currentlyIncludes = shelf.bookIds.includes(props.book.localId)
-
-            if (shouldInclude && !currentlyIncludes) {
-                return { ...shelf, bookIds: [...shelf.bookIds, props.book.localId] }
-            } else if (!shouldInclude && currentlyIncludes) {
-                return {
-                    ...shelf,
-                    bookIds: shelf.bookIds.filter((id) => id !== props.book.localId),
-                }
-            }
-            return shelf
-        })
-
-        setState("shelves", updatedShelves)
         props.onDismiss?.()
     }
 
@@ -156,7 +130,7 @@ function BookshelfModal(props: BookshelfModalProps) {
             </p>
             {/* List all shelves with checkboxes */}
             <div class="mt-4 border border-base03 rounded-md divide-y divide-base03 max-h-64 overflow-y-auto">
-                <For each={state.shelves}>
+                <For each={libraryState.shelves}>
                     {(shelf) => (
                         <label class="flex items-center px-4 py-3 space-x-3 cursor-pointer hover:bg-base02 transition-colors">
                             <input

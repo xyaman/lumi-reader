@@ -1,12 +1,12 @@
 import { createMemo, createSignal, For, onCleanup, onMount } from "solid-js"
 import { ReaderSourceLightRecord } from "@/lib/db"
-import { useLibraryContext } from "@/context/library"
 import BookCard from "./BookCard"
 import { isTouchDevice } from "@/lib/utils"
+import { useLibraryState } from "@/context/library"
 
 // Main grid for displaying all books.
 export default function BooksGrid() {
-    const { state } = useLibraryContext()
+    const libraryState = useLibraryState()
 
     // Track which book is hovered/touched.
     const [hoveredBookId, setHoveredBookId] = createSignal<number | null>(null)
@@ -37,11 +37,9 @@ export default function BooksGrid() {
 
     // Filter books by active shelf if set.
     const visibleBooks = createMemo(() => {
-        if (!state.activeShelf) return state.books
-        return state.books.filter((book) =>
-            state.shelves
-                .find((shelf) => shelf.id === state.activeShelf)
-                ?.bookIds.includes(book.localId),
+        if (!libraryState.activeShelf) return libraryState.books
+        return libraryState.books.filter((book) =>
+            libraryState.shelves.find((shelf) => shelf.id === libraryState.activeShelf)?.bookIds.includes(book.localId),
         )
     })
 

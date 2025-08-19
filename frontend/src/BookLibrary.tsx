@@ -1,20 +1,20 @@
 import { createEffect, createResource, createSignal, For } from "solid-js"
 import { IconCloud, IconFilter, IconUpload } from "./components/icons"
 import BooksGrid from "./components/library/BooksGrid"
-import { useLibraryContext } from "./context/library"
 import { LumiDb, ReaderSourceData, ReaderSourceLightRecord, ReaderSourceRecord } from "./lib/db"
-import { EpubBook } from "./lib/epub"
 
 import Popover from "@corvu/popover"
 import Modal from "./components/Modal"
 import Checkbox from "./components/Checkbox"
 import { SyncedBook, syncedBooksApi } from "./api/syncedBooks"
+import { useLibraryDispatch, useLibraryState } from "./context/library"
 
 function SortPopover() {
-    const { setSortParams, state } = useLibraryContext()
+    const libraryState = useLibraryState()
+    const { setSortParams } = useLibraryDispatch()
 
-    const [sortBy, setSortBy] = createSignal(state.sort || "lastModifiedDate")
-    const [order, setOrder] = createSignal(state.dir || "desc")
+    const [sortBy, setSortBy] = createSignal(libraryState.sort || "lastModifiedDate")
+    const [order, setOrder] = createSignal(libraryState.dir || "desc")
 
     createEffect(() => {
         setSortParams(sortBy(), order())
@@ -35,8 +35,8 @@ function SortPopover() {
                                 <input
                                     type="radio"
                                     name="sortBy"
-                                    checked={sortBy() === "lastModifiedDate"}
-                                    onChange={() => setSortBy("lastModifiedDate")}
+                                    checked={sortBy() === "byLastUpdate"}
+                                    onChange={() => setSortBy("byLastUpdate")}
                                 />
                                 <span class="ml-2">Last Read</span>
                             </label>
@@ -46,8 +46,8 @@ function SortPopover() {
                                 <input
                                     type="radio"
                                     name="sortBy"
-                                    checked={sortBy() === "creationDate"}
-                                    onChange={() => setSortBy("creationDate")}
+                                    checked={sortBy() === "byCreationDate"}
+                                    onChange={() => setSortBy("byCreationDate")}
                                 />
                                 <span class="ml-2">Added Time</span>
                             </label>
@@ -82,11 +82,7 @@ function SortPopover() {
     )
 }
 
-function SyncModal(props: {
-    show: boolean
-    onDismiss?: () => void
-    books: ReaderSourceLightRecord[]
-}) {
+function SyncModal(props: { show: boolean; onDismiss?: () => void; books: ReaderSourceLightRecord[] }) {
     const [checkedBooks, setCheckedBooks] = createSignal<Set<string>>(new Set())
     const toggleChecked = (id: string) => {
         setCheckedBooks((prev) => {
@@ -154,9 +150,7 @@ function SyncModal(props: {
                 <p class="font-medium mb-2">
                     Your sync limit: <span class="text-base0D">3 books</span> (Free Plan)
                 </p>
-                <p class="text-sm text-[var(--base05)]">
-                    Upgrade to sync more books simultaneously.
-                </p>
+                <p class="text-sm text-[var(--base05)]">Upgrade to sync more books simultaneously.</p>
             </div>
             <p class="mt-2 text-sm text-base04">
                 <span>Books in the cloud</span>
@@ -201,30 +195,14 @@ function SyncModal(props: {
 }
 
 export default function BookLibrary() {
-    const { state, setState } = useLibraryContext()
+    const libraryState = useLibraryState()
+    const { createBook } = useLibraryDispatch()
+
     const [showModal, setShowModal] = createSignal(false)
 
     const handleUpload = async (e: Event) => {
         const files = Array.from((e.target as HTMLInputElement).files || [])
-        const newBooks: ReaderSourceLightRecord[] = []
-
-        for (const file of files) {
-            if (!file.type.includes("epub") && !file.name.endsWith(".epub")) continue
-
-            // TODO: this also creates the image blob.. check??
-            const book = await EpubBook.fromFile(file)
-            book.deinit()
-            if (!book.localId) continue
-
-            const light = await LumiDb.getLightBookById(book.localId)
-            if (light) {
-                newBooks.push(light)
-            }
-        }
-
-        if (newBooks.length > 0) {
-            setState("books", (prev) => [...prev, ...newBooks])
-        }
+        await createBook(files)
     }
 
     return (
@@ -256,11 +234,7 @@ export default function BookLibrary() {
                 </div>
             </header>
             <BooksGrid />
-            <SyncModal
-                show={showModal()}
-                onDismiss={() => setShowModal(false)}
-                books={state.books}
-            />
+            <SyncModal show={showModal()} onDismiss={() => setShowModal(false)} books={libraryState.books} />
         </>
     )
 }

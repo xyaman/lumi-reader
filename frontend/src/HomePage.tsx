@@ -1,24 +1,17 @@
 import Resizable from "@corvu/resizable"
-import { onCleanup, createSignal, For, JSX, Show, onMount } from "solid-js"
+import { createSignal, For, JSX, Show, onMount } from "solid-js"
 import { A, useLocation } from "@solidjs/router"
 import { IconCalendar, IconHome, IconSettings, IconUsers } from "./components/icons"
-import { LibraryProvider, useLibraryContext } from "./context/library"
 import SocialList from "./components/SocialList"
 import Dialog from "@corvu/dialog"
-import { LumiDb } from "./lib/db"
 import UserAvatar from "./components/UserAvatar"
 import { useAuthState } from "./context/auth"
-
-function useIsMobile() {
-    const [isMobile, setIsMobile] = createSignal(window.innerWidth <= 768)
-    const handler = () => setIsMobile(window.innerWidth <= 768)
-    window.addEventListener("resize", handler)
-    onCleanup(() => window.removeEventListener("resize", handler))
-    return isMobile
-}
+import { useIsMobile } from "./hooks"
+import LibraryProvider, { useLibraryDispatch, useLibraryState } from "./context/library"
 
 function AddShelfDialog() {
-    const { state, setState } = useLibraryContext()
+    const libraryDispatch = useLibraryDispatch()
+
     const [shelfName, setShelfName] = createSignal("")
     const { setOpen } = Dialog.useContext()
 
@@ -34,8 +27,8 @@ function AddShelfDialog() {
     const handleAdd = async () => {
         const name = shelfName().trim()
         if (!name) return
-        const newShelf = await LumiDb.createBookShelf(name)
-        setState("shelves", [...state.shelves, newShelf])
+
+        await libraryDispatch.createShelf(name)
         setShelfName("")
     }
 
@@ -89,7 +82,9 @@ function Sidebar() {
     const location = useLocation()
 
     const authState = useAuthState()
-    const { state, setState } = useLibraryContext()
+    const libraryState = useLibraryState()
+    const libraryDispatch = useLibraryDispatch()
+
     return (
         <div class="bg-base01 border border-base02 h-full w-full">
             {/* User */}
@@ -161,24 +156,24 @@ function Sidebar() {
                     </Dialog>
                 </div>
                 <ul>
-                    <li classList={{ "border-l-3 border-base0D": state.activeShelf === null }}>
+                    <li classList={{ "border-l-3 border-base0D": libraryState.activeShelf === null }}>
                         <button
                             class="w-full flex cursor-pointer rounded p-2 hover:bg-base02"
-                            onClick={() => setState("activeShelf", null)}
+                            onClick={() => libraryDispatch.setActiveShelf(null)}
                         >
                             <p>All Books</p>
                         </button>
                     </li>
-                    <For each={state.shelves}>
+                    <For each={libraryState.shelves}>
                         {(shelf) => (
                             <li
                                 classList={{
-                                    "border-l-3 border-base0D": state.activeShelf === shelf.id,
+                                    "border-l-3 border-base0D": libraryState.activeShelf === shelf.id,
                                 }}
                             >
                                 <button
                                     class="w-full flex cursor-pointer rounded p-2 hover:bg-base02"
-                                    onClick={() => setState("activeShelf", shelf.id)}
+                                    onClick={() => libraryDispatch.setActiveShelf(shelf.id)}
                                 >
                                     <p>{shelf.name}</p>
                                 </button>
