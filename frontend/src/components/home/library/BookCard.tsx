@@ -1,26 +1,29 @@
-import { IconFolderOpen, IconTrash } from "@/components/icons"
 import { ReaderSourceLightRecord } from "@/lib/db"
 import { A } from "@solidjs/router"
-import { createEffect, createSignal, For } from "solid-js"
-import Modal, { ModalProps } from "../Modal"
-import { isTouchDevice } from "@/lib/utils"
+import { createEffect, createSignal, For, Show } from "solid-js"
+import { IconFolderOpen, IconTrash } from "@/components/icons"
+import Modal, { ModalProps } from "@/components/Modal"
 import { useLibraryDispatch, useLibraryState } from "@/context/library"
 
-// Renders a single book card with cover, title, progress, and actions.
-export default function BookCard(props: {
+type BookCardProps = {
     book: ReaderSourceLightRecord
     hovered: boolean
+    onInfoClick: () => void
+
+    // used to track click/hover on touch devices
+    // the state is shared between other book-cards so it handled by
+    // the parent (BookGrid)
     onClick: (e: MouseEvent) => void
-}) {
+}
+
+// Renders a single book card with cover, title, progress, and actions.
+export function BookCard(props: BookCardProps) {
     const libraryState = useLibraryState()
     const libraryDispatch = useLibraryDispatch()
-    const [modalOpen, setModalOpen] = createSignal<ReaderSourceLightRecord | null>(null)
 
     // Reading progress as percent.
+    // It doesn't change while the compoment is mounted, so no need to use a function
     const progressPercentage = Math.floor((100 * props.book.currChars) / props.book.totalChars)
-
-    // show actions only for hovered/touched book.
-    const buttonsVisible = () => isTouchDevice() && props.hovered
 
     // Delete book from library and DB.
     const handleDeleteBook = async (e: MouseEvent) => {
@@ -29,10 +32,9 @@ export default function BookCard(props: {
         await libraryDispatch.deleteBook(props.book.localId)
     }
 
-    const handleModalDismiss = () => setModalOpen(null)
-
     return (
         <div class="relative group book-card">
+            {/* Main View, buttons are absolute and are outside the <a> to avoid click event propagation */}
             <A href={`/reader/${props.book.localId}`} onClick={props.onClick}>
                 <div class="bg-base01 shadow-lg hover:shadow-xl transition-shadow rounded overflow-hidden">
                     <img
@@ -49,34 +51,34 @@ export default function BookCard(props: {
                     </div>
                 </div>
             </A>
+
+            {/* Buttons */}
             {/* Info button */}
             <button
-                class="bg-base02 absolute cursor-pointer top-2 w-8 h-8 border-none opacity-0 group-hover:opacity-100 hover:ring-2 hover:ring-(--base08) rounded-full flex items-center justify-center transition-opacity right-11"
-                classList={{ "opacity-100": buttonsVisible() }}
-                onClick={() => setModalOpen(props.book)}
+                class="bg-base02 absolute cursor-pointer top-2 w-8 h-8 border-none opacity-0 group-hover:opacity-100 hover:ring-2 hover:ring-base08 rounded-full flex items-center justify-center transition-opacity right-11"
+                classList={{ "opacity-100": props.hovered }}
+                onClick={props.onInfoClick}
             >
                 <IconFolderOpen />
             </button>
 
             {/* Delete button */}
             <button
-                class="bg-base02 absolute cursor-pointer top-2 w-8 h-8 border-none opacity-0 group-hover:opacity-100 hover:ring-2 hover:ring-(--base08) rounded-full flex items-center justify-center transition-opacity right-2"
-                classList={{ "opacity-100": buttonsVisible() }}
+                class="bg-base02 absolute cursor-pointer top-2 w-8 h-8 border-none opacity-0 group-hover:opacity-100 hover:ring-2 hover:ring-base08 rounded-full flex items-center justify-center transition-opacity right-2"
+                classList={{ "opacity-100": props.hovered }}
                 onClick={handleDeleteBook}
             >
                 <IconTrash />
             </button>
-
-            {/* TODO: move modal to the library page */}
-            <BookshelfModal book={props.book} show={modalOpen() !== null} onDismiss={handleModalDismiss} />
         </div>
     )
 }
 
 type BookshelfModalProps = ModalProps & {
-    book: ReaderSourceLightRecord
+    book: ReaderSourceLightRecord | null
 }
-function BookshelfModal(props: BookshelfModalProps) {
+
+export function BookshelfModal(props: BookshelfModalProps) {
     const libraryState = useLibraryState()
     const libraryDispatch = useLibraryDispatch()
 
@@ -85,8 +87,10 @@ function BookshelfModal(props: BookshelfModalProps) {
 
     // update every time book changes?
     createEffect(() => {
+        if (!props.book) return
+
         const bookShelves = libraryState.shelves
-            .filter((shelf) => shelf.bookIds.includes(props.book.localId))
+            .filter((shelf) => shelf.bookIds.includes(props.book!.localId))
             .map((shelf) => shelf.id)
         setSelectedShelves(new Set(bookShelves))
     })
@@ -100,19 +104,20 @@ function BookshelfModal(props: BookshelfModalProps) {
     }
 
     // Save shelf changes to DB and state.
-    // TODO: improve logic
+    // TODO: improve logic to avoid unnecessary iterations
     const handleSave = async () => {
-        const selected = selectedShelves()
+        if (!props.book) return
+        const shelves = selectedShelves()
 
         // Remove book from shelves where it's no longer selected
-        for (const shelf of libraryState.shelves.filter((shelf) => shelf.bookIds.includes(props.book.localId))) {
-            if (!selected.has(shelf.id)) {
+        for (const shelf of libraryState.shelves.filter((shelf) => shelf.bookIds.includes(props.book!.localId))) {
+            if (!shelves.has(shelf.id)) {
                 libraryDispatch.toggleBookInShelf(shelf.id, props.book.localId)
             }
         }
 
         // Add book to newly selected shelves
-        for (const shelfId of selected) {
+        for (const shelfId of shelves) {
             const shelf = libraryState.shelves.find((s) => s.id === shelfId)
             if (shelf && !shelf.bookIds.includes(props.book.localId)) {
                 libraryDispatch.toggleBookInShelf(shelf.id, props.book.localId)
@@ -123,27 +128,30 @@ function BookshelfModal(props: BookshelfModalProps) {
     }
 
     return (
-        <Modal show={props.show} onDismiss={props.onDismiss}>
+        <Modal show={props.book !== null} onDismiss={props.onDismiss}>
             <h2 class="font-semibold">{props.book?.title}</h2>
             <p class="mt-2 text-sm text-base04">
                 <span>Add to Bookshelves</span>
             </p>
+
             {/* List all shelves with checkboxes */}
-            <div class="mt-4 border border-base03 rounded-md divide-y divide-base03 max-h-64 overflow-y-auto">
-                <For each={libraryState.shelves}>
-                    {(shelf) => (
-                        <label class="flex items-center px-4 py-3 space-x-3 cursor-pointer hover:bg-base02 transition-colors">
-                            <input
-                                type="checkbox"
-                                class="accent-base0D rounded"
-                                checked={selectedShelves().has(shelf.id)}
-                                onChange={(e) => handleShelfToggle(shelf.id, e.target.checked)}
-                            />
-                            <span class="text-base05 truncate">{shelf.name}</span>
-                        </label>
-                    )}
-                </For>
-            </div>
+            <Show when={libraryState.shelves.length > 0} fallback={<p>No shelves have been created yet.</p>}>
+                <div class="mt-4 border border-base03 rounded-md divide-y divide-base03 max-h-64 overflow-y-auto">
+                    <For each={libraryState.shelves}>
+                        {(shelf) => (
+                            <label class="flex items-center px-4 py-3 space-x-3 cursor-pointer hover:bg-base02 transition-colors">
+                                <input
+                                    type="checkbox"
+                                    class="accent-base0D rounded"
+                                    checked={selectedShelves().has(shelf.id)}
+                                    onChange={(e) => handleShelfToggle(shelf.id, e.target.checked)}
+                                />
+                                <span class="text-base05 truncate">{shelf.name}</span>
+                            </label>
+                        )}
+                    </For>
+                </div>
+            </Show>
             {/* Actions */}
             <div class="mt-6 flex justify-end space-x-2">
                 <button

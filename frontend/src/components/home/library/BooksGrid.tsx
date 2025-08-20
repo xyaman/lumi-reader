@@ -1,15 +1,19 @@
 import { createMemo, createSignal, For, onCleanup, onMount } from "solid-js"
 import { ReaderSourceLightRecord } from "@/lib/db"
-import BookCard from "./BookCard"
 import { isTouchDevice } from "@/lib/utils"
 import { useLibraryState } from "@/context/library"
+import { BookCard, BookshelfModal } from "@/components/home/library"
 
 // Main grid for displaying all books.
-export default function BooksGrid() {
+export function BooksGrid() {
     const libraryState = useLibraryState()
 
     // Track which book is hovered/touched.
     const [hoveredBookId, setHoveredBookId] = createSignal<number | null>(null)
+
+    // Track modal content
+    const [modalBook, setModalBook] = createSignal<ReaderSourceLightRecord | null>(null)
+
     const isTouch = isTouchDevice()
 
     // Hide actions when clicking outside any book card.
@@ -49,11 +53,14 @@ export default function BooksGrid() {
                 {(book) => (
                     <BookCard
                         book={book}
-                        hovered={hoveredBookId() === book.localId}
+                        hovered={isTouch && hoveredBookId() === book.localId}
+                        onInfoClick={() => setModalBook(book)}
                         onClick={(e) => handleBookClick(e, book)}
                     />
                 )}
             </For>
+
+            <BookshelfModal book={modalBook()} onDismiss={() => setModalBook(null)} />
         </div>
     )
 }

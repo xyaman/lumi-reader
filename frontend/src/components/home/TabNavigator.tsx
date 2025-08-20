@@ -1,7 +1,10 @@
 import { A, useLocation } from "@solidjs/router"
 import { IconCalendar, IconHome, IconSettings, IconUsers } from "../icons"
 
-/// Bottom tab navigator, used in mobile devices
+/**
+ * Displays a bottom tab navigator, used in mobile devices
+ * Note: Needs access to a solidjs router
+ */
 export function TabNavigator(props: { height: string }) {
     const location = useLocation()
     const tabs = [

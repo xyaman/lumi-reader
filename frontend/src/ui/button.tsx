@@ -17,7 +17,7 @@ export function Button(props: ButtonProps) {
         danger: "bg-base08 hover:bg-base09 text-base05",
     }
 
-    const baseStyle = "cursor-pointer py-2 px-4 rounded-md"
+    const baseStyle = "cursor-pointer rounded-md"
     const size = {
         sm: "py-1 px-3 text-sm",
         md: "py-2 px-4 text-base",
@@ -25,7 +25,7 @@ export function Button(props: ButtonProps) {
     }
 
     const colorsStyle = colors[local.variant ?? "primary"]
-    const sizeStyle = local.size ? size[local.size] : ""
+    const sizeStyle = local.size ? size[local.size] : "py-2 px-4"
 
     // reactive
     const disabledStyle = () => (otherProps.disabled ? "opacity-50 cursor-not-allowed" : "")
