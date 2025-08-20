@@ -1,2 +1,2 @@
-export * from "./login.jsx"
+export * from "./login.tsx"
 export * from "./register.tsx"

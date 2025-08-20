@@ -7,11 +7,11 @@ import UserSearch from "@/SearchPage"
 import AuthProvider from "@/context/auth"
 
 import { ReadingSessionsPage } from "@/ReadingSessionsPage"
-import HomePage from "@/HomePage"
 import SocialList from "@/components/SocialList"
 import UserPage from "@/UserPage"
 
 import { Login, Register } from "@/pages/auth"
+import { Home } from "@/pages/home"
 
 const settingsFilter: MatchFilters = {
     name: ["theme", "reader", "sessions"],
@@ -24,7 +24,7 @@ export function App() {
     return (
         <AuthProvider>
             <Router>
-                <Route path="/" component={HomePage}>
+                <Route path="/" component={Home}>
                     <Route path="/" component={BookLibrary} />
                     <Route path="/sessions" component={ReadingSessionsPage} />
                     <Route path="/social" component={SocialList} />

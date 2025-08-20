@@ -1,13 +1,11 @@
-import Resizable from "@corvu/resizable"
-import { createSignal, For, JSX, Show, onMount } from "solid-js"
+import { createMemo, createSignal, For, onMount, Show } from "solid-js"
 import { A, useLocation } from "@solidjs/router"
-import { IconCalendar, IconHome, IconSettings, IconUsers } from "./components/icons"
-import SocialList from "./components/SocialList"
+import { IconCalendar, IconHome, IconSettings } from "@/components/icons"
+import SocialList from "@/components/SocialList"
 import Dialog from "@corvu/dialog"
-import UserAvatar from "./components/UserAvatar"
-import { useAuthState } from "./context/auth"
-import { useIsMobile } from "./hooks"
-import LibraryProvider, { useLibraryDispatch, useLibraryState } from "./context/library"
+import UserAvatar from "@/components/UserAvatar"
+import { useAuthState } from "@/context/auth"
+import { useLibraryDispatch, useLibraryState } from "@/context/library"
 
 function AddShelfDialog() {
     const libraryDispatch = useLibraryDispatch()
@@ -60,30 +58,19 @@ function AddShelfDialog() {
     )
 }
 
-function Header() {
+export function Sidebar() {
     const location = useLocation()
-    const titles: Record<string, string> = {
-        "/social": "Social activity",
-    }
-
-    const subtitle: Record<string, string | null> = {}
-
-    return (
-        <Show when={location.pathname in titles}>
-            <header class="mb-8">
-                <h1 class="text-3xl font-bold">{titles[location.pathname]}</h1>
-                <p>{subtitle[location.pathname] || ""}</p>
-            </header>
-        </Show>
-    )
-}
-
-function Sidebar() {
-    const location = useLocation()
-
     const authState = useAuthState()
     const libraryState = useLibraryState()
     const libraryDispatch = useLibraryDispatch()
+
+    const activePath = createMemo(() => location.pathname)
+
+    const navItems = [
+        { href: "/", label: "Home", icon: IconHome },
+        { href: "/sessions", label: "Sessions", icon: IconCalendar },
+        { href: "/settings", label: "Settings", icon: IconSettings },
+    ]
 
     return (
         <div class="bg-base01 border border-base02 h-full w-full">
@@ -110,40 +97,23 @@ function Sidebar() {
             </Show>
 
             {/* Navigation */}
-            <nav class="p-2 border-b border-base02">
+            {/* Navigation */}
+            <nav class="p-2 border-b border-base02" aria-label="Main navigation">
                 <ul>
-                    <li
-                        classList={{
-                            "border-l-3 border-base0D": location.pathname === "/",
-                        }}
-                    >
-                        <A href="/" class="flex hover:bg-base02 p-2 rounded">
-                            <span class="mr-3">
-                                <IconHome />
-                            </span>
-                            <span>Home</span>
-                        </A>
-                    </li>
-                    <li
-                        classList={{
-                            "border-l-3 border-base0D": location.pathname === "/sessions",
-                        }}
-                    >
-                        <A href="/sessions" class="flex items-center hover:bg-base02 p-2 rounded">
-                            <span class="mr-3">
-                                <IconCalendar />
-                            </span>
-                            <span>Sessions</span>
-                        </A>
-                    </li>
-                    <li>
-                        <A href="/settings" class="flex hover:bg-base02 p-2 rounded">
-                            <span class="mr-3">
-                                <IconSettings />
-                            </span>
-                            <span>Settings</span>
-                        </A>
-                    </li>
+                    <For each={navItems}>
+                        {(item) => (
+                            <li
+                                classList={{
+                                    "border-l-3 border-base0D": activePath() === item.href,
+                                }}
+                            >
+                                <A href={item.href} class="flex hover:bg-base02 p-2 rounded">
+                                    <span class="mr-3">{<item.icon />}</span>
+                                    <span>{item.label}</span>
+                                </A>
+                            </li>
+                        )}
+                    </For>
                 </ul>
             </nav>
 
@@ -189,61 +159,5 @@ function Sidebar() {
                 <SocialList />
             </div>
         </div>
-    )
-}
-
-export default function HomePage(props: { children?: JSX.Element }) {
-    const isMobile = useIsMobile()
-    const location = useLocation()
-
-    return (
-        <LibraryProvider>
-            <Show
-                when={isMobile()}
-                fallback={
-                    <div class="size-full">
-                        <Resizable class="size-full">
-                            <Resizable.Panel initialSize={0.2} minSize={0.1} class="overflow-hidden">
-                                <Sidebar />
-                            </Resizable.Panel>
-                            <Resizable.Handle class="group basis-3 px-0.75">
-                                <div class="size-full rounded-sm transition-colors group-data-active:bg-base02 group-data-dragging:bg-base03" />
-                            </Resizable.Handle>
-                            <Resizable.Panel
-                                initialSize={0.8}
-                                minSize={0.7}
-                                class="overflow-y-auto"
-                                id="main-container"
-                            >
-                                <div class="p-10">{props.children}</div>
-                            </Resizable.Panel>
-                        </Resizable>
-                    </div>
-                }
-            >
-                {/* Mobile version */}
-                <div id="main-container" class="p-10 overflow-auto" style={{ height: "calc(100vh - 60px)" }}>
-                    <Header />
-                    {props.children}
-                </div>
-                <div
-                    class="fixed bottom-0 left-0 right-0 bg-base01 border-t border-base02 flex justify-around items-center p-2 md:hidden"
-                    style={{ height: "56px" }}
-                >
-                    <A href="/" class="p-2" classList={{ "text-base0D": location.pathname === "/" }}>
-                        <IconHome />
-                    </A>
-                    <A href="/sessions" class="p-2" classList={{ "text-base0D": location.pathname === "/sessions" }}>
-                        <IconCalendar />
-                    </A>
-                    <A href="/social" class="p-2" classList={{ "text-base0D": location.pathname === "/social" }}>
-                        <IconUsers />
-                    </A>
-                    <A href="/settings" class="p-2" classList={{ "text-base0D": location.pathname === "/settings" }}>
-                        <IconSettings />
-                    </A>
-                </div>
-            </Show>
-        </LibraryProvider>
     )
 }
