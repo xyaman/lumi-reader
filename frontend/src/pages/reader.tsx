@@ -8,8 +8,8 @@ import { SettingsSidebar, ReaderLeftSidebar } from "@/components/reader/ReaderSi
 import ReaderContent from "@/components/reader/ReaderContent"
 import { LumiDb } from "@/lib/db"
 import { ReaderSource } from "@/lib/readerSource"
-import { UserActivityManager } from "@/services/userPresence"
 import { CharacterCounter, KeymapManager } from "@/components/reader"
+import { useUserActivity } from "@/hooks"
 
 /**
  * BookReader component for displaying and managing the reading experience of an EPUB book.
@@ -28,6 +28,7 @@ export function BookReader(): JSX.Element {
     const id = Number(params.id)
 
     const navigate = useNavigate()
+    const userActivity = useUserActivity()
     if (!id) navigate("/", { replace: true })
 
     // -- signals
@@ -45,9 +46,9 @@ export function BookReader(): JSX.Element {
 
         // NOTE: if user is offline or unauthenticated, the
         // function is called, but it won't execute the fetch
-        UserActivityManager.setPresence("reading", source.title)
+        userActivity.setPresence("reading", source.title)
         interval = setInterval(() => {
-            UserActivityManager.setPresence("reading", source.title)
+            userActivity.setPresence("reading", source.title)
         }, 30000)
     }
 
