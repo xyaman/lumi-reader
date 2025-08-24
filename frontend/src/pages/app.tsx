@@ -1,5 +1,4 @@
 import { MatchFilters, Route, Router } from "@solidjs/router"
-import BookReader from "@/BookReader"
 import Settings from "@/Settings"
 import { getSelectedTheme, setGlobalTheme } from "@/theme"
 import UserSearch from "@/SearchPage"
@@ -11,6 +10,7 @@ import UserPage from "@/UserPage"
 
 import { Login, Register } from "@/pages/auth"
 import { Home, Library } from "@/pages/home"
+import { BookReader } from "@/pages/reader"
 
 const settingsFilter: MatchFilters = {
     name: ["theme", "reader", "sessions"],

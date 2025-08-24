@@ -1,7 +1,7 @@
-import { useReaderContext } from "@/context/reader"
 import { createEffect, For, on, onCleanup, Show } from "solid-js"
 import { IconBookmarkFull } from "@/components/icons"
 import { readerSettingsStore } from "@/stores/readerSettings"
+import { useReaderDispatch, useReaderState } from "@/context/reader"
 
 function getBaseName(path: string) {
     const match = path.match(/(?:.*\/)?([^\/]+\.(?:png|jpe?g|svg|xhtml|html))$/i)
@@ -19,7 +19,8 @@ function getBaseName(path: string) {
  * - --reader-line-height
  */
 export default function ReaderContent() {
-    const { updateChars, readerStore, setReaderStore } = useReaderContext()
+    const readerState = useReaderState()
+    const readerDispatch = useReaderDispatch()
 
     let containerRef: HTMLDivElement | undefined
 
@@ -67,7 +68,7 @@ export default function ReaderContent() {
             if (!val) return
 
             const base = getBaseName(val)
-            const image = readerStore.book.images.find((v) => getBaseName(v.filename) === base)
+            const image = readerState.book.images.find((v) => getBaseName(v.filename) === base)
             if (image && image.url) el.setAttribute(attr, image.url)
         }
 
@@ -89,26 +90,22 @@ export default function ReaderContent() {
 
         if (isVertical()) {
             isStart = containerRef.scrollTop === 0
-            isEnd =
-                Math.ceil(containerRef.scrollTop + containerRef.clientHeight) >=
-                containerRef.scrollHeight
+            isEnd = Math.ceil(containerRef.scrollTop + containerRef.clientHeight) >= containerRef.scrollHeight
         } else {
             isStart = containerRef.scrollLeft === 0
-            isEnd =
-                Math.ceil(containerRef.scrollLeft + containerRef.clientWidth) >=
-                containerRef.scrollWidth
+            isEnd = Math.ceil(containerRef.scrollLeft + containerRef.clientWidth) >= containerRef.scrollWidth
         }
 
         if (isStart && multiplier === -1) {
-            if (readerStore.currSection === 0) return
-            setReaderStore("currSection", readerStore.currSection - 1)
+            if (readerState.currSection === 0) return
+            const nextId = readerDispatch.goToPrevSection()
             // Scroll to end of previous section (and go to the last paragraph)
-            const nextId = readerStore.book.sections[readerStore.currSection].lastIndex - 1
             document.querySelector(`p[index="${nextId}"]`)?.scrollIntoView()
             return
         } else if (isEnd && multiplier === 1) {
-            if (readerStore.currSection === readerStore.book.sections.length - 1) return
-            setReaderStore("currSection", readerStore.currSection + 1)
+            if (readerState.currSection === readerState.book.sections.length - 1) return
+            readerDispatch.goToNextSection()
+
             // Scroll to beginning of next section
             if (isVertical()) {
                 containerRef.scrollTo({ top: 0, behavior: "instant" })
@@ -134,14 +131,14 @@ export default function ReaderContent() {
      */
     const toggleBookmark = (id: number | string, content: string) => {
         const idNum = Number(id)
-        const idx = readerStore.book.bookmarks.findIndex((b) => b.paragraphId === idNum)
+        const idx = readerState.book.bookmarks.findIndex((b) => b.paragraphId === idNum)
         if (idx !== -1) {
-            readerStore.book.bookmarks.splice(idx, 1)
+            readerState.book.bookmarks.splice(idx, 1)
             return true
         } else {
-            readerStore.book.bookmarks.push({
+            readerState.book.bookmarks.push({
                 paragraphId: idNum,
-                sectionName: readerStore.book.sections[readerStore.currSection].name,
+                sectionName: readerState.book.sections[readerState.currSection].name,
                 content,
             })
             return false
@@ -151,7 +148,7 @@ export default function ReaderContent() {
     // == bookmarks
     const setupBookmarks = () => {
         const ptags = document.querySelectorAll("p[index]")
-        const bookmarksIds = readerStore.book.bookmarks.map((b) => b.paragraphId)
+        const bookmarksIds = readerState.book.bookmarks.map((b) => b.paragraphId)
         const bgcolor = "bg-[var(--base01)]"
 
         // if already has bookmark icon, remove it and return
@@ -195,11 +192,9 @@ export default function ReaderContent() {
             bookmarkSpan.onmouseover = () => {
                 p.classList.add("bg-[var(--base02)]")
                 label.style.opacity = "1"
-                const bookmarksIds = readerStore.book.bookmarks.map((b) => b.paragraphId)
+                const bookmarksIds = readerState.book.bookmarks.map((b) => b.paragraphId)
                 const index = Number(p.getAttribute("index"))
-                label.textContent = bookmarksIds.includes(index)
-                    ? "Remove bookmark"
-                    : "Add bookmark"
+                label.textContent = bookmarksIds.includes(index) ? "Remove bookmark" : "Add bookmark"
             }
             bookmarkSpan.onmouseleave = () => {
                 p.classList.remove("bg-[var(--base02)]")
@@ -217,7 +212,7 @@ export default function ReaderContent() {
                 const index = p.getAttribute("index")!
                 const removed = toggleBookmark(index, p.textContent!)
                 removed ? p.classList.remove(bgcolor) : p.classList.add(bgcolor)
-                readerStore.book.save()
+                readerState.book.save()
 
                 // when clicked, onmouseleave is not called
                 p.classList.remove("bg-[var(--base02)]")
@@ -240,7 +235,7 @@ export default function ReaderContent() {
     createEffect(() => {
         if (isVertical() && isPaginated()) {
             setTimeout(() => {
-                const currPosition = readerStore.book.currParagraph
+                const currPosition = readerState.book.currParagraph
                 document.querySelector(`p[index="${currPosition}"]`)?.scrollIntoView()
             }, 0)
         }
@@ -251,7 +246,7 @@ export default function ReaderContent() {
             if (!containerRef) return
             containerRef.style.height = "0px"
             containerRef.style.removeProperty("height")
-            document.querySelector(`p[index='${readerStore.book.currParagraph}']`)?.scrollIntoView()
+            document.querySelector(`p[index='${readerState.book.currParagraph}']`)?.scrollIntoView()
         }, 0)
     }
 
@@ -264,7 +259,7 @@ export default function ReaderContent() {
         on(isPaginated, () => {
             if (!containerRef) return
 
-            const handleScroll = () => updateChars(isPaginated(), isVertical())
+            const handleScroll = () => readerDispatch.updateChars(isPaginated(), isVertical())
 
             let scrollTimer: number | null = null
             const handleScrollContinous = () => {
@@ -306,9 +301,9 @@ export default function ReaderContent() {
 
             if (isPaginated()) {
                 // update last section
-                const newSection = readerStore.book.findSectionIndex(readerStore.book.currParagraph)
-                if (readerStore.currSection != newSection && newSection) {
-                    setReaderStore("currSection", newSection)
+                const newSection = readerState.book.findSectionIndex(readerState.book.currParagraph)
+                if (readerState.currSection != newSection && newSection) {
+                    readerDispatch.setSection(newSection)
                 }
 
                 containerRef.addEventListener("touchstart", handleTouchStart)
@@ -352,7 +347,7 @@ export default function ReaderContent() {
 
             // wait to next render
             setTimeout(() => {
-                const currPosition = readerStore.book.currParagraph
+                const currPosition = readerState.book.currParagraph
                 document.querySelector(`p[index="${currPosition}"]`)?.scrollIntoView()
             }, 0)
         }),
@@ -361,7 +356,7 @@ export default function ReaderContent() {
     // Update: currSection changes
     // This should be triggered when using paginated mode
     // or when changing the current xhtml
-    const currSectionSignal = () => readerStore.currSection
+    const currSectionSignal = () => readerState.currSection
     createEffect(
         on(currSectionSignal, () => {
             if (!isPaginated()) return
@@ -372,7 +367,7 @@ export default function ReaderContent() {
                 shouldUpdateChars = true
                 return
             }
-            updateChars(isPaginated(), isVertical())
+            readerDispatch.updateChars(isPaginated(), isVertical())
         }),
     )
 
@@ -404,27 +399,22 @@ export default function ReaderContent() {
                 ref={containerRef}
                 class={containerClass()}
                 onClick={() => {
-                    setReaderStore("sideBar", null)
-                    setReaderStore("navOpen", false)
+                    readerDispatch.closeNavbar()
+                    readerDispatch.setSidebar(null)
                 }}
             >
                 <div
                     id="reader-content"
                     class={contentClass()}
-                    style={{"font-size":"var(--reader-font-size)","line-height":"var(--reader-line-height)"}}
+                    style={{ "font-size": "var(--reader-font-size)", "line-height": "var(--reader-line-height)" }}
                 >
                     <Show
                         when={!isPaginated()}
                         fallback={
-                            <div
-                                innerHTML={
-                                    readerStore.book.sections[readerStore.currSection].content ??
-                                    "error??"
-                                }
-                            />
+                            <div innerHTML={readerState.book.sections[readerState.currSection].content ?? "error??"} />
                         }
                     >
-                        <For each={readerStore.book.sections}>
+                        <For each={readerState.book.sections}>
                             {(x) => {
                                 return <div innerHTML={x.content} />
                             }}

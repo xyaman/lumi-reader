@@ -2,26 +2,26 @@ import { createEffect, createMemo, createSignal, For, onCleanup, Show } from "so
 import ReaderSettings from "./ReaderSettings"
 import Sidebar from "@/components/Sidebar"
 import ThemeList from "@/components/Themelist"
-import { useReaderContext } from "@/context/reader"
 import { ThemeProvider } from "@/context/theme"
 import { Bookmark } from "@/lib/readerSource"
 import { formatTime } from "@/lib/utils"
+import { useReaderDispatch, useReaderState } from "@/context/reader"
+import ReadingSessionManager from "@/services/readingSession"
 
 export function SettingsSidebar() {
-    const { readerStore, setReaderStore } = useReaderContext()
+    const readerState = useReaderState()
+    const readerDispatch = useReaderDispatch()
 
     // Prevent scrolling on main view when is open
-    createEffect(
-        () => (document.body.style.overflow = readerStore.sideBar !== null ? "hidden" : ""),
-    )
+    createEffect(() => (document.body.style.overflow = readerState.sideBar !== null ? "hidden" : ""))
 
     return (
         <Sidebar
             side="right"
             overlay
             title="Settings"
-            open={readerStore.sideBar == "settings"}
-            onClose={() => setReaderStore("sideBar", null)}
+            open={readerState.sideBar == "settings"}
+            onClose={() => readerDispatch.setSidebar(null)}
         >
             <div class="space-y-4">
                 {/* TODO: only reload if changed pagination, vertical etc */}
@@ -35,7 +35,8 @@ export function SettingsSidebar() {
 }
 
 export function ReaderLeftSidebar() {
-    const { navigationGoTo, bookmarkGoTo, readerStore, setReaderStore } = useReaderContext()
+    const readerState = useReaderState()
+    const readerDispatch = useReaderDispatch()
 
     const titles = {
         toc: "Table of Contents",
@@ -47,19 +48,19 @@ export function ReaderLeftSidebar() {
 
     return (
         <Sidebar
-            open={readerStore.sideBar !== null && readerStore.sideBar !== "settings"}
+            open={readerState.sideBar !== null && readerState.sideBar !== "settings"}
             side="left"
-            title={titles[readerStore.sideBar || "generic"]}
+            title={titles[readerState.sideBar || "generic"]}
             overlay
-            onClose={() => setReaderStore("sideBar", null)}
+            onClose={() => readerDispatch.setSidebar(null)}
         >
-            <Show when={readerStore.sideBar === "toc"}>
-                <TocSidebarContent goTo={navigationGoTo} />
+            <Show when={readerState.sideBar === "toc"}>
+                <TocSidebarContent goTo={readerDispatch.navigationGoTo} />
             </Show>
-            <Show when={readerStore.sideBar === "bookmarks"}>
-                <BookmarksSidebarContent onItemClick={bookmarkGoTo} />
+            <Show when={readerState.sideBar === "bookmarks"}>
+                <BookmarksSidebarContent onItemClick={readerDispatch.bookmarkGoTo} />
             </Show>
-            <Show when={readerStore.sideBar === "session"}>
+            <Show when={readerState.sideBar === "session"}>
                 <ReadingSessionSidebar />
             </Show>
         </Sidebar>
@@ -67,9 +68,10 @@ export function ReaderLeftSidebar() {
 }
 
 export function TocSidebarContent(props: { goTo: (file: string) => void }) {
-    const { readerStore } = useReaderContext()
+    const readerState = useReaderState()
+
     return (
-        <For each={readerStore.book.nav}>
+        <For each={readerState.book.nav}>
             {(item) => (
                 <p
                     class="cursor-pointer text-sm px-2 py-1 rounded hover:bg-[var(--base00)]"
@@ -85,11 +87,13 @@ export function TocSidebarContent(props: { goTo: (file: string) => void }) {
 }
 
 export function BookmarksSidebarContent(props: { onItemClick: (b: Bookmark) => void }) {
-    const { readerStore, setReaderStore } = useReaderContext()
+    const readerState = useReaderState()
+    const readerDispatch = useReaderDispatch()
+
     const [sortOption, setSortOption] = createSignal("added-newest")
 
     const sortedBookmarks = createMemo(() => {
-        const bookmarks = [...readerStore.book.bookmarks]
+        const bookmarks = [...readerState.book.bookmarks]
         switch (sortOption()) {
             case "added-oldest":
                 return bookmarks
@@ -134,7 +138,7 @@ export function BookmarksSidebarContent(props: { onItemClick: (b: Bookmark) => v
                     <p
                         class="cursor-pointer text-sm px-2 py-1 rounded hover:bg-[var(--base00)]"
                         onClick={() => {
-                            setReaderStore("sideBar", null)
+                            readerDispatch.setSidebar(null)
                             props.onItemClick(b)
                         }}
                     >
@@ -147,8 +151,8 @@ export function BookmarksSidebarContent(props: { onItemClick: (b: Bookmark) => v
 }
 
 function ReadingSessionSidebar() {
-    const { readerStore, readingManager } = useReaderContext()
-    const session = () => readingManager.activeSession()
+    const readerState = useReaderState()
+    const session = () => ReadingSessionManager.getInstance().activeSession()
     const [currentTime, setCurrentTime] = createSignal(Math.floor(Date.now() / 1000))
 
     let intervalId: number | null = null
@@ -166,7 +170,7 @@ function ReadingSessionSidebar() {
     }
 
     createEffect(() => {
-        if (readerStore.sideBar === "session") {
+        if (readerState.sideBar === "session") {
             startTimer()
         } else {
             stopTimer()
@@ -191,12 +195,12 @@ function ReadingSessionSidebar() {
     const toggleSession = async () => {
         if (session()) {
             if (session()!.isPaused) {
-                await readingManager.resumeSession()
+                await ReadingSessionManager.getInstance().resumeSession()
             } else {
-                await readingManager.pauseSession()
+                await ReadingSessionManager.getInstance().pauseSession()
             }
         } else {
-            await readingManager.startSession(readerStore.book)
+            await ReadingSessionManager.getInstance().startSession(readerState.book)
         }
 
         setCurrentTime(session()!.lastActiveTime)
@@ -215,14 +219,12 @@ function ReadingSessionSidebar() {
     }
 
     const progress = () => {
-        return Math.floor((readerStore.currChars * 100) / readerStore.book.totalChars)
+        return Math.floor((readerState.currChars * 100) / readerState.book.totalChars)
     }
 
     return (
         <div class="max-h-[90vh] overflow-y-auto">
-            <p class="text-md mb-2">
-                Session: {session() ? (session()!.isPaused ? "Paused" : "Active") : "None"}
-            </p>
+            <p class="text-md mb-2">Session: {session() ? (session()!.isPaused ? "Paused" : "Active") : "None"}</p>
 
             <div class="space-y-4">
                 <button class="button px-4 py-2 font-semibold" onClick={toggleSession}>
@@ -244,10 +246,7 @@ function ReadingSessionSidebar() {
                 <div class="bg-(--base02) p-4 rounded">
                     <h3 class="text-sm font-medium mb-1">Progress</h3>
                     <div class="w-full bg-(--base03) rounded-full h-2.5 mt-2">
-                        <div
-                            class="bg-(--base0B) h-2.5 rounded-full"
-                            style={{ width: `${progress()}%` }}
-                         />
+                        <div class="bg-(--base0B) h-2.5 rounded-full" style={{ width: `${progress()}%` }} />
                     </div>
                     <p class="text-sm mt-2">{progress()} % completed</p>
                 </div>

@@ -11,7 +11,7 @@ import {
     IconWindowed,
 } from "@/components/icons"
 import { useNavigate } from "@solidjs/router"
-import { useReaderContext } from "@/context/reader"
+import { useReaderDispatch, useReaderState } from "@/context/reader"
 
 /**
  * ReaderNavbar component for `BookReader`
@@ -22,36 +22,29 @@ export default function ReaderNavbar() {
     const navigate = useNavigate()
     const isFullscreen = () => document.fullscreenElement != null
 
-    const { readerStore, setReaderStore, bookmarkGoTo } = useReaderContext()
+    const readerStore = useReaderState()
+    const readerDispatch = useReaderDispatch()
+
     const goToLastBookmark = () => {
         const bookmarks = readerStore.book.bookmarks
         if (bookmarks.length === 0) return
         const lastBookmark = bookmarks[bookmarks.length - 1]
-        bookmarkGoTo(lastBookmark)
+        readerDispatch.bookmarkGoTo(lastBookmark)
     }
 
     return (
         <>
             <button
-                onClick={() => {
-                    setReaderStore("navOpen", true)
-                    setReaderStore("sideBar", null)
-                }}
+                onClick={() => readerDispatch.openNavbar()}
                 class="fixed top-0 left-0 right-0 h-12 z-10 bg-transparent cursor-pointer"
             />
             <Show when={readerStore.navOpen}>
                 <Navbar fixed disableCollapse>
                     <Navbar.Left>
-                        <button
-                            class="cursor-pointer"
-                            onClick={() => setReaderStore("sideBar", "toc")}
-                        >
+                        <button class="cursor-pointer" onClick={() => readerDispatch.setSidebar("toc")}>
                             <IconToc />
                         </button>
-                        <button
-                            class="cursor-pointer"
-                            onClick={() => setReaderStore("sideBar", "bookmarks")}
-                        >
+                        <button class="cursor-pointer" onClick={() => readerDispatch.setSidebar("bookmarks")}>
                             <IconBookmark />
                         </button>
                         <Show when={readerStore.book.bookmarks.length > 0}>
@@ -59,10 +52,7 @@ export default function ReaderNavbar() {
                                 <IconBookmarkSquare />
                             </button>
                         </Show>
-                        <button
-                            class="cursor-pointer"
-                            onClick={() => setReaderStore("sideBar", "session")}
-                        >
+                        <button class="cursor-pointer" onClick={() => readerDispatch.setSidebar("session")}>
                             <IconClock />
                         </button>
                     </Navbar.Left>
@@ -75,17 +65,14 @@ export default function ReaderNavbar() {
                                 } else {
                                     document.documentElement.requestFullscreen()
                                 }
-                                setReaderStore("navOpen", false)
+                                readerDispatch.closeNavbar()
                             }}
                         >
                             <Show when={isFullscreen()} fallback={<IconFullscreen />}>
                                 <IconWindowed />
                             </Show>
                         </button>
-                        <button
-                            class="cursor-pointer"
-                            onClick={() => setReaderStore("sideBar", "settings")}
-                        >
+                        <button class="cursor-pointer" onClick={() => readerDispatch.setSidebar("settings")}>
                             <IconSettings />
                         </button>
                         <button class="cursor-pointer" onClick={() => navigate("/")}>

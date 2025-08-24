@@ -1,14 +1,9 @@
+import { createContext, JSX, useContext } from "solid-js"
+import { createStore } from "solid-js/store"
 import { Bookmark, ReaderSource } from "@/lib/readerSource"
 import ReadingSessionManager from "@/services/readingSession"
-import { ISessionStatus, sessionStore } from "@/stores/session"
-import { createContext, JSX, onCleanup, useContext } from "solid-js"
-import { createStore, SetStoreFunction } from "solid-js/store"
 
-/**
- * State for the reader UI.
- */
-interface ReaderStore {
-    // reader related
+type ReaderState = {
     shouldReload: boolean
     navOpen: boolean
     sideBar: "toc" | "bookmarks" | "settings" | "session" | null
@@ -20,48 +15,40 @@ interface ReaderStore {
     currSection: number
 }
 
-const initialState: Omit<ReaderStore, "book"> = {
-    // reader related
-    shouldReload: false,
-    navOpen: false,
-    sideBar: null,
-
-    // book related
-    currIndex: 0,
-    currChars: 0,
-    currSection: 0,
-}
-
-type ReaderContextType = {
+type ReaderDispatch = {
     updateChars: (isPaginated: boolean, isVertical: boolean) => number
     navigationGoTo: (file: string) => void
     bookmarkGoTo: (bookmark: Bookmark) => void
-    readerStore: ReaderStore
-    setReaderStore: SetStoreFunction<ReaderStore>
-    readingManager: ReadingSessionManager
+    openNavbar: () => void
+    closeNavbar: () => void
+    setSidebar: (value: string | null) => void
+
+    goToNextSection: () => void
+    goToPrevSection: () => number
+    setSection: (section: number) => void
 }
 
-const ReaderContext = createContext<ReaderContextType>()
-const LS_AUTOMATICSTART = "reader:sessions:automaticstart"
+const BookStateContext = createContext<ReaderState>()
+const BookDispatchContext = createContext<ReaderDispatch>()
 
-/**
- * Provides the reader context to its children.
- * @param props - Contains the book and children components.
- */
 export function ReaderProvider(props: { book: ReaderSource; children: JSX.Element }) {
-    const [readerStore, setReaderStore] = createStore({
-        ...initialState,
+    const [store, setStore] = createStore<ReaderState>({
+        shouldReload: false,
+        navOpen: false,
+        sideBar: null,
+        currIndex: 0,
+        currChars: 0,
         book: props.book,
         currSection: props.book.findSectionIndex(props.book.currParagraph) ?? 0,
     })
 
-    const readingManager = new ReadingSessionManager()
-
-    const automaticStart = localStorage.getItem(LS_AUTOMATICSTART)
-        ? localStorage.getItem(LS_AUTOMATICSTART) === "true"
-        : true
-    if (automaticStart) readingManager.startSession(props.book)
-
+    /**
+     * Updates the current paragraph and character count based on visible content.
+     * Also persists the progress to local storage.
+     * @param isPaginated - Whether the reader is in paginated mode.
+     * @param isVertical - Whether the reader is in vertical mode.
+     * @returns The index of the last visible paragraph.
+     */
     const updateChars = (isPaginated: boolean, isVertical: boolean) => {
         let lastIndex = props.book.currParagraph
         let currChars = props.book.currChars
@@ -88,69 +75,104 @@ export function ReaderProvider(props: { book: ReaderSource; children: JSX.Elemen
         props.book.save().catch(console.error)
 
         // update store state
-        setReaderStore("currIndex", lastIndex)
-        setReaderStore("currChars", currChars)
+        setStore("currIndex", lastIndex)
+        setStore("currChars", currChars)
 
-        readingManager.updateReadingProgress(
-            currChars,
-            sessionStore.status === ISessionStatus.authenticated,
-        )
+        ReadingSessionManager.getInstance().updateReadingProgress(currChars)
+        // readingManager.updateReadingProgress(currChars, sessionStore.status === ISessionStatus.authenticated)
 
         return lastIndex
     }
 
-    onCleanup(() => readingManager.finishSession())
-
-    const bookmarkGoTo = (bookmark: Bookmark) => {
-        const sectionId = readerStore.book.findSectionIndexById(bookmark.sectionName)
-        if (readerStore.currSection !== sectionId && sectionId) {
-            setReaderStore("currSection", sectionId)
-        }
-
-        setTimeout(() => {
-            document
-                .querySelector(`p[index="${bookmark.paragraphId}"]`)
-                ?.scrollIntoView({ block: "center" })
-        }, 0)
-    }
+    /**
+     * Navigates to a specific section by its file name and scrolls it into view.
+     * @param name - The file name of the section to navigate to.
+     */
     const navigationGoTo = (name: string) => {
-        const section = readerStore.book.sections[readerStore.currSection]
+        const section = store.book.sections[store.currSection]
         const currentFile = section.name
 
         if (currentFile !== name) {
-            const sectionId = readerStore.book.sections.findIndex(
-                (section) => section.name === name,
-            )!
-            setReaderStore("currSection", sectionId)
+            const sectionId = store.book.sections.findIndex((section) => section.name === name)!
+            setStore("currSection", sectionId)
         }
 
+        // TODO: find a better way and dont use timeout to wait for the render
         setTimeout(() => {
             document.getElementById(name)?.scrollIntoView({ block: "center" })
         }, 0)
     }
 
+    /**
+     * Navigates to a specific bookmark and scrolls the corresponding paragraph into view.
+     * @param bookmark - The bookmark object containing section and paragraph info.
+     */
+    const bookmarkGoTo = (bookmark: Bookmark) => {
+        const sectionId = store.book.findSectionIndexById(bookmark.sectionName)
+        if (store.currSection !== sectionId && sectionId) {
+            setStore("currSection", sectionId)
+        }
+
+        // TODO: find a better way and dont use timeout to wait for the render
+        setTimeout(() => {
+            document.querySelector(`p[index="${bookmark.paragraphId}"]`)?.scrollIntoView({ block: "center" })
+        }, 0)
+    }
+
+    const openNavbar = () => {
+        setStore("navOpen", true)
+        setStore("sideBar", null)
+    }
+
+    const closeNavbar = () => {
+        setStore("navOpen", false)
+        setStore("sideBar", null)
+    }
+
+    const setSidebar = (value: string | null) => setStore("sideBar", value as any)
+
+    const goToNextSection = () => {
+        setStore("currSection", store.currSection + 1)
+    }
+
+    const goToPrevSection = () => {
+        setStore("currSection", store.currSection - 1)
+        return store.book.sections[store.currSection].lastIndex - 1
+    }
+
+    const setSection = (section: number) => {
+        setStore("currSection", section)
+    }
+
     return (
-        <ReaderContext.Provider
-            value={{
-                updateChars,
-                navigationGoTo,
-                bookmarkGoTo,
-                readerStore,
-                setReaderStore,
-                readingManager,
-            }}
-        >
-            {props.children}
-        </ReaderContext.Provider>
+        <BookStateContext.Provider value={store}>
+            <BookDispatchContext.Provider
+                value={{
+                    updateChars,
+                    navigationGoTo,
+                    bookmarkGoTo,
+                    openNavbar,
+                    closeNavbar,
+                    setSidebar,
+                    goToNextSection,
+                    goToPrevSection,
+                    setSection,
+                }}
+            >
+                {props.children}
+            </BookDispatchContext.Provider>
+        </BookStateContext.Provider>
     )
 }
 
-/**
- * Hook to access the reader context.
- * @throws Error if used outside of ReaderProvider.
- */
-export function useReaderContext() {
-    const ctx = useContext(ReaderContext)
-    if (!ctx) throw new Error("useReaderContext must be used inside <ReaderProvider>")
+export function useReaderState() {
+    const ctx = useContext(BookStateContext)
+    if (!ctx) throw new Error("useReaderState must be used inside <ReaderProvider>")
+    return ctx
+}
+
+export function useReaderDispatch() {
+    const ctx = useContext(BookDispatchContext)
+    if (!ctx) throw new Error("useReaderDispatch must be used inside <ReaderProvider>")
     return ctx
 }

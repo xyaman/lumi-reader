@@ -13,11 +13,19 @@ interface IPartialSource {
 }
 
 export default class ReadingSessionManager {
+    private static sharedInstance: ReadingSessionManager | null = null
     activeSession: () => ReadingSession | null
-    setActiveSession: (session: ReadingSession | undefined) => void
+    setActiveSession: (session: ReadingSession | null) => void
 
-    constructor() {
+    private constructor() {
         ;[this.activeSession, this.setActiveSession] = createSignal<ReadingSession | null>(null)
+    }
+
+    static getInstance(): ReadingSessionManager {
+        if (!ReadingSessionManager.sharedInstance) {
+            ReadingSessionManager.sharedInstance = new ReadingSessionManager()
+        }
+        return ReadingSessionManager.sharedInstance
     }
 
     static async syncWithBackend(): AsyncResult<boolean, Error> {
@@ -48,12 +56,8 @@ export default class ReadingSessionManager {
 
         // 3.  Handle different types of changes
         if (localIds.length > 0) {
-            const localOnlySessions = await Promise.all(
-                localIds.map((id) => LumiDb.getReadingSessionById(id)),
-            )
-            const updateRes = await readingSessionsApi.batchUpdate(
-                localOnlySessions.filter((s) => s !== undefined),
-            )
+            const localOnlySessions = await Promise.all(localIds.map((id) => LumiDb.getReadingSessionById(id)))
+            const updateRes = await readingSessionsApi.batchUpdate(localOnlySessions.filter((s) => s !== undefined))
             if (updateRes.error) {
                 return updateRes
             }
@@ -97,7 +101,7 @@ export default class ReadingSessionManager {
 
         await LumiDb.updateReadingSession(updatedSession)
         await readingSessionsApi.update(updatedSession.snowflake, updatedSession)
-        this.setActiveSession(undefined)
+        this.setActiveSession(null)
     }
 
     async pauseSession() {
