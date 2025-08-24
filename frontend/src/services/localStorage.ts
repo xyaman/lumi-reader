@@ -29,8 +29,10 @@ function remove(key: string) {
     localStorage.removeItem(key)
 }
 
-function get<T>(key: string): T | undefined {
-    return localStorage.getItem(key) as T | undefined
+// TODO: change T
+function get<T>(key: string, json: boolean = true): T | undefined {
+    const item = localStorage.getItem(key)
+    return json && item ? JSON.parse(item as string) : item
 }
 
 export const lsReadingSessions = {

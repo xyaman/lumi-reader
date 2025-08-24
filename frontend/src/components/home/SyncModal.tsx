@@ -17,7 +17,8 @@ export function SyncModal(props: { show: boolean; onDismiss?: () => void; books:
 
     const [cloudBooks] = createResource(async () => {
         const res = await syncedBooksApi.getAll()
-        if (res.error) throw res.error
+        // TODO: error text
+        if (res.error) return []
         const books = res.ok.data!.books
         return books
     })

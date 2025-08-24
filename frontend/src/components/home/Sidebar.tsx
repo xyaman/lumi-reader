@@ -77,7 +77,7 @@ export function Sidebar() {
         <div class="bg-base01 border border-base02 h-full w-full">
             {/* User */}
             <Show
-                when={authState.user}
+                when={authState.user != null}
                 fallback={
                     <div class="p-4 border-b border-base02">
                         <A href="/register">
@@ -157,7 +157,9 @@ export function Sidebar() {
             {/* Social */}
             <div class="p-4">
                 <h2 class="font-semibold mb-2">Social Activity</h2>
-                <SocialList />
+                <Show when={authState.status == "authenticated"}>
+                    <SocialList />
+                </Show>
             </div>
         </div>
     )
