@@ -69,14 +69,33 @@ export function Register() {
                     >
                         <h2 class="text-3xl font-bold text-center text-base07 mb-6">Create Account</h2>
                         <form class="space-y-4" onSubmit={handleSubmit}>
-                            <Input ref={(el) => (emailInput = el)} type="email" placeholder="Email address" required />
-                            <Input ref={(el) => (usernameInput = el)} type="text" placeholder="Username" required />
-                            <Input ref={(el) => (passwordInput = el)} type="password" placeholder="Password" required />
+                            <Input
+                                ref={(el) => (emailInput = el)}
+                                type="email"
+                                placeholder="Email address"
+                                required
+                                autocomplete="email"
+                            />
+                            <Input
+                                ref={(el) => (usernameInput = el)}
+                                type="text"
+                                placeholder="Username"
+                                required
+                                autocomplete="username"
+                            />
+                            <Input
+                                ref={(el) => (passwordInput = el)}
+                                type="password"
+                                placeholder="Password"
+                                required
+                                autocomplete="new-password"
+                            />
                             <Input
                                 ref={(el) => (passwordConfirmationInput = el)}
                                 type="password"
                                 placeholder="Confirm Password"
                                 required
+                                autocomplete="new-password"
                             />
 
                             <Show when={error()}>

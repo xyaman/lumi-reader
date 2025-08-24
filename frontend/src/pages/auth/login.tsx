@@ -68,8 +68,20 @@ export function Login() {
                     </Show>
                     <h2 class="text-3xl font-bold text-center text-base07 mb-6">Welcome Back</h2>
                     <form class="space-y-4" onSubmit={handleSubmit}>
-                        <Input ref={(el) => (emailInput = el)} type="email" placeholder="Email address" required />
-                        <Input ref={(el) => (passwordInput = el)} type="password" placeholder="Password" required />
+                        <Input
+                            ref={(el) => (emailInput = el)}
+                            type="email"
+                            placeholder="Email address"
+                            autocomplete="email"
+                            required
+                        />
+                        <Input
+                            ref={(el) => (passwordInput = el)}
+                            type="password"
+                            placeholder="Password"
+                            autocomplete="current-password"
+                            required
+                        />
                         <Show when={error()}>
                             <p class="text-sm text-base08 transition-opacity duration-300 animate-fade-in">{error()}</p>
                         </Show>
@@ -78,7 +90,7 @@ export function Login() {
                         </Button>
                     </form>
                     <div class="mt-4 text-center text-sm text-base04">
-                        Don’t have an account?
+                        Don’t have an account?{" "}
                         <A href="/register" class="text-base0D hover:underline">
                             Sign up
                         </A>
