@@ -1,7 +1,7 @@
 import { createEffect, For, on, onCleanup, Show } from "solid-js"
 import { IconBookmarkFull } from "@/components/icons"
-import { readerSettingsStore } from "@/stores/readerSettings"
 import { useReaderDispatch, useReaderState } from "@/context/reader"
+import { createReaderSettings } from "@/hooks"
 
 function getBaseName(path: string) {
     const match = path.match(/(?:.*\/)?([^\/]+\.(?:png|jpe?g|svg|xhtml|html))$/i)
@@ -24,9 +24,10 @@ export default function ReaderContent() {
 
     let containerRef: HTMLDivElement | undefined
 
-    const isPaginated = () => readerSettingsStore.paginated
-    const isVertical = () => readerSettingsStore.vertical
-    const showFurigana = () => readerSettingsStore.showFurigana
+    const [readerSettings] = createReaderSettings()
+    const isPaginated = () => readerSettings().paginated
+    const isVertical = () => readerSettings().vertical
+    const showFurigana = () => readerSettings().showFurigana
 
     let shouldUpdateChars = false
 
@@ -373,8 +374,8 @@ export default function ReaderContent() {
 
     // Update: padding changed
     createEffect(() => {
-        readerSettingsStore.verticalPadding
-        readerSettingsStore.horizontalPadding
+        readerSettings().verticalPadding
+        readerSettings().horizontalPadding
         handleResize()
     })
 

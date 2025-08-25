@@ -1,5 +1,4 @@
 import { createEffect, createMemo, createSignal, For, onCleanup, Show } from "solid-js"
-import ReaderSettings from "./ReaderSettings"
 import Sidebar from "@/components/Sidebar"
 import ThemeList from "@/components/Themelist"
 import { ThemeProvider } from "@/context/theme"
@@ -7,6 +6,7 @@ import { Bookmark } from "@/lib/readerSource"
 import { formatTime } from "@/lib/utils"
 import { useReaderDispatch, useReaderState } from "@/context/reader"
 import ReadingSessionManager from "@/services/readingSession"
+import { ReaderSettings } from "@/pages/settings"
 
 export function SettingsSidebar() {
     const readerState = useReaderState()
@@ -25,7 +25,7 @@ export function SettingsSidebar() {
         >
             <div class="space-y-4">
                 {/* TODO: only reload if changed pagination, vertical etc */}
-                <ReaderSettings saveButton />
+                <ReaderSettings isEmbedded={true} />
                 <ThemeProvider>
                     <ThemeList selectOnly />
                 </ThemeProvider>
