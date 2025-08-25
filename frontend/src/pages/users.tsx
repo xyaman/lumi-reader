@@ -12,15 +12,16 @@ import {
     Show,
     Switch,
 } from "solid-js"
+
 import UserAvatar from "@/components/UserAvatar"
-import { userApi } from "./api/user"
-import { User, ReadingSession } from "./types/api"
-import { LumiDb } from "./lib/db"
-import { IndividualSessions } from "./components/home/readingSessions"
+import { userApi } from "@/api/user"
+import { User, ReadingSession } from "@/types/api"
+import { LumiDb } from "@/lib/db"
+import { IndividualSessions } from "@/components/home/readingSessions"
 import { createStore } from "solid-js/store"
-import { readingSessionsApi } from "./api/readingSessions"
-import Spinner from "./components/Spiner"
-import { useAuthState } from "./context/auth"
+import { readingSessionsApi } from "@/api/readingSessions"
+import Spinner from "@/components/Spiner"
+import { useAuthState } from "@/context/auth"
 
 type UserDescriptionProps = {
     user: User
@@ -42,7 +43,7 @@ function UserDescription(props: UserDescriptionProps) {
     )
 }
 
-export default function UserPage() {
+export function Users() {
     const authState = useAuthState()
 
     const params = useParams()

@@ -5,11 +5,10 @@ import UserSearch from "@/SearchPage"
 import AuthProvider from "@/context/auth"
 
 import SocialList from "@/components/SocialList"
-import UserPage from "@/UserPage"
 
 import { Login, Register } from "@/pages/auth"
 import { Home, Library, ReadingSessions } from "@/pages/home"
-import { BookReader } from "@/pages/reader"
+import { Users, BookReader } from "@/pages"
 
 const settingsFilter: MatchFilters = {
     name: ["theme", "reader", "sessions"],
@@ -26,7 +25,7 @@ export function App() {
                     <Route path="/" component={Library} />
                     <Route path="/sessions" component={ReadingSessions} />
                     <Route path="/social" component={SocialList} />
-                    <Route path="/users/:id?" component={UserPage} />
+                    <Route path="/users/:id?" component={Users} />
                 </Route>
                 <Route path="/reader/:id?" component={BookReader} matchFilters={settingsFilter} />
                 <Route path="/settings/:name?" component={Settings} />
