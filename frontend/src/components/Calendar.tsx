@@ -26,14 +26,10 @@ export default function Calendar(props: RootRangeProps) {
                     <div class="space-y-4 md:flex md:space-x-4 md:space-y-0">
                         <Index each={calendarProps.months}>
                             {(month, index) => (
-                                <div class={index === 0 ? "" : "hidden md:block"}>
+                                <div class={index === 1 ? "" : "hidden md:block"}>
                                     <div class="flex h-7 items-center justify-center">
-                                        <CorvuCalendar.Label
-                                            index={index}
-                                            class="text-sm text-(--base05)"
-                                        >
-                                            {formatMonth(month().month)}{" "}
-                                            {month().month.getFullYear()}
+                                        <CorvuCalendar.Label index={index} class="text-sm text-(--base05)">
+                                            {formatMonth(month().month)} {month().month.getFullYear()}
                                         </CorvuCalendar.Label>
                                     </div>
                                     <CorvuCalendar.Table index={index} class="mt-3">
