@@ -1,5 +1,17 @@
 import { useNavigate, useParams } from "@solidjs/router"
-import { createEffect, createResource, createSignal, For, Match, onCleanup, onMount, Show, Switch } from "solid-js"
+import {
+    createEffect,
+    createMemo,
+    createResource,
+    createSignal,
+    For,
+    Match,
+    on,
+    onCleanup,
+    onMount,
+    Show,
+    Switch,
+} from "solid-js"
 import UserAvatar from "@/components/UserAvatar"
 import { userApi } from "./api/user"
 import { User, ReadingSession } from "./types/api"
@@ -36,11 +48,12 @@ export default function UserPage() {
     const params = useParams()
     const navigate = useNavigate()
 
-    const userId = () => Number(params.id ?? authState.user?.id)
+    const userId = createMemo(() => Number(params.id ?? authState.user?.id))
     const isOwnId = () => authState.user?.id == userId()
 
     const [editDescription, setEditDescription] = createSignal<string | null>(null)
     const [isLoading, setIsLoading] = createSignal(false)
+
     const [readingStore, setReadingStore] = createStore({
         sessions: [] as ReadingSession[],
         loading: false,
@@ -49,6 +62,11 @@ export default function UserPage() {
     })
 
     const [user, { mutate: mutateUser }] = createResource(userId, async () => {
+        // this might happen when the auth still is loading
+        if (Number.isNaN(userId())) {
+            return undefined
+        }
+
         const data = await userApi.getProfile(userId())
         if (data.error) {
             throw data.error
@@ -59,7 +77,7 @@ export default function UserPage() {
     // Go to login page if there is no param and the user is not logged in
     // Otherwise user not found?
     createEffect(() => {
-        if (Number.isNaN(userId()) || userId() === 0) {
+        if (authState.status !== "loading" && Number.isNaN(userId())) {
             return navigate("/login", { replace: true })
         }
     })
@@ -75,10 +93,17 @@ export default function UserPage() {
             }
         }
 
-        loadMoreSessions()
         container.addEventListener("scroll", onScroll)
         onCleanup(() => container.removeEventListener("scroll", onScroll))
     })
+
+    // load initial sessions when the userId is determined
+    createEffect(
+        on(userId, (value) => {
+            if (Number.isNaN(value)) return
+            loadMoreSessions()
+        }),
+    )
 
     const loadMoreSessions = async () => {
         if (readingStore.loading) return
