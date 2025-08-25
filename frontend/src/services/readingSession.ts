@@ -12,6 +12,7 @@ interface IPartialSource {
     currChars: number
 }
 
+// TODO: use a hook
 export default class ReadingSessionManager {
     private static sharedInstance: ReadingSessionManager | null = null
     activeSession: () => ReadingSession | null

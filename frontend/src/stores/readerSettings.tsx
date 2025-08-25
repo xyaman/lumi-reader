@@ -10,6 +10,7 @@ export interface IReaderSettings {
     showFurigana: boolean
 }
 
+// TODO: stop using this
 function getInitialSettings(): IReaderSettings {
     return {
         fontSize: Number(localStorage.getItem("reader:fontSize") ?? 20),
@@ -22,5 +23,4 @@ function getInitialSettings(): IReaderSettings {
     }
 }
 
-export const [readerSettingsStore, setReaderSettingsStore] =
-    createStore<IReaderSettings>(getInitialSettings())
+export const [readerSettingsStore, setReaderSettingsStore] = createStore<IReaderSettings>(getInitialSettings())

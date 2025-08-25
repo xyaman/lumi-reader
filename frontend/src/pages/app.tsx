@@ -4,12 +4,11 @@ import { getSelectedTheme, setGlobalTheme } from "@/theme"
 import UserSearch from "@/SearchPage"
 import AuthProvider from "@/context/auth"
 
-import { ReadingSessionsPage } from "@/ReadingSessionsPage"
 import SocialList from "@/components/SocialList"
 import UserPage from "@/UserPage"
 
 import { Login, Register } from "@/pages/auth"
-import { Home, Library } from "@/pages/home"
+import { Home, Library, ReadingSessions } from "@/pages/home"
 import { BookReader } from "@/pages/reader"
 
 const settingsFilter: MatchFilters = {
@@ -25,7 +24,7 @@ export function App() {
             <Router>
                 <Route path="/" component={Home}>
                     <Route path="/" component={Library} />
-                    <Route path="/sessions" component={ReadingSessionsPage} />
+                    <Route path="/sessions" component={ReadingSessions} />
                     <Route path="/social" component={SocialList} />
                     <Route path="/users/:id?" component={UserPage} />
                 </Route>
