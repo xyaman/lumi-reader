@@ -7,7 +7,7 @@ import { createEffect, createSignal, onCleanup, onMount } from "solid-js"
  *
  * @param [autoReflectChanges=true] default true. update the css after any change
  */
-export function createReaderSettings(autoReflectChanges: boolean = true) {
+export function createReaderSettings(autoReflectChanges: boolean = false) {
     const initial = {
         fontSize: Math.max(lsReader.fontSize(), 1),
         lineHeight: Math.max(lsReader.lineHeight(), 1),
