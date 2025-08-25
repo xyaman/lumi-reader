@@ -1,8 +1,9 @@
+import { lsReader } from "@/services/localStorage"
 import { createStore } from "solid-js/store"
 
 export interface IReaderSettings {
     fontSize: number
-    lineHeight: number | string
+    lineHeight: number
     verticalPadding: number
     horizontalPadding: number
     vertical: boolean
@@ -13,13 +14,13 @@ export interface IReaderSettings {
 // TODO: stop using this
 function getInitialSettings(): IReaderSettings {
     return {
-        fontSize: Number(localStorage.getItem("reader:fontSize") ?? 20),
-        lineHeight: localStorage.getItem("reader:lineHeight") ?? "1.5",
-        verticalPadding: Number(localStorage.getItem("reader:verticalPadding") ?? 10),
-        horizontalPadding: Number(localStorage.getItem("reader:horizontalPadding") ?? 10),
-        vertical: localStorage.getItem("reader:vertical") === "true",
-        paginated: localStorage.getItem("reader:paginated") === "true",
-        showFurigana: localStorage.getItem("reader:showFurigana") === "true",
+        fontSize: lsReader.fontSize(),
+        lineHeight: lsReader.lineHeight(),
+        verticalPadding: lsReader.verticalPadding(),
+        horizontalPadding: lsReader.horizontalPadding(),
+        vertical: lsReader.vertical(),
+        paginated: lsReader.paginated(),
+        showFurigana: lsReader.showFurigana(),
     }
 }
 

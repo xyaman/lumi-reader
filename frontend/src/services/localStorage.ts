@@ -1,11 +1,18 @@
 import { type AuthUser } from "@/api/auth"
 
-// reader
-const LS_AUTOSTART = "reader:sessions:autostart"
-const LS_AUTOSYNC = "reader:sessions:autosync"
+// -- reader settings
+const LS_FONT_SIZE = "reader:fontSize"
+const LS_LINE_HEIGHT = "reader:lineHeight"
+const LS_VERTICAL_PADDING = "reader:verticalPadding"
+const LS_HORIZONTAL_PADDING = "reader:horizontalPadding"
+const LS_SHOW_FURIGANA = "reader:showFurigana"
+const LS_VERTICAL = "reader:vertical"
+const LS_PAGINATED = "reader:paginated"
 
 // reading sessions
 const LS_LASTSYNC = "last_session_sync_time"
+const LS_AUTOSTART = "reader:sessions:autostart"
+const LS_AUTOSYNC = "reader:sessions:autosync"
 
 // auth
 const LS_CURRUSER = "auth:currentuser"
@@ -37,6 +44,29 @@ function remove(key: string) {
 function get<T>(key: string, json: boolean = true): T | undefined {
     const item = localStorage.getItem(key)
     return json && item ? JSON.parse(item as string) : item
+}
+
+export const lsReader = {
+    fontSize: () => getNumberOr(LS_FONT_SIZE, 16),
+    setFontSize: (value: number) => set(LS_FONT_SIZE, value),
+
+    lineHeight: () => getNumberOr(LS_LINE_HEIGHT, 1.5),
+    setLineHeight: (value: number) => set(LS_LINE_HEIGHT, value),
+
+    verticalPadding: () => getNumberOr(LS_VERTICAL_PADDING, 24),
+    setVerticalPadding: (value: number) => set(LS_VERTICAL_PADDING, value),
+
+    horizontalPadding: () => getNumberOr(LS_HORIZONTAL_PADDING, 24),
+    setHorizontalPadding: (value: number) => set(LS_HORIZONTAL_PADDING, value),
+
+    showFurigana: () => getOrTrue(LS_SHOW_FURIGANA),
+    setShowFurigana: (value: boolean) => set(LS_SHOW_FURIGANA, value),
+
+    vertical: () => getOrTrue(LS_VERTICAL),
+    setVertical: (value: boolean) => set(LS_VERTICAL, value),
+
+    paginated: () => getOrTrue(LS_PAGINATED),
+    setPaginated: (value: boolean) => set(LS_PAGINATED, value),
 }
 
 export const lsReadingSessions = {

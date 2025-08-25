@@ -2,7 +2,7 @@ import { createResource, createSignal, For } from "solid-js"
 import { LumiDb, ReaderSourceData, ReaderSourceLightRecord, ReaderSourceRecord } from "@/lib/db"
 import { SyncedBook, syncedBooksApi } from "@/api/syncedBooks"
 import Modal from "@/components/Modal"
-import Checkbox from "@/components/Checkbox"
+import Checkbox from "@/ui/checkbox"
 
 export function SyncModal(props: { show: boolean; onDismiss?: () => void; books: ReaderSourceLightRecord[] }) {
     const [checkedBooks, setCheckedBooks] = createSignal<Set<string>>(new Set())

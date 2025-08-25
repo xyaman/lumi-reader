@@ -5,7 +5,7 @@ import { IconArrowPath, IconError, IconTick } from "@/components/icons"
 import Calendar from "@/components/Calendar"
 
 import ReadingSessionManager from "@/services/readingSession"
-import Checkbox from "@/components/Checkbox"
+import Checkbox from "@/ui/checkbox"
 import { useAuthState } from "@/context/auth"
 import { ReadingSessionsList } from "@/components/home/readingSessions"
 
