@@ -58,11 +58,12 @@ export function Users() {
     const [readingStore, setReadingStore] = createStore({
         sessions: [] as ReadingSession[],
         loading: false,
+        morePages: true,
         page: 0,
         pages: 1,
     })
 
-    const [user, { mutate: mutateUser }] = createResource(userId, async () => {
+    const [userResource, { mutate: mutateUser }] = createResource(userId, async () => {
         // this might happen when the auth still is loading
         if (Number.isNaN(userId())) {
             return undefined
@@ -107,14 +108,16 @@ export function Users() {
     )
 
     const loadMoreSessions = async () => {
-        if (readingStore.loading) return
+        if (readingStore.loading || !readingStore.morePages) return
         setReadingStore("loading", true)
+        console.log("loading more..")
 
         if (isOwnId()) {
             // local sessions
             const res = await LumiDb.getRecentReadingSessions(readingStore.page)
             if (res.length === 0) {
                 setReadingStore("loading", false)
+                setReadingStore("morePages", false)
                 return
             }
             setReadingStore("sessions", (sessions) => [...sessions, ...res])
@@ -122,12 +125,16 @@ export function Users() {
         } else {
             // backend sessions (other users)
             // it means we are at the end
-            if (readingStore.page >= readingStore.pages) return
+            if (readingStore.page >= readingStore.pages) {
+                setReadingStore("loading", false)
+                setReadingStore("morePages", false)
+                return
+            }
 
             // backend pages starts at 1 (pagy ruby)
             const res = await readingSessionsApi.getRecent(userId(), readingStore.page + 1)
             if (res.ok) {
-                setReadingStore("sessions", res.ok.data!.sessions)
+                setReadingStore("sessions", (sessions) => [...sessions, ...res.ok.data!.sessions])
                 setReadingStore("page", (page) => page + 1)
                 setReadingStore("pages", res.ok.data!.pagy.pages)
             } else {
@@ -153,21 +160,21 @@ export function Users() {
         if (res.error) {
             console.error(res.error)
         } else {
-            mutateUser({ ...user()!, avatarUrl: res.ok.data!.avatarUrl })
+            mutateUser({ ...userResource()!, avatarUrl: res.ok.data!.avatarUrl })
         }
     }
 
     // -- buttons handlers
     const handleFollow = async () => {
         let res
-        const following = !user()!.following
-        if (user()!.following) {
+        const following = !userResource()!.following
+        if (userResource()!.following) {
             res = await userApi.unfollow(userId())
         } else {
             res = await userApi.follow(userId())
         }
         if (res.error) throw res.error
-        mutateUser({ ...user()!, following })
+        mutateUser({ ...userResource()!, following })
     }
 
     const handleSaveDescription = async () => {
@@ -179,7 +186,7 @@ export function Users() {
         setIsLoading(true)
         const res = await userApi.updateDescription(newDescription)
         if (res.ok) {
-            mutateUser({ ...user()!, description: editDescription()! })
+            mutateUser({ ...userResource()!, description: editDescription()! })
         } else {
             console.error(res.error)
         }
@@ -189,17 +196,17 @@ export function Users() {
 
     return (
         <div class="px-4 py-8">
-            <Show when={user()}>
+            <Show when={userResource()}>
                 {/* Profile header */}
                 <section>
                     <div class="flex gap-8">
                         {/* Avatar */}
-                        <UserAvatar user={user()!} w={40} h={40} onAvatarChange={onAvatarChange} />
+                        <UserAvatar user={userResource()!} w={40} h={40} onAvatarChange={onAvatarChange} />
 
                         {/* Profile info */}
                         <div class="flex-1">
                             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 md:mb-0">
-                                <h1 class="text-3xl font-bold">{user()!.username}</h1>
+                                <h1 class="text-3xl font-bold">{userResource()!.username}</h1>
 
                                 <Switch>
                                     <Match when={editDescription() !== null}>
@@ -219,7 +226,7 @@ export function Users() {
                                     </Match>
                                     <Match when={authState.user && !isOwnId()}>
                                         <button class="button text-center" onClick={handleFollow}>
-                                            {user()!.following ? "Unfollow" : "Follow"}
+                                            {userResource()!.following ? "Unfollow" : "Follow"}
                                         </button>
                                     </Match>
                                 </Switch>
@@ -227,7 +234,7 @@ export function Users() {
 
                             {/* Description */}
                             <UserDescription
-                                user={user()!}
+                                user={userResource()!}
                                 isEditing={editDescription() !== null}
                                 onInput={descriptionOnInput}
                                 disabled={isLoading()}
@@ -236,11 +243,11 @@ export function Users() {
                             {/* Stats */}
                             <div class="flex gap-8">
                                 <div>
-                                    <span class="block text-2xl font-bold">{user()!.followersCount || 0}</span>
+                                    <span class="block text-2xl font-bold">{userResource()!.followersCount || 0}</span>
                                     <span class="text-sm">Followers</span>
                                 </div>
                                 <div>
-                                    <span class="block text-2xl font-bold">{user()!.followingCount || 0}</span>
+                                    <span class="block text-2xl font-bold">{userResource()!.followingCount || 0}</span>
                                     <span class="text-sm">Following</span>
                                 </div>
                             </div>
@@ -250,11 +257,10 @@ export function Users() {
                 {/* Sessions/Activity */}
                 <section class="mt-12">
                     <h2 class="text-2xl font-bold mb-6 p-2 border-b border-base03">Recent Reading Activity</h2>
-                    <Show when={!readingStore.loading} fallback={<Spinner size={40} base16Color="--base05" />}>
-                        <For each={readingStore.sessions ?? []}>
-                            {(session) => <IndividualSessions session={session} />}
-                        </For>
+                    <Show when={readingStore.loading}>
+                        <Spinner size={40} base16Color="--base05" />
                     </Show>
+                    <For each={readingStore.sessions}>{(session) => <IndividualSessions session={session} />}</For>
                 </section>
             </Show>
         </div>

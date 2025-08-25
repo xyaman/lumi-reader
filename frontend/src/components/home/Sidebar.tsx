@@ -88,12 +88,14 @@ export function Sidebar() {
                 }
             >
                 <div class="p-2 border-b border-base02">
-                    <div class="flex items-center space-x-3 p-2 rounded hover:bg-base02">
-                        {/* User Avatar */}
-                        <UserAvatar h={10} w={10} user={authState.user!} />
-                        {/* Name  */}
-                        <p class="font-semibold">{authState.user?.username}</p>
-                    </div>
+                    <A href="/users">
+                        <div class="flex items-center space-x-3 p-2 rounded hover:bg-base02">
+                            {/* User Avatar */}
+                            <UserAvatar h={10} w={10} user={authState.user!} />
+                            {/* Name  */}
+                            <p class="font-semibold">{authState.user?.username}</p>
+                        </div>
+                    </A>
                 </div>
             </Show>
 
