@@ -1,6 +1,6 @@
 import { LumiDb } from "@/lib/db"
 import { formatTime } from "@/lib/utils"
-import { createResource, createSignal, Match, onMount, Show, Switch } from "solid-js"
+import { createEffect, createResource, createSignal, Match, onMount, Show, Switch } from "solid-js"
 import { IconArrowPath, IconError, IconTick } from "@/components/icons"
 import Calendar from "@/components/Calendar"
 
@@ -72,7 +72,6 @@ export function ReadingSessions() {
 
         const start = Math.floor(range.from.getTime() / 1000)
         const end = Math.floor(range.to.getTime() / 1000)
-
         return await LumiDb.getReadingSessionByDateRange(start, end)
     })
 

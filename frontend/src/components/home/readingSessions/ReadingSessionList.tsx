@@ -1,6 +1,6 @@
 import { formatTime } from "@/lib/utils"
-import { For } from "solid-js"
-import { IconClock, IconTick, IconTrendingUp } from "@/components/icons"
+import { createSignal, For, Show } from "solid-js"
+import { IconCalendar, IconClock, IconLanguage, IconTick, IconTrendingUp } from "@/components/icons"
 
 import { ReadingSession } from "@/types/api"
 

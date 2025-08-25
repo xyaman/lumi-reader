@@ -2,6 +2,7 @@ import { createContext, JSX, useContext } from "solid-js"
 import { createStore } from "solid-js/store"
 import { Bookmark, ReaderSource } from "@/lib/readerSource"
 import ReadingSessionManager from "@/services/readingSession"
+import { lsReadingSessions } from "@/services/localStorage"
 
 type ReaderState = {
     shouldReload: boolean
@@ -42,6 +43,10 @@ export function ReaderProvider(props: { book: ReaderSource; children: JSX.Elemen
         currSection: props.book.findSectionIndex(props.book.currParagraph) ?? 0,
     })
 
+    if (lsReadingSessions.autoStart()) {
+        ReadingSessionManager.getInstance().startSession(props.book)
+    }
+
     /**
      * Updates the current paragraph and character count based on visible content.
      * Also persists the progress to local storage.
@@ -79,7 +84,6 @@ export function ReaderProvider(props: { book: ReaderSource; children: JSX.Elemen
         setStore("currChars", currChars)
 
         ReadingSessionManager.getInstance().updateReadingProgress(currChars)
-        // readingManager.updateReadingProgress(currChars, sessionStore.status === ISessionStatus.authenticated)
 
         return lastIndex
     }

@@ -1,9 +1,13 @@
 import { type AuthUser } from "@/api/auth"
 
+// reader
 const LS_AUTOSTART = "reader:sessions:autostart"
 const LS_AUTOSYNC = "reader:sessions:autosync"
+
+// reading sessions
 const LS_LASTSYNC = "last_session_sync_time"
 
+// auth
 const LS_CURRUSER = "auth:currentuser"
 
 function getNumberOr(key: string, fallback: number | string) {
