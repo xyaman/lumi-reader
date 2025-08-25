@@ -1,26 +1,25 @@
 import { For, Show } from "solid-js"
-import { useThemeContext } from "@/context/theme"
 import { ITheme } from "@/theme"
 import { IconDuplicate, IconEdit, IconTrash } from "@/components/icons"
+import { useThemeDispatch, useThemeState } from "@/context/theme"
 
-export default function ThemeList(props: {
-    selectOnly?: boolean
-    onEdit?: (theme: ITheme) => void
-}) {
-    const { selectedTheme, selectTheme, allThemes, deleteTheme, duplicateTheme } = useThemeContext()
+export default function ThemeList(props: { selectOnly?: boolean; onEdit?: (theme: ITheme) => void }) {
+    const themeState = useThemeState()
+    const themeDispatch = useThemeDispatch()
+
     const isDefaultTheme = (scheme: string) =>
-        allThemes().some((t) => t.scheme === scheme && t.author === "lumireader")
+        themeState.allThemes.some((t) => t.scheme === scheme && t.author === "lumireader")
 
     return (
         <div>
             <h3 class="text-lg font-medium mb-2">Available Themes</h3>
-            <For each={allThemes()}>
+            <For each={themeState.allThemes}>
                 {(theme) => (
                     <div
                         class={`flex items-center justify-between p-3 my-2 rounded border ${
-                            selectedTheme() === theme.scheme ? "border-blue-600" : "border-zinc-600"
+                            themeState.selectedTheme === theme.scheme ? "border-blue-600" : "border-zinc-600"
                         }`}
-                        onClick={() => selectTheme(theme.scheme)}
+                        onClick={() => themeDispatch.selectTheme(theme.scheme)}
                     >
                         <p class="cursor-pointer">
                             {theme.scheme}
@@ -32,7 +31,7 @@ export default function ThemeList(props: {
                             <Show when={!props.selectOnly}>
                                 <button
                                     class="ml-2 text-sm text-[var(--base05)] cursor-pointer"
-                                    onClick={() => duplicateTheme(theme)}
+                                    onClick={() => themeDispatch.duplicateTheme(theme)}
                                 >
                                     <IconDuplicate />
                                 </button>
@@ -46,7 +45,7 @@ export default function ThemeList(props: {
                                 </button>
                                 <button
                                     class="ml-2 text-sm text-[var(--base05)] cursor-pointer"
-                                    onClick={() => deleteTheme(theme.scheme)}
+                                    onClick={() => themeDispatch.deleteTheme(theme.scheme)}
                                 >
                                     <IconTrash />
                                 </button>

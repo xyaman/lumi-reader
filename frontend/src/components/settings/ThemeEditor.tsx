@@ -1,6 +1,6 @@
 import { createEffect, createSignal, For } from "solid-js"
 import { ITheme } from "@/theme"
-import { useThemeContext } from "@/context/theme"
+import { useThemeDispatch } from "@/context/theme"
 
 type Base16Key = keyof ITheme
 
@@ -67,26 +67,18 @@ const themeDesc = {
     base0F: "brown",
 }
 
-export default function ThemeEditor(props: {
-    initialTheme?: ITheme
-    mode?: "create" | "edit"
-    onClose: () => void
-}) {
-    const { saveTheme } = useThemeContext()
-    const [form, setForm] = createSignal<ITheme>(
-        props.initialTheme ? { ...props.initialTheme } : emptyTheme,
-    )
+export default function ThemeEditor(props: { initialTheme?: ITheme; mode?: "create" | "edit"; onClose: () => void }) {
+    const themeDispatch = useThemeDispatch()
+    const [form, setForm] = createSignal<ITheme>(props.initialTheme ? { ...props.initialTheme } : emptyTheme)
     const [yamlString, setYamlString] = createSignal(themeToYAML(form()))
     const [yamlError, setYamlError] = createSignal<string | null>(null)
     const originalName = props.initialTheme?.scheme ?? ""
 
     createEffect(() => setYamlString(themeToYAML(form())))
 
-    const handleFormChange = (key: keyof ITheme, value: string) =>
-        setForm((prev) => ({ ...prev, [key]: value }))
+    const handleFormChange = (key: keyof ITheme, value: string) => setForm((prev) => ({ ...prev, [key]: value }))
 
-    const handleBase16Change = (key: Base16Key, value: string) =>
-        setForm((prev) => ({ ...prev, [key]: value }))
+    const handleBase16Change = (key: Base16Key, value: string) => setForm((prev) => ({ ...prev, [key]: value }))
 
     const handleYamlChange = (e: Event) => {
         const value = (e.target as HTMLTextAreaElement).value
@@ -115,7 +107,7 @@ export default function ThemeEditor(props: {
         e.preventDefault()
         const theme = form()
         if (!theme.scheme.trim()) return
-        saveTheme(theme, props.mode === "edit" ? originalName : undefined)
+        themeDispatch.saveTheme(theme, props.mode === "edit" ? originalName : undefined)
         props.onClose()
         if (props.mode === "create") setForm(emptyTheme)
     }
@@ -123,9 +115,7 @@ export default function ThemeEditor(props: {
     return (
         <form onSubmit={handleFormSubmit} class="navbar-theme p-4 rounded-lg">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-medium">
-                    {props.mode === "edit" ? "Edit Theme" : "New Theme"}
-                </h3>
+                <h3 class="text-lg font-medium">{props.mode === "edit" ? "Edit Theme" : "New Theme"}</h3>
                 <button
                     type="button"
                     class="button cursor-pointer text-sm px-4 py-2 rounded-lg"
@@ -169,9 +159,7 @@ export default function ThemeEditor(props: {
                                     <input
                                         type="color"
                                         value={form()[key]}
-                                        onInput={(e) =>
-                                            handleBase16Change(key, e.currentTarget.value)
-                                        }
+                                        onInput={(e) => handleBase16Change(key, e.currentTarget.value)}
                                         class="w-8 h-8 bg-transparent border-none cursor-pointer"
                                     />
                                 </div>

@@ -1,6 +1,6 @@
 import { createEffect, createMemo, createSignal, For, onCleanup, Show } from "solid-js"
 import Sidebar from "@/components/Sidebar"
-import ThemeList from "@/components/Themelist"
+import ThemeList from "@/components/settings/Themelist"
 import { ThemeProvider } from "@/context/theme"
 import { Bookmark } from "@/lib/readerSource"
 import { formatTime } from "@/lib/utils"

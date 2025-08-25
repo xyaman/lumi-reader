@@ -1,14 +1,14 @@
 import { createMemo, createSignal, Show } from "solid-js"
 import { ITheme } from "@/theme"
 import Navbar from "@/components/Navbar"
-import { IconToc } from "@/components/icons"
 import { A, useParams } from "@solidjs/router"
-import ThemeList from "@/components/Themelist"
-import ThemeEditor from "@/components/ThemeEditor"
+import ThemeList from "@/components/settings/Themelist"
+import ThemeEditor from "@/components/settings/ThemeEditor"
 import { ThemeProvider } from "@/context/theme"
 import { lsReadingSessions } from "../../services/localStorage"
 import { Sidebar } from "@/components/settings/Sidebar"
 import { ReaderSettings } from "./readerSettings"
+import { Button } from "@/ui"
 
 type Menu = "theme" | "reader" | "sessions"
 
@@ -51,7 +51,6 @@ export function Settings() {
     const params = useParams()
     // Sidebar/menu state
     const selectedMenu = createMemo<Menu>(() => (params.name as Menu) ?? "reader")
-    const [showSidebar, setShowSidebar] = createSignal(false)
 
     // Theme state
     const [editorMode, setEditorMode] = createSignal<null | {
@@ -63,9 +62,6 @@ export function Settings() {
         <>
             <Navbar fixed disableCollapse>
                 <Navbar.Left>
-                    <button class="md:hidden mr-4" onClick={() => setShowSidebar((prev) => !prev)}>
-                        <IconToc />
-                    </button>
                     <A href="/" class="text-xl font-bold hover:text-[var(--base0D)] transition-colors">
                         ← lumireader
                     </A>
@@ -75,43 +71,6 @@ export function Settings() {
             {/* Sidebar */}
             <div class="mt-12 flex flex-col md:flex-row min-h-screen">
                 <Sidebar />
-                {/*     <aside class={`navbar-theme w-full md:w-64 p-4 md:block ${showSidebar() ? "block" : "hidden"}`}> */}
-                {/*         <ul class="space-y-2"> */}
-                {/*             <li> */}
-                {/*                 <A */}
-                {/*                     href="/settings/theme" */}
-                {/*                     class={`cursor-pointer w-full text-left font-medium hover:opacity-70 rounded px-2 py-1 ${ */}
-                {/*                         selectedMenu() === "theme" ? "bg-(--base02) text-(--base05)" : "text-(--base04)" */}
-                {/*                     }`} */}
-                {/*                     onClick={() => setShowSidebar(false)} */}
-                {/*                 > */}
-                {/*                     Theme Settings */}
-                {/*                 </A> */}
-                {/*             </li> */}
-                {/*             <li> */}
-                {/*                 <A */}
-                {/*                     href="/settings/reader/" */}
-                {/*                     class={`cursor-pointer w-full text-left font-medium hover:opacity-70 rounded px-2 py-1 ${ */}
-                {/*                         selectedMenu() === "reader" ? "bg-(--base02) text-(--base05)" : "text-(--base04)" */}
-                {/*                     }`} */}
-                {/*                     onClick={() => setShowSidebar(false)} */}
-                {/*                 > */}
-                {/*                     Reader Settings */}
-                {/*                 </A> */}
-                {/*             </li> */}
-                {/*             <li> */}
-                {/*                 <A */}
-                {/*                     href="/settings/sessions/" */}
-                {/*                     class={`cursor-pointer w-full text-left font-medium hover:opacity-70 rounded px-2 py-1 ${ */}
-                {/*                         selectedMenu() === "sessions" ? "bg-(--base02) text-(--base05)" : "text-(--base04)" */}
-                {/*                     }`} */}
-                {/*                     onClick={() => setShowSidebar(false)} */}
-                {/*                 > */}
-                {/*                     Session Settings */}
-                {/*                 </A> */}
-                {/*             </li> */}
-                {/*         </ul> */}
-                {/*     </aside> */}
 
                 {/* Main content */}
                 <main class="flex-1 p-6 md:p-12">
@@ -131,12 +90,12 @@ export function Settings() {
                                         }
                                     >
                                         <>
-                                            <button
-                                                class="button-alt cursor-pointer px-4 py-2 mt-2 mb-4 rounded-lg"
+                                            <Button
+                                                classList={{ "mb-2": true }}
                                                 onClick={() => setEditorMode({ mode: "create" })}
                                             >
                                                 + New Theme
-                                            </button>
+                                            </Button>
                                             <ThemeList onEdit={(theme) => setEditorMode({ mode: "edit", theme })} />
                                         </>
                                     </Show>
