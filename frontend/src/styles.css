@@ -30,21 +30,6 @@
     --color-base0E: var(--base0E); /* purple (accent) */
     --color-base0F: var(--base0F); /* brown / override */
 }
-
-@layer components {
-    .button {
-        @apply cursor-pointer bg-base02 hover:bg-base03 text-base05 py-2 px-4 rounded-md;
-    }
-
-    .button-alt {
-        @apply cursor-pointer rounded-lg shadow-md bg-base01 hover:bg-base00 border border-base03 text-base05 p-1;
-    }
-
-    .body-alt {
-        @apply bg-base01;
-    }
-}
-
 html,
 body,
 #root {

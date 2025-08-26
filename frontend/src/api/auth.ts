@@ -17,13 +17,8 @@ export const authApi = {
     },
 
     // Registers a new user with the given credentials
-    async register(credentials: {
-        email: string
-        username: string
-        password: string
-        password_confirmation: string
-    }) {
-        return ApiClient.request<{ user: AuthUser }>("/session", {
+    async register(credentials: { email: string; username: string; password: string; password_confirmation: string }) {
+        return ApiClient.request<{ user: AuthUser }>("/users", {
             method: "POST",
             body: JSON.stringify({ user: credentials }),
         })

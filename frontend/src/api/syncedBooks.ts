@@ -1,4 +1,4 @@
-import { ApiClient, ApiResult } from "@/lib/apiClient"
+import { ApiClient } from "@/lib/apiClient"
 import { ReaderSourceData } from "@/lib/db"
 import { AsyncResult, ok } from "@/lib/result"
 import { camelToSnake } from "@/lib/utils"
@@ -31,13 +31,10 @@ export const syncedBooksApi = {
     },
 
     async sync(books: SyncedBook[]) {
-        return ApiClient.request<{ newBooks: SyncedBook[]; updatedBooks: SyncedBook[] }>(
-            "/synced_books/sync",
-            {
-                method: "POST",
-                body: JSON.stringify({ books: camelToSnake(books) }),
-            },
-        )
+        return ApiClient.request<{ newBooks: SyncedBook[]; updatedBooks: SyncedBook[] }>("/synced_books/sync", {
+            method: "POST",
+            body: JSON.stringify({ books: camelToSnake(books) }),
+        })
     },
 
     async uploadData(uniqueId: string, data: ReaderSourceData) {

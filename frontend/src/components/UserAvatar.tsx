@@ -6,6 +6,7 @@ type UserAvatarProps = {
     w: number
     h: number
     onAvatarChange?: (f: File) => void
+    isCurrentUser?: boolean
 }
 
 export default function UserAvatar(props: UserAvatarProps) {
@@ -22,30 +23,21 @@ export default function UserAvatar(props: UserAvatarProps) {
         }
     `
     return (
-        <div class="relative">
+        <div class="relative m-auto">
             <Show
                 when={props.user.avatarUrl}
                 fallback={
-                    <div
-                        class="bg-base01 rounded-full flex items-center justify-center"
-                        style={style}
-                    >
-                        <span class="text-xs font-medium">
-                            {props.user.username.charAt(0).toUpperCase()}
-                        </span>
+                    <div class="bg-base01 rounded-full flex items-center justify-center" style={style}>
+                        <span class="text-xs font-medium">{props.user.username.charAt(0).toUpperCase()}</span>
                     </div>
                 }
             >
                 <div class="rounded-full overflow-hidden border-2 border-base04" style={style}>
-                    <img
-                        class="w-full h-full object-cover"
-                        src={props.user.avatarUrl}
-                        alt="User avatar"
-                    />
+                    <img class="w-full h-full object-cover" src={props.user.avatarUrl} alt="User avatar" />
                 </div>
             </Show>
-            <Show when={props.onAvatarChange}>
-                <label class="button absolute bottom-0 right-0 text-xs px-2 py-1">
+            <Show when={props.onAvatarChange && props.isCurrentUser}>
+                <label class="absolute rounded bottom-0 right-0 text-xs px-2 py-1 cursor-pointer bg-base02 hover:bg-base03">
                     Change
                     <input
                         type="file"

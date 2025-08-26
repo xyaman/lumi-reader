@@ -13,7 +13,7 @@ class V1::SessionsController < ApplicationController
     user = User.authenticate_by(params.permit(:email, :password))
 
     unless user
-      return unauthorized_response("Invalid id or password")
+      return unauthorized_response("Invalid email or password")
     end
 
     unless user.confirmed?

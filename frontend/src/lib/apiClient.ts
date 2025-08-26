@@ -25,15 +25,17 @@ export class ConnectionError extends Error {
 export type ApiResult<T> = AsyncResult<ApiResponse<T>, ApiError | ConnectionError>
 
 export class ApiClient {
-    static async rawRequest(
-        url: string,
-        options: RequestInit = {},
-    ): AsyncResult<Response, ApiError | ConnectionError> {
+    static async rawRequest(url: string, options: RequestInit = {}): AsyncResult<Response, ApiError | ConnectionError> {
         // All requests methods, except GET, needs the csrfToken. Even for not
         // unprotected routes. The backend puts this cookie on every request
-        const csrfToken = await this.getCsrfToken()
-        if (!csrfToken) {
-            return err(new ConnectionError("Missing CSRF token"))
+        let csrfToken
+        try {
+            csrfToken = await this.getCsrfToken()
+            if (!csrfToken) {
+                return err(new ConnectionError("Missing CSRF token"))
+            }
+        } catch (e: any) {
+            return err(new ConnectionError(e?.message || "Network Error"))
         }
 
         const isFormData = options.body instanceof FormData
@@ -67,9 +69,7 @@ export class ApiClient {
         try {
             data = await response.json()
         } catch {
-            return err(
-                new ApiError({ errors: ["Invalid JSON response"] } as ApiResponse, response.status),
-            )
+            return err(new ApiError({ errors: ["Invalid JSON response"] } as ApiResponse, response.status))
         }
 
         if (!response.ok) {

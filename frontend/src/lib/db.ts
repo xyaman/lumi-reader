@@ -177,10 +177,7 @@ export class LumiDb {
     static async deleteBookById(localId: number): Promise<void> {
         const db = await this.getDB()
         const tx = db.transaction([STORE_RECORDS, STORE_LIGHT], "readwrite")
-        await Promise.all([
-            tx.objectStore(STORE_RECORDS).delete(localId),
-            tx.objectStore(STORE_LIGHT).delete(localId),
-        ])
+        await Promise.all([tx.objectStore(STORE_RECORDS).delete(localId), tx.objectStore(STORE_LIGHT).delete(localId)])
         await tx.done
     }
 
@@ -316,8 +313,7 @@ export class LumiDb {
 
     // @throws if id is not passed
     static async updateReadingSession(newSession: Partial<ReadingSession>): Promise<void> {
-        if (!newSession.snowflake)
-            throw new Error("Undefined id/snowflake. Id must be a valid value")
+        if (!newSession.snowflake) throw new Error("Undefined id/snowflake. Id must be a valid value")
 
         const db = await this.getDB()
         const currSession = await this.getReadingSessionById(newSession.snowflake)
