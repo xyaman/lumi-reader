@@ -120,7 +120,7 @@ export default function LibraryProvider(props: { children: JSX.Element }) {
         const shelfIndex = store.shelves.findIndex((s) => s.id === shelfId)
         if (shelfIndex === -1) return
 
-        await LumiDb.updateBookshelf({ id: shelfId, name, bookIds: store.shelves[shelfIndex].bookIds })
+        await LumiDb.updateBookshelf({ id: shelfId, name, bookIds: Array.from(store.shelves[shelfIndex].bookIds) })
         setStore("shelves", shelfIndex, "name", name)
     }
 
