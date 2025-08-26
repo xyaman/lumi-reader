@@ -7,10 +7,7 @@ gem "puma", ">= 5.0"
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 gem "bcrypt", "~> 3.1.7"
 
-gem "pagy", "~> 9.3" # omit patch digit
-
-# Windows does not include zoneinfo files, so bundle the tzinfo-data gem
-# gem "tzinfo-data", platforms: %i[ windows jruby ]
+gem "pagy", "~> 9.3"
 
 # Use the database-backed adapters for Rails.cache, Active Job, and Action Cable
 gem "solid_cache"
@@ -45,8 +42,9 @@ group :development, :test do
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
 
-  # API Docs
-  gem "oas_rails"
-
+  # mail service are loaded from .env in development
+  # in production are given by KAMAL
   gem "dotenv-rails"
 end
+
+gem "blueprinter", "~> 1.1"

@@ -1,4 +1,26 @@
 xyaman:
-  email: xyaman@example.com
+  email: xyaman@lumireader.app
   username: xyaman
-  password_digest: <%= BCrypt::Password.create('password') %>
+  password_digest: <%= BCrypt::Password.create('jkjk') %>
+  email_confirmed_at: <%= Time.current %>
+  share_online_status: true
+  share_presence: true
+  user_plan: tier1
+
+user2:
+  email: user2@lumireader.app
+  username: user2
+  password_digest: <%= BCrypt::Password.create('jkjk') %>
+  email_confirmed_at: <%= Time.current %>
+  share_online_status: true
+  share_presence: true
+  user_plan: free
+
+user3:
+  email: user3@lumireader.app
+  username: user3
+  password_digest: <%= BCrypt::Password.create('jkjk') %>
+  email_confirmed_at: <%= Time.current %>
+  share_online_status: true
+  share_presence: true
+  user_plan: free
