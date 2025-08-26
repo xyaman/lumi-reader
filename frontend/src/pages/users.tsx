@@ -22,6 +22,7 @@ import { createStore } from "solid-js/store"
 import { readingSessionsApi } from "@/api/readingSessions"
 import Spinner from "@/components/Spiner"
 import { useAuthState } from "@/context/auth"
+import { Button } from "@/ui"
 
 type UserDescriptionProps = {
     user: User
@@ -196,7 +197,7 @@ export function Users() {
 
     return (
         <div class="px-4 py-8">
-            <Show when={userResource()}>
+            <Show fallback={<Spinner size={48} base16Color="--base0D" />} when={userResource()}>
                 {/* Profile header */}
                 <section>
                     <div class="flex gap-8">
@@ -211,23 +212,29 @@ export function Users() {
                                 <Switch>
                                     <Match when={editDescription() !== null}>
                                         <div class="flex gap-2">
-                                            <button class="button text-center" onClick={() => setEditDescription(null)}>
+                                            <Button
+                                                classList={{ "text-center": true }}
+                                                onClick={() => setEditDescription(null)}
+                                            >
                                                 Cancel
-                                            </button>
-                                            <button class="button text-center" onClick={handleSaveDescription}>
+                                            </Button>
+                                            <Button classList={{ "text-center": true }} onClick={handleSaveDescription}>
                                                 Save
-                                            </button>
+                                            </Button>
                                         </div>
                                     </Match>
                                     <Match when={authState.user && isOwnId()}>
-                                        <button class="button text-center" onClick={() => setEditDescription("")}>
+                                        <Button
+                                            classList={{ "text-center": true }}
+                                            onClick={() => setEditDescription("")}
+                                        >
                                             Edit description
-                                        </button>
+                                        </Button>
                                     </Match>
                                     <Match when={authState.user && !isOwnId()}>
-                                        <button class="button text-center" onClick={handleFollow}>
+                                        <Button classList={{ "text-center": true }} onClick={handleFollow}>
                                             {userResource()!.following ? "Unfollow" : "Follow"}
-                                        </button>
+                                        </Button>
                                     </Match>
                                 </Switch>
                             </div>

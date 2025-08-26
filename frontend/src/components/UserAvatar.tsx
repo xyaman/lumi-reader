@@ -36,7 +36,7 @@ export default function UserAvatar(props: UserAvatarProps) {
                 </div>
             </Show>
             <Show when={props.onAvatarChange}>
-                <label class="button absolute bottom-0 right-0 text-xs px-2 py-1">
+                <label class="absolute rounded bottom-3 right-0 text-xs px-2 py-1 cursor-pointer bg-base02 hover:bg-base03">
                     Change
                     <input
                         type="file"

@@ -1,3 +1,3 @@
 export * from "./useIsMobile.tsx"
 export * from "./useUserActivity.tsx"
-export * from "./createReadingSettings.tsx"
+export * from "./createReaderSettings.tsx"
