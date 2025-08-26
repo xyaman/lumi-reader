@@ -1,45 +1,42 @@
 class User < ApplicationRecord
+  include EmailConfirmation
+
+  has_email_confirmation
   has_secure_password
+
   has_many :sessions, dependent: :destroy
-  has_many :reading_sessions, dependent: :destroy
-  has_many :synced_books, dependent: :destroy
+  has_one_attached :avatar
 
+  belongs_to :user_plan
+
+  # normalization
   normalizes :email, with: ->(e) { e.strip.downcase }
-  validates :email, presence: true, uniqueness: true
-  validates :username, presence: true, length: { minimum: 5 }
 
-  # Users this user is following
-  has_many :following_relationships, foreign_key: :follower_id, class_name: "Follow", dependent: :destroy
-  has_many :following, through: :following_relationships, source: :followed
+  # validations
+  before_validation :set_default_user_plan, on: :create
+  validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
+  validates :username, presence: true, uniqueness: true, length: { minimum: 5 }
+  validates :password, length: { minimum: 8 }, if: :password_digest_changed?
 
   # Users following this user
   has_many :follower_relationships, foreign_key: :followed_id, class_name: "Follow", dependent: :destroy
   has_many :followers, through: :follower_relationships, source: :follower
 
-  has_one_attached :avatar
+  # Users this user is following
+  has_many :following_relationships, foreign_key: :follower_id, class_name: "Follow", dependent: :destroy
+  has_many :following, through: :following_relationships, source: :followed
 
-  # Class method
-  def self.find_by_username(query)
-    where("LOWER(username) LIKE ?", "%#{sanitize_sql_like(query.downcase)}%")
+  def email_confirmed?
+    email_confirmed_at.present?
   end
 
-  # synced books related
-  def sync_limit
-    5
+  def confirm_email!
+    update_columns(email_confirmed_at: Time.current)
   end
 
-  # email confirmation
-  def confirmed?
-    confirmed_at.present?
-  end
+  private
 
-  def confirm!
-    update_columns(confirmed_at: Time.current, confirmation_token: nil)
-  end
-
-  def generate_confirmation_token
-    self.confirmation_token = SecureRandom.urlsafe_base64
-    self.confirmation_sent_at = Time.current
-    self.save!
+  def set_default_user_plan
+    self.user_plan ||= UserPlan.find_by(name: "free")
   end
 end

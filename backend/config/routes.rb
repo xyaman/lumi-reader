@@ -1,49 +1,19 @@
 Rails.application.routes.draw do
-  # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
-
-  # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
-  # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
   get "csrf", to: "application#csrf"
 
+  # - `POST /v1/password_resets` → `create` (request password reset)
+  # - `PATCH/PUT /v1/password_resets/:token` → `update` (reset password with token)
+  # - `GET /v1/password_resets/:token/edit` → redirect to frontend edit page
   namespace :v1 do
-    resources :reading_sessions do
-      collection do
-        get "diff", to: "reading_sessions#diff"
-        post "batch_update", to: "reading_sessions#batch_update"
-        get "recent/:user_id", to: "reading_sessions#recent"
+    resources :password_resets, only: [ :create, :update ], param: :token do
+      member do
+        get :edit
       end
     end
 
-    resources :synced_books, only: [ :index ]
-    delete "synced_books/:unique_id", to: "synced_books#destroy"
-    patch "synced_books/:unique_id", to: "synced_books#update"
-    post "synced_books/sync", to: "synced_books#sync"
-    post "synced_books/upload/:unique_id", to: "synced_books#upload_data"
+    resources :registrations, only: [ :create ]
 
-    resource :session, only: [ :create, :show, :destroy ] do
-      resources :follows, only: [ :update, :destroy ]
-
-      patch "avatar", to: "users#update_avatar"
-      patch "description", to: "users#update_description"
-      patch "presence", to: "user_presence#update"
-      patch "share_status", to: "users#update_share_status"
-    end
-
-    # email confirmation
-    get "users_confirm", to: "users#confirm"
-    get "users/search", to: "users#search"
-
-    resources :users, only: [ :create, :show ] do
-      resource :presence, only: [ :show ], controller: "user_presence"
-      get "following", to: "follows#following"
-      get "followers", to: "follows#followers"
-    end
-
-    get "user_presence/batch", to: "user_presence#batch"
-  end
-
-  if Rails.env.development?
-    mount OasRails::Engine => "/api-docs"
+    resource :session, only: [ :create, :show, :destroy ]
   end
 end

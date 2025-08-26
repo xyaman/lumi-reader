@@ -8,5 +8,7 @@ class CreateFollows < ActiveRecord::Migration[8.0]
     end
 
     add_index :follows, [ :follower_id, :followed_id ], unique: true
+    add_column :users, :following_count, :integer, default: 0, null: false
+    add_column :users, :followers_count, :integer, default: 0, null: false
   end
 end

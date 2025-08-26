@@ -1,4 +1,4 @@
 class ApplicationMailer < ActionMailer::Base
-  default from: "no-reply@mail.lumireader.app"
+  default from: "from@example.com"
   layout "mailer"
 end

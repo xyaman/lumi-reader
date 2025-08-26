@@ -6,6 +6,9 @@ module Authentication
   end
 
   class_methods do
+    # Unprotected routes may behave differently if the user is logged in.
+    # For example, requesting a profile while logged in will indicate whether
+    # the logged-in user follows that profile; otherwise, it returns nil.
     def allow_unauthenticated_access(**options)
       skip_before_action :authenticated?, **options
       before_action :resume_session
@@ -13,7 +16,6 @@ module Authentication
   end
 
   private
-  # @return [bool] the current session or nil if not authenticated
   def authenticated?
     unless resume_session
       head :unauthorized
@@ -21,21 +23,26 @@ module Authentication
     end
   end
 
-  # @return [Session, nil] the current session after resuming or finding by cookie
+  # resume_session assigns the session (if found) to Current.session,
+  # updates session.updated_at, and returns the session.
+  # Returns nil if no session was found.
   def resume_session
-    Current.session ||= find_session_by_cookie
+    session = Current.session || find_session_by_cookie
+    if session
+      # should always be already written, but just in case
+      session.touch if session.persisted?
+      Current.session = session
+    end
   end
 
-  # @return [Session, nil] the session found by cookie, or nil if not found
   def find_session_by_cookie
     Session.find_by(id: cookies.signed[:session_id]) if cookies.signed[:session_id]
   end
 
-  # @param user [User] the user to start a session for
-  # @return [Session] the newly created session
   def start_new_session_for(user)
     user.sessions.create!(user_agent: request.user_agent, ip_address: request.remote_ip).tap do |session|
       Current.session = session
+
       cookies.signed.permanent[:session_id] = {
         value: session.id,
         httponly: true,

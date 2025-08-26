@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_21_031024) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_26_124700) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -49,26 +49,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_21_031024) do
     t.index ["follower_id"], name: "index_follows_on_follower_id"
   end
 
-  create_table "reading_sessions", force: :cascade do |t|
-    t.integer "snowflake", null: false
-    t.integer "user_id", null: false
-    t.string "book_id", null: false
-    t.string "book_title", null: false
-    t.string "book_language", null: false
-    t.integer "start_time", null: false
-    t.integer "end_time"
-    t.integer "initial_chars", null: false
-    t.integer "curr_chars", null: false
-    t.integer "total_reading_time", null: false
-    t.string "status", default: "active", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["start_time"], name: "index_reading_sessions_on_start_time"
-    t.index ["status"], name: "index_reading_sessions_on_status"
-    t.index ["user_id", "snowflake"], name: "index_reading_sessions_on_user_id_and_snowflake", unique: true
-    t.index ["user_id"], name: "index_reading_sessions_on_user_id"
-  end
-
   create_table "sessions", force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "ip_address"
@@ -78,42 +58,39 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_21_031024) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
-  create_table "synced_books", force: :cascade do |t|
-    t.integer "user_id", null: false
-    t.string "kind", null: false
-    t.string "unique_id", null: false
-    t.string "title", null: false
-    t.string "creator", null: false
-    t.string "language", null: false
-    t.integer "total_chars", null: false
-    t.integer "curr_chars", default: 0, null: false
-    t.integer "curr_paragraph", default: 0, null: false
+  create_table "user_plans", force: :cascade do |t|
+    t.string "name", null: false
+    t.integer "book_sync_limit", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["unique_id"], name: "index_synced_books_on_unique_id"
-    t.index ["user_id"], name: "index_synced_books_on_user_id"
+    t.index ["name"], name: "index_user_plans_on_name", unique: true
   end
 
   create_table "users", force: :cascade do |t|
     t.string "email", null: false
-    t.string "username", null: false
     t.string "password_digest", null: false
-    t.string "description"
-    t.boolean "share_status", default: true, null: false
-    t.string "confirmation_token"
-    t.datetime "confirmed_at"
-    t.datetime "confirmation_sent_at"
+    t.datetime "email_confirmed_at"
+    t.datetime "email_confirmation_sent_at"
+    t.datetime "password_reset_at"
+    t.datetime "password_reset_mail_sent_at"
+    t.string "username", null: false
+    t.string "bio"
+    t.boolean "share_online_status", default: true, null: false
+    t.boolean "share_presence", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
+    t.integer "user_plan_id", null: false
+    t.integer "following_count", default: 0, null: false
+    t.integer "followers_count", default: 0, null: false
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["user_plan_id"], name: "index_users_on_user_plan_id"
+    t.index ["username"], name: "index_users_on_username", unique: true
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "follows", "users", column: "followed_id"
   add_foreign_key "follows", "users", column: "follower_id"
-  add_foreign_key "reading_sessions", "users"
   add_foreign_key "sessions", "users"
-  add_foreign_key "synced_books", "users"
+  add_foreign_key "users", "user_plans"
 end

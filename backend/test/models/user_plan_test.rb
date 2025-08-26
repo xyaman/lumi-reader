@@ -1,6 +1,6 @@
 require "test_helper"
 
-class ReadingSessionTest < ActiveSupport::TestCase
+class UserPlanTest < ActiveSupport::TestCase
   # test "the truth" do
   #   assert true
   # end
