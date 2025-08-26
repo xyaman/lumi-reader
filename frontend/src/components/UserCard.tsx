@@ -1,7 +1,7 @@
 import { useNavigate } from "@solidjs/router"
 import { createResource, createSignal, Show } from "solid-js"
 import UserList from "./UserList"
-import Spinner from "./Spiner"
+import Spinner from "./Spinner"
 import { User } from "@/types/api"
 import { userApi } from "@/api/user"
 
@@ -122,18 +122,12 @@ export default function UserCard(props: UserCardProps) {
                 onClick={props.onButtonClick}
                 disabled={props.isEditing}
             >
-                {props.isOwnProfile
-                    ? "Edit description"
-                    : props.isFollowing
-                      ? "Unfollow"
-                      : "Follow"}
+                {props.isOwnProfile ? "Edit description" : props.isFollowing ? "Unfollow" : "Follow"}
             </button>
             <Show when={props.isOwnProfile}>
                 <div class="w-full flex items-center justify-between gap-2 text-xs font-medium">
                     <span
-                        class={`flex items-center gap-1 ${
-                            user().shareStatus ? "text-(--base0B)" : "text-(--base03)"
-                        }`}
+                        class={`flex items-center gap-1 ${user().shareStatus ? "text-(--base0B)" : "text-(--base03)"}`}
                     >
                         {user().shareStatus ? "Status: Sharing" : "Status: Not sharing"}
                         {user().shareStatus ? (
@@ -141,21 +135,12 @@ export default function UserCard(props: UserCardProps) {
                                 <circle cx="7" cy="7" r="6" />
                             </svg>
                         ) : (
-                            <svg
-                                width="14"
-                                height="14"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                            >
+                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="7" cy="7" r="6" />
                             </svg>
                         )}
                     </span>
-                    <button
-                        class="button-alt px-2 py-1 text-xs"
-                        onClick={props.onToggleShareStatus}
-                    >
+                    <button class="button-alt px-2 py-1 text-xs" onClick={props.onToggleShareStatus}>
                         {user().shareStatus ? "Hide" : "Share"}
                     </button>
                 </div>
@@ -181,12 +166,7 @@ export default function UserCard(props: UserCardProps) {
                     {user().followingCount} following
                 </span>
             </p>
-            <UserModal
-                open={modalOpen()}
-                onClose={() => setModalOpen(false)}
-                userId={user().id}
-                type={modalType()}
-            />
+            <UserModal open={modalOpen()} onClose={() => setModalOpen(false)} userId={user().id} type={modalType()} />
         </div>
     )
 }

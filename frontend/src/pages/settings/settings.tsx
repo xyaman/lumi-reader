@@ -1,4 +1,4 @@
-import { createMemo, Switch, Match, Show, createSignal } from "solid-js"
+import { createMemo, Switch, Match, Show } from "solid-js"
 import Navbar from "@/components/Navbar"
 import { A, useParams } from "@solidjs/router"
 import { Sidebar } from "@/components/settings/Sidebar"

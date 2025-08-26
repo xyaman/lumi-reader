@@ -1,13 +1,12 @@
 import { LumiDb } from "@/lib/db"
 import { formatTime } from "@/lib/utils"
-import { createEffect, createResource, createSignal, Match, onMount, Show, Switch } from "solid-js"
+import { createResource, createSignal, Match, onMount, Show, Switch } from "solid-js"
 import { IconArrowPath, IconError, IconTick } from "@/components/icons"
-import Calendar from "@/components/Calendar"
 
 import ReadingSessionManager from "@/services/readingSession"
 import Checkbox from "@/ui/checkbox"
 import { useAuthState } from "@/context/auth"
-import { ReadingSessionsList } from "@/components/home/readingSessions"
+import { ReadingSessionsList, Calendar } from "@/components/home/readingSessions"
 
 export function ReadingSessions() {
     const authState = useAuthState()

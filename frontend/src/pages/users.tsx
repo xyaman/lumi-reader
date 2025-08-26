@@ -20,7 +20,7 @@ import { LumiDb } from "@/lib/db"
 import { IndividualSessions } from "@/components/home/readingSessions"
 import { createStore } from "solid-js/store"
 import { readingSessionsApi } from "@/api/readingSessions"
-import Spinner from "@/components/Spiner"
+import Spinner from "@/components/Spinner"
 import { useAuthState } from "@/context/auth"
 import { Button } from "@/ui"
 

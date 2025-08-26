@@ -1,7 +1,7 @@
 import CorvuCalendar, { RootRangeProps, RootChildrenRangeProps } from "@corvu/calendar"
 import { Index } from "solid-js"
 
-export default function Calendar(props: RootRangeProps) {
+export function Calendar(props: RootRangeProps) {
     const now = new Date()
     const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
 
