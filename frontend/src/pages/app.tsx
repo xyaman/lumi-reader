@@ -1,6 +1,5 @@
 import { MatchFilters, Route, Router } from "@solidjs/router"
-import { getSelectedTheme, setGlobalTheme } from "@/theme"
-import UserSearch from "@/SearchPage"
+import { getSelectedTheme, setGlobalTheme } from "@/lib/theme"
 import AuthProvider from "@/context/auth"
 
 import SocialList from "@/components/SocialList"
@@ -31,7 +30,7 @@ export function App() {
                 <Route path="/settings/:name?" component={Settings} matchFilters={settingsFilter} />
                 <Route path="/register" component={Register} />
                 <Route path="/login" component={Login} />
-                <Route path="/users/search" component={UserSearch} />
+                {/* <Route path="/users/search" component={UserSearch} /> */}
             </Router>
         </AuthProvider>
     )

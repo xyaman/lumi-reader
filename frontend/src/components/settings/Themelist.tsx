@@ -1,5 +1,5 @@
 import { For, Show } from "solid-js"
-import { ITheme } from "@/theme"
+import { ITheme } from "@/lib/theme"
 import { IconDuplicate, IconEdit, IconTrash } from "@/components/icons"
 import { useThemeDispatch, useThemeState } from "@/context/theme"
 

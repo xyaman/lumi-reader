@@ -3,7 +3,7 @@ import ThemeList from "@/components/settings/Themelist"
 import ThemeEditor from "@/components/settings/ThemeEditor"
 import { ThemeProvider } from "@/context/theme"
 import { Button } from "@/ui"
-import { ITheme } from "@/theme"
+import { ITheme } from "@/lib/theme"
 
 export function ThemeSettings() {
     // Theme state

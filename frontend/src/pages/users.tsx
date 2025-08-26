@@ -200,9 +200,15 @@ export function Users() {
             <Show fallback={<Spinner size={48} base16Color="--base0D" />} when={userResource()}>
                 {/* Profile header */}
                 <section>
-                    <div class="flex gap-8">
+                    <div class="flex gap-8 flex-col md:flex-row">
                         {/* Avatar */}
-                        <UserAvatar user={userResource()!} w={40} h={40} onAvatarChange={onAvatarChange} />
+                        <UserAvatar
+                            user={userResource()!}
+                            w={40}
+                            h={40}
+                            onAvatarChange={onAvatarChange}
+                            isCurrentUser={isOwnId()}
+                        />
 
                         {/* Profile info */}
                         <div class="flex-1">

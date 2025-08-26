@@ -1,5 +1,5 @@
 import { createEffect, createSignal, For } from "solid-js"
-import { ITheme } from "@/theme"
+import { ITheme } from "@/lib/theme"
 import { useThemeDispatch } from "@/context/theme"
 
 type Base16Key = keyof ITheme

@@ -1,5 +1,5 @@
 import { createContext, JSX, useContext } from "solid-js"
-import { ITheme, defaultThemes, getCustomThemes, saveCustomThemes, getSelectedTheme, setGlobalTheme } from "@/theme"
+import { ITheme, defaultThemes, getCustomThemes, saveCustomThemes, getSelectedTheme, setGlobalTheme } from "@/lib/theme"
 import { createStore } from "solid-js/store"
 
 type ThemeState = {
