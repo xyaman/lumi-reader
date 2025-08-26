@@ -201,14 +201,16 @@ export function Users() {
                 {/* Profile header */}
                 <section>
                     <div class="flex gap-8 flex-col md:flex-row">
-                        {/* Avatar */}
-                        <UserAvatar
-                            user={userResource()!}
-                            w={40}
-                            h={40}
-                            onAvatarChange={onAvatarChange}
-                            isCurrentUser={isOwnId()}
-                        />
+                        <div class="m-auto">
+                            {/* Avatar */}
+                            <UserAvatar
+                                user={userResource()!}
+                                w={40}
+                                h={40}
+                                onAvatarChange={onAvatarChange}
+                                isCurrentUser={isOwnId()}
+                            />
+                        </div>
 
                         {/* Profile info */}
                         <div class="flex-1">

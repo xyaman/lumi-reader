@@ -23,7 +23,7 @@ export default function UserAvatar(props: UserAvatarProps) {
         }
     `
     return (
-        <div class="relative m-auto">
+        <div class="relative">
             <Show
                 when={props.user.avatarUrl}
                 fallback={
