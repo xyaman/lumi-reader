@@ -2,13 +2,19 @@
 
 class UserBlueprint < Blueprinter::Base
   identifier :id
-  fields :username, :bio, :avatar_url, :share_online_status, :share_presence, :following_count, :followers_count
-  field :user_plan do |user, _options|
-    user.user_plan.name
+  fields :username, :avatar_url
+
+  view :show do
+    fields :bio, :share_online_status, :share_presence, :following_count, :followers_count
+    association :user_plan, name: :plan, blueprint: UserPlanBlueprint
   end
 
   view :login do
-    include_view :default
+    include_view :show
     fields :email
+  end
+
+  view :presence do
+    fields :presence
   end
 end
