@@ -1,7 +1,7 @@
 xyaman:
   email: xyaman@lumireader.app
   username: xyaman
-  password_digest: <%= BCrypt::Password.create('jkjk') %>
+  password_digest: <%= BCrypt::Password.create('jkjkjkjk') %>
   email_confirmed_at: <%= Time.current %>
   share_online_status: true
   share_presence: true
@@ -10,7 +10,7 @@ xyaman:
 user2:
   email: user2@lumireader.app
   username: user2
-  password_digest: <%= BCrypt::Password.create('jkjk') %>
+  password_digest: <%= BCrypt::Password.create('jkjkjkjk') %>
   email_confirmed_at: <%= Time.current %>
   share_online_status: true
   share_presence: true
@@ -19,7 +19,7 @@ user2:
 user3:
   email: user3@lumireader.app
   username: user3
-  password_digest: <%= BCrypt::Password.create('jkjk') %>
+  password_digest: <%= BCrypt::Password.create('jkjkjkjk') %>
   email_confirmed_at: <%= Time.current %>
   share_online_status: true
   share_presence: true

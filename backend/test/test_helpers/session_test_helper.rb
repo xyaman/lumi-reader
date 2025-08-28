@@ -1,10 +1,9 @@
 module SessionTestHelper
   def sign_in_as(user)
-    Current.session = user.sessions.create!
-
-    ActionDispatch::TestRequest.create.cookie_jar.tap do |cookie_jar|
-      cookie_jar.signed[:session_id] = Current.session.id
-      cookies[:session_id] = cookie_jar[:session_id]
-    end
+    session = user.sessions.create!
+    Current.session = session
+    request = ActionDispatch::Request.new(Rails.application.env_config)
+    cookies = request.cookie_jar
+    cookies.signed[:session_id] = { value: session.id, httponly: true, same_site: :lax }
   end
 end

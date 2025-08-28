@@ -2,6 +2,19 @@ require "test_helper"
 
 class UserTest < ActiveSupport::TestCase
 
+  test "validates email format" do
+    valid_user = User.new(email: "valid@example.com", password: "password123", username: "12345")
+    assert valid_user.valid?, "User with valid email should be valid"
+
+    invalid_user = User.new(email: "invalid-email", password: "password123", username: "12345")
+    assert_not invalid_user.valid?, "User with invalid email should be invalid"
+    assert_includes invalid_user.errors[:email], "is invalid"
+
+    invalid_user = User.new(email: "invalid-email@", password: "password123", username: "12345")
+    assert_not invalid_user.valid?, "User with invalid email should be invalid"
+    assert_includes invalid_user.errors[:email], "is invalid"
+  end
+
   test "finds user by valid password reset token" do
     user = users(:xyaman)
     token = user.password_reset_token
