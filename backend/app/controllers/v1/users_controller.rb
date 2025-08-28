@@ -3,7 +3,9 @@ class V1::UsersController < ApplicationController
 
   def show
     user = User.find_by(username: params[:username])
-    if user
-    end
+    return render_error errors: "User not found." unless user
+
+    render_success data: UserBlueprint.render_as_json(user)
   end
+
 end

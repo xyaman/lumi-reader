@@ -19,5 +19,7 @@ Rails.application.routes.draw do
     end
 
     resource :session, only: [ :create, :show, :destroy ]
+
+    resources :users, only: [ :show ], param: :username
   end
 end
