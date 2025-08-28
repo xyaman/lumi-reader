@@ -39,9 +39,43 @@ class User < ApplicationRecord
     Rails.application.routes.url_helpers.url_for(avatar)
   end
 
+  def set_online!
+    presence = Rails.cache.read(presence_cache_key) || {}
+    presence[:status] = "online"
+    Rails.cache.write(presence_cache_key, presence, expires_in: 48.hours)
+  end
+
+  def set_offline!
+    presence = Rails.cache.read(presence_cache_key)
+    if presence
+      presence[:status] = "offline"
+      Rails.cache.write(presence_cache_key, presence, expires_in: 48.hours)
+    end
+  end
+
+  def presence
+    Rails.cache.read(presence_cache_key) || { status: "offline" }
+  end
+
+  def set_presence_activity!(type:, name:)
+    presence = Rails.cache.read(presence_cache_key) || {}
+
+    # Every time presence is updated, it means the user is online
+    presence[:status] = "online"
+    presence[:activity_timestamp] = Time.current.to_i
+    presence[:activity_type] = type
+    presence[:activity_name] = name
+
+    Rails.cache.write(presence_cache_key, presence, expires_in: 48.hours)
+  end
+
   private
 
   def set_default_user_plan
     self.user_plan ||= UserPlan.find_by(name: "free")
+  end
+
+  def presence_cache_key
+    "user_presence:#{id}"
   end
 end
