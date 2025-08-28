@@ -32,10 +32,10 @@ class V1::RegistrationsController < ApplicationController
 
   def handle_api_confirmation(user)
     if user&.email_confirmed?
-      render_success message: "Account already confirmed." 
+      render_success message: "Account already confirmed."
     elsif user
       user.confirm_email!
-      render_success message: "Account confirmed. You can now sign in." 
+      render_success message: "Account confirmed. You can now sign in."
     else
       render_error errors: "Invalid or expired confirmation token."
     end

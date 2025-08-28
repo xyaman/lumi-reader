@@ -1,7 +1,6 @@
 require "test_helper"
 
 class UserTest < ActiveSupport::TestCase
-
   test "validates email format" do
     valid_user = User.new(email: "valid@example.com", password: "password123", username: "12345")
     assert valid_user.valid?, "User with valid email should be valid"
