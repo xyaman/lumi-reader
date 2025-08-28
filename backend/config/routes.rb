@@ -20,6 +20,13 @@ Rails.application.routes.draw do
 
     resource :session, only: [ :create, :show, :destroy ]
 
-    resources :users, only: [ :show ], param: :username
+    resources :users, only: [ :show ], param: :username do
+      member do
+        get :followers
+        get :following
+        put :follow
+        put :unfollow
+      end
+    end
   end
 end
