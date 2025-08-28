@@ -24,3 +24,21 @@ user3:
   share_online_status: true
   share_presence: true
   user_plan: free
+
+user4:
+  email: user4@lumireader.app
+  username: user4
+  password_digest: <%= BCrypt::Password.create('jkjkjkjk') %>
+  email_confirmed_at: <%= Time.current %>
+  share_online_status: true
+  share_presence: true
+  user_plan: free
+
+user5:
+  email: user5@lumireader.app
+  username: user5
+  password_digest: <%= BCrypt::Password.create('jkjkjkjk') %>
+  email_confirmed_at: <%= Time.current %>
+  share_online_status: true
+  share_presence: true
+  user_plan: free
