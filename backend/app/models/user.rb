@@ -34,6 +34,11 @@ class User < ApplicationRecord
     update_columns(email_confirmed_at: Time.current)
   end
 
+  def avatar_url
+    return nil unless avatar.attached?
+    Rails.application.routes.url_helpers.url_for(avatar)
+  end
+
   private
 
   def set_default_user_plan
