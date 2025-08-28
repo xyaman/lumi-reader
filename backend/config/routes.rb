@@ -12,7 +12,11 @@ Rails.application.routes.draw do
       end
     end
 
-    resources :registrations, only: [ :create ]
+    resource :registration, only: [ :create ] do
+      collection do
+        get :confirm
+      end
+    end
 
     resource :session, only: [ :create, :show, :destroy ]
   end
