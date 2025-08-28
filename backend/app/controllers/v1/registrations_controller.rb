@@ -6,7 +6,7 @@ class V1::RegistrationsController < ApplicationController
 
     if @user.save
       UserMailer.confirmation_email_v1(@user).deliver_later
-      render_success data: @user, message: "Registered successfully. Please check your email to confirm your account.", status: :created
+      render_success data: UserBlueprint.render_as_json(@user), message: "Registered successfully. Please check your email to confirm your account.", status: :created
     else
       render_error errors: @user.errors.full_messages
     end
