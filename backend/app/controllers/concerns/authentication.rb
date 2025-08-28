@@ -6,12 +6,21 @@ module Authentication
   end
 
   class_methods do
-    # Unprotected routes may behave differently if the user is logged in.
-    # For example, requesting a profile while logged in will indicate whether
-    # the logged-in user follows that profile; otherwise, it returns nil.
+    # Allows specific routes to be accessed without authentication.
+    # `Current.session` will still be assigned, but has to be checked before
+    # accessing it (it might be nil)
     def allow_unauthenticated_access(**options)
       skip_before_action :authenticated?, **options
       before_action :resume_session
+
+      # Configure CSRF protection based on route scope
+      if options[:only] && !Rails.env.test?
+        # Disable CSRF only for specified routes, keep protection elsewhere
+        # Example: allow_unauthenticated_access only: [:show, :index]
+        protect_from_forgery with: :exception, except: options[:only]
+      else
+        protect_from_forgery with: :null_session
+      end
     end
   end
 

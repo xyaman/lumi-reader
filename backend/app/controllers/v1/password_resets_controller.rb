@@ -1,7 +1,6 @@
 # https://api.rubyonrails.org/classes/ActiveModel/SecurePassword/ClassMethods.html
 class V1::PasswordResetsController < ApplicationController
   allow_unauthenticated_access
-  protect_from_forgery with: :null_session
 
   def create
     @user = User.find_by(email: params[:email])

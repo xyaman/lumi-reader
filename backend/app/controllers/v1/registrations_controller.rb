@@ -1,6 +1,5 @@
 class V1::RegistrationsController < ApplicationController
   allow_unauthenticated_access
-  protect_from_forgery with: :null_session
 
   def create
     @user = User.new(sign_up_params)
