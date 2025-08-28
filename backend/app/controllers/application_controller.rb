@@ -9,6 +9,7 @@ class ApplicationController < ActionController::API
   allow_unauthenticated_access only: %i[ csrf ]
 
   rescue_from ActionController::ParameterMissing,  with: :render_parameter_missing
+  rescue_from ActionController::InvalidAuthenticityToken, with: :render_csrf_token_missing
 
   if Rails.env.test?
     protect_from_forgery with: :null_session
@@ -29,6 +30,10 @@ class ApplicationController < ActionController::API
       secure: Rails.env.production?,
       domain: Rails.env.production? ? ".lumireader.app" : nil
     }
+  end
+
+  def render_csrf_token_missing(exception)
+    render_error(errors: exception.message, status: :unprocessable_content)
   end
 
   def render_parameter_missing(exception)
