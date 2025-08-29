@@ -1,5 +1,5 @@
 class V1::UsersController < ApplicationController
-  allow_unauthenticated_access only: %i[ show following followers]
+  allow_unauthenticated_access only: %i[ show following followers ]
 
   def show
     user = User.find_by(username: params[:username])
