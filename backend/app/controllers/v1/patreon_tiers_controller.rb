@@ -7,7 +7,7 @@ class V1::PatreonTiersController < ApplicationController
   end
 
   def show
-    patreon_tier = PatreonTier.find_by(id: params[:id])
+    patreon_tier = PatreonTier.find_by(patreon_tier_id: params[:id])
     return render_error errors: "Patreon tier not found." unless patreon_tier
 
     render_success data: PatreonTierBlueprint.render_as_json(patreon_tier)

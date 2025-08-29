@@ -12,7 +12,7 @@ class V1::PatreonTiersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should show patreon tier" do
-    get v1_patreon_tier_url(@free_tier)
+    get v1_patreon_tier_url(id: @free_tier.patreon_tier_id)
     assert_response :success
     json = JSON.parse(@response.body)
     assert_equal @free_tier.name, json["data"]["name"]
