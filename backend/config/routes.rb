@@ -28,5 +28,12 @@ Rails.application.routes.draw do
         put :unfollow
       end
     end
+
+    resource :me, only: [ :show, :update ], controller: :me do
+      collection do
+        post :avatar
+      end
+    end
+
   end
 end
