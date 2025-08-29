@@ -7,13 +7,13 @@ class User < ApplicationRecord
   has_many :sessions, dependent: :destroy
   has_one_attached :avatar
 
-  belongs_to :user_plan
+  belongs_to :patreon_tier, optional: true
 
   # normalization
   normalizes :email, with: ->(e) { e.strip.downcase }
 
   # validations
-  before_validation :set_default_user_plan, on: :create
+  before_validation :set_default_patreon_tier, on: :create
   validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :username, presence: true, uniqueness: true, length: { minimum: 5 }
   validates :password, length: { minimum: 8 }, if: :password_digest_changed?
@@ -73,11 +73,11 @@ class User < ApplicationRecord
 
   private
 
-  def set_default_user_plan
-    self.user_plan ||= UserPlan.find_by(name: "free")
-  end
-
   def presence_cache_key
     "user_presence:#{id}"
+  end
+
+  def set_default_patreon_tier
+    self.patreon_tier ||= PatreonTier.find_by(name: "Free")
   end
 end

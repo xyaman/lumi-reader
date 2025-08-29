@@ -14,26 +14,29 @@
 
 2.  **Seed the database:**
 
-    You must seed the database with initial data.
-    ```bash
-    rails db:seed
-    ```
-
-    For **development** you can also seed users with SEED_USERS=1
+    For **development** you can seed users with SEED_USERS=1
     ```bash
     SEED_USERS=true rails db:seed
     ```
 
-3. To start the server, run:
+3. **Seed/Update Patreon Tiers**
+
+    To fetch tier information from Patreon during seeding, configure the following environment variables:
+
+    - `CAMPAIGN_ID` = `ENV["PATREON_CAMPAIGN_ID"]`
+    - `CREATOR_ACCESS_TOKEN` = `ENV["PATREON_CREATOR_ACCESS_TOKEN"]`
+
     ```bash
-    rails server
+    bundle exec rake patreon:sync_tiers
     ```
 
+    All plan features are default to 0, so you need to enter manually the information
+    Example: `book_sync_limit` is set to 0
 
-4.  The application is deployed using Kamal.
-    To seed the database with only user plans:
+
+4. To start the server, run:
     ```bash
-    kamal app exec -i 'rails db:seed'
+    rails server
     ```
 
 ### Running tests

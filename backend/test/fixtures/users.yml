@@ -5,7 +5,6 @@ xyaman:
   email_confirmed_at: <%= Time.current %>
   share_online_status: true
   share_presence: true
-  user_plan: tier1
 
 user2:
   email: user2@lumireader.app
@@ -14,7 +13,6 @@ user2:
   email_confirmed_at: <%= Time.current %>
   share_online_status: true
   share_presence: true
-  user_plan: free
 
 user3:
   email: user3@lumireader.app
@@ -23,7 +21,6 @@ user3:
   email_confirmed_at: <%= Time.current %>
   share_online_status: true
   share_presence: true
-  user_plan: free
 
 user4:
   email: user4@lumireader.app
@@ -32,7 +29,6 @@ user4:
   email_confirmed_at: <%= Time.current %>
   share_online_status: true
   share_presence: true
-  user_plan: free
 
 user5:
   email: user5@lumireader.app
@@ -41,4 +37,3 @@ user5:
   email_confirmed_at: <%= Time.current %>
   share_online_status: true
   share_presence: true
-  user_plan: free

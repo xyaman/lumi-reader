@@ -6,7 +6,7 @@ class UserBlueprint < Blueprinter::Base
 
   view :show do
     fields :bio, :share_online_status, :share_presence, :following_count, :followers_count
-    association :user_plan, name: :plan, blueprint: UserPlanBlueprint
+    association :patreon_tier, blueprint: PatreonTierBlueprint, view: :light
   end
 
   view :login do
