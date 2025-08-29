@@ -35,5 +35,7 @@ Rails.application.routes.draw do
       end
     end
 
+    resources :patreon_tiers, only: [ :index, :show ]
+
   end
 end
