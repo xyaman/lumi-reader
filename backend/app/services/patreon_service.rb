@@ -4,6 +4,7 @@ require "json"
 
 # https://docs.patreon.com/#oauth
 class PatreonService
+  class PatreonApiError < StandardError; end
   PATREON_API_BASE = "https://www.patreon.com/api/oauth2/v2"
 
   # https://www.patreon.com/api/oauth2/v2/campaigns
@@ -12,17 +13,18 @@ class PatreonService
   CREATOR_ACCESS_TOKEN = ENV["PATREON_CREATOR_ACCESS_TOKEN"]
   CLIENT_ID = ENV["PATREON_CLIENT_ID"]
   CLIENT_SECRET = ENV["PATREON_CLIENT_SECRET"]
-  REDIRECT_URI  = ENV["REDIRECT_URI"]
+  REDIRECT_URI = ENV["REDIRECT_URI"]
 
   # --- Class Methods ---
-  def self.authorization_url
+  def self.authorization_url(session_id)
     scopes = [ "identity", "identity[memberships]" ].join(" ")
     uri = URI("https://www.patreon.com/oauth2/authorize")
     uri.query = URI.encode_www_form({
       response_type: "code",
       client_id: CLIENT_ID,
       redirect_uri: REDIRECT_URI,
-      scope: scopes
+      scope: scopes,
+      state: session_id
     })
     uri.to_s
   end
@@ -36,7 +38,7 @@ class PatreonService
     req = Net::HTTP::Get.new(uri)
     req["Authorization"] = "Bearer #{CREATOR_ACCESS_TOKEN}"
     res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(req) }
-    # raise "Patreon API error: #{res.code} #{res.body}" unless res.is_a?(Net::HTTPSuccess)
+    raise PatreonApiError, "Patreon API error: #{res.code} #{res.body}" unless res.is_a?(Net::HTTPSuccess)
     data = JSON.parse(res.body)
     data
   end
@@ -57,6 +59,7 @@ class PatreonService
     req = Net::HTTP::Get.new(uri)
     req["Authorization"] = "Bearer #{tokens["access_token"]}"
     res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(req) }
+    raise PatreonApiError, "Patreon API error: #{res.code} #{res.body}" unless res.is_a?(Net::HTTPSuccess)
     data = JSON.parse(res.body)
 
     # TODO: sync_from_api(data)
@@ -97,16 +100,26 @@ class PatreonService
   def update_token(params)
     uri = URI("https://www.patreon.com/api/oauth2/token")
     res = Net::HTTP.post_form(uri, params)
+    raise PatreonApiError, "Patreon API error: #{res.code} #{res.body}" unless res.is_a?(Net::HTTPSuccess)
     body = JSON.parse(res.body)
     body
   end
 
-  def set_patreon_fields!(tokens)
+  def set_patreon_fields!(tokens, identity_data)
     expiry_date = Time.current + tokens["expires_in"].to_i.seconds
+    patreon_user_id = identity_data.dig("data", "id")
+
+    membership = identity_data.dig("included")&.find { |i| i["type"] == "membership" }
+    tier_id = membership&.dig("relationships", "currently_entitled_tiers", "data", 0, "id")
+
+    patreon_tier = PatreonTier.find_by(patreon_tier_id: tier_id) if tier_id
+
     @user.update!(
       patreon_access_token: tokens["access_token"],
       patreon_refresh_token: tokens["refresh_token"],
-      patreon_expires_at: expiry_date
+      patreon_expires_at: expiry_date,
+      patreon_id: patreon_user_id,
+      patreon_tier: patreon_tier
     )
   end
 end

@@ -20,6 +20,9 @@ Rails.application.routes.draw do
 
     resource :session, only: [ :create, :show, :destroy ]
 
+    get "auth/patreon/callback", to: "auth#patreon"
+    get "auth/patreon/generate", to: "auth#generate_patreon_url"
+
     resources :users, only: [ :show ], param: :username do
       member do
         get :followers
