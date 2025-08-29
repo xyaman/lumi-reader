@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_26_124700) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_29_125043) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -49,6 +49,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_26_124700) do
     t.index ["follower_id"], name: "index_follows_on_follower_id"
   end
 
+  create_table "patreon_tiers", force: :cascade do |t|
+    t.string "patreon_tier_id", null: false
+    t.string "name", null: false
+    t.text "description"
+    t.integer "amount_cents", null: false
+    t.boolean "published"
+    t.string "image_url"
+    t.integer "book_sync_limit", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["patreon_tier_id"], name: "index_patreon_tiers_on_patreon_tier_id", unique: true
+  end
+
   create_table "sessions", force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "ip_address"
@@ -56,14 +69,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_26_124700) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_sessions_on_user_id"
-  end
-
-  create_table "user_plans", force: :cascade do |t|
-    t.string "name", null: false
-    t.integer "book_sync_limit", default: 0, null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["name"], name: "index_user_plans_on_name", unique: true
   end
 
   create_table "users", force: :cascade do |t|
@@ -79,11 +84,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_26_124700) do
     t.boolean "share_presence", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "user_plan_id", null: false
     t.integer "following_count", default: 0, null: false
     t.integer "followers_count", default: 0, null: false
+    t.string "patreon_id"
+    t.string "patreon_access_token"
+    t.string "patreon_refresh_token"
+    t.datetime "patreon_expires_at"
+    t.integer "patreon_tier_id"
     t.index ["email"], name: "index_users_on_email", unique: true
-    t.index ["user_plan_id"], name: "index_users_on_user_plan_id"
+    t.index ["patreon_id"], name: "index_users_on_patreon_id", unique: true
+    t.index ["patreon_tier_id"], name: "index_users_on_patreon_tier_id"
     t.index ["username"], name: "index_users_on_username", unique: true
   end
 
@@ -92,5 +102,5 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_26_124700) do
   add_foreign_key "follows", "users", column: "followed_id"
   add_foreign_key "follows", "users", column: "follower_id"
   add_foreign_key "sessions", "users"
-  add_foreign_key "users", "user_plans"
+  add_foreign_key "users", "patreon_tiers"
 end

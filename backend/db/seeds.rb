@@ -1,14 +1,3 @@
-plans = [
-  { name: "free", book_sync_limit: 3 },
-  { name: "tier1", book_sync_limit: 20 }
-]
-
-plans.each do |attrs|
-  UserPlan.find_or_create_by!(name: attrs[:name]) do |up|
-    up.book_sync_limit = attrs[:book_sync_limit]
-  end
-end
-
 if ENV["SEED_USERS"]
   users = [
     { email: "xyaman@lumireader.app", username: "xyaman", plan: "tier1" },
@@ -23,7 +12,6 @@ if ENV["SEED_USERS"]
       user.share_online_status = true
       user.share_presence = true
       user.email_confirmed_at = Time.current
-      user.user_plan = UserPlan.find_by(name: attrs[:plan])
     end
   end
 end
