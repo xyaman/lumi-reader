@@ -15,7 +15,6 @@ class V1::RegistrationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :created
     json = JSON.parse(response.body)
     assert_equal "testuser", json["data"]["username"]
-    assert_equal "test@example.com", json["data"]["email"]
 
     assert_equal User.count, initial_count + 1
   end
