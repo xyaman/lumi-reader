@@ -82,6 +82,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_29_125043) do
     t.string "bio"
     t.boolean "share_online_status", default: true, null: false
     t.boolean "share_presence", default: true, null: false
+    t.boolean "is_admin", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "following_count", default: 0, null: false

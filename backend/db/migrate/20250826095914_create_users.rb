@@ -18,6 +18,7 @@ class CreateUsers < ActiveRecord::Migration[8.0]
       t.string :bio
       t.boolean :share_online_status, null: false, default: true
       t.boolean :share_presence, null: false, default: true
+      t.boolean :is_admin, null: false, default: false
 
       t.timestamps
     end
