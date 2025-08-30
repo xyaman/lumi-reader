@@ -48,4 +48,34 @@ class V1::MeControllerTest < ActionDispatch::IntegrationTest
 
   # test "should return error if avatar upload fails" do
   # end
+
+  test "should set user online" do
+    put presence_v1_me_url, params: { presence: { status: "online" } }
+    assert_response :success
+
+    fresh_user = User.find(@user.id)
+    assert_equal "online", fresh_user.presence[:status]
+  end
+
+  test "should set user offline" do
+    put presence_v1_me_url, params: { presence: { status: "offline" } }
+    assert_response :success
+
+    fresh_user = User.find(@user.id)
+    assert_equal "offline", fresh_user.presence[:status]
+  end
+
+  test "should set user activity" do
+    put presence_v1_me_url, params: { presence: { activity_type: "reading", activity_name: "The Lord of the Rings" } }
+    assert_response :success
+
+    fresh_user = User.find(@user.id)
+    assert_equal "reading", fresh_user.presence[:activity_type]
+    assert_equal "The Lord of the Rings", fresh_user.presence[:activity_name]
+  end
+
+  test "should return error for invalid presence parameters" do
+    put presence_v1_me_url, params: { presence: { invalid_param: "value" } }
+    assert_response :unprocessable_content
+  end
 end

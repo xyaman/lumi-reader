@@ -11,13 +11,13 @@ class V1::UsersController < ApplicationController
   def following
     user = User.find_by(username: params[:username])
     return render_error errors: "User not found.", status: :not_found unless user
-    render_success data: UserBlueprint.render_as_json(user.following)
+    render_success data: UserBlueprint.render_as_json(user.following, view: :presence)
   end
 
   def followers
     user = User.find_by(username: params[:username])
     return render_error errors: "User not found.", status: :not_found unless user
-    render_success data: UserBlueprint.render_as_json(user.followers)
+    render_success data: UserBlueprint.render_as_json(user.followers, view: :presence)
   end
 
   def follow

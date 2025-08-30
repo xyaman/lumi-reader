@@ -114,7 +114,7 @@ class PatreonService
   def user_tokens
     {
       "access_token" => @user.patreon_access_token,
-      "refresh_token" => @user.patreon_refresh_token,
+      "refresh_token" => @user.patreon_refresh_token
     }
   end
 

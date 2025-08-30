@@ -7,6 +7,8 @@ class UserBlueprint < Blueprinter::Base
   view :show do
     fields :bio, :share_online_status, :share_presence, :following_count, :followers_count
     association :patreon_tier, name: :tier, blueprint: PatreonTierBlueprint, view: :light
+
+    field :presence, if: ->(_field_name, user, _options) { user.share_presence }
   end
 
   view :login do
@@ -16,6 +18,6 @@ class UserBlueprint < Blueprinter::Base
   end
 
   view :presence do
-    fields :presence
+    field :presence, if: ->(_field_name, user, _options) { user.share_presence }
   end
 end

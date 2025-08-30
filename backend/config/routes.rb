@@ -41,10 +41,10 @@ Rails.application.routes.draw do
     resource :me, only: [ :show, :update ], controller: :me do
       collection do
         post :avatar
+        put :presence
       end
     end
 
     resources :patreon_tiers, only: [ :index, :show ]
-
   end
 end

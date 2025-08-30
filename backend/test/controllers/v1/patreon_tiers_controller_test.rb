@@ -22,6 +22,6 @@ class V1::PatreonTiersControllerTest < ActionDispatch::IntegrationTest
     get v1_patreon_tier_url(id: "nonexistent")
     assert_response :unprocessable_content
     json = JSON.parse(@response.body)
-    assert_equal ["Patreon tier not found."], json["errors"]
+    assert_equal [ "Patreon tier not found." ], json["errors"]
   end
 end
