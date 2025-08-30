@@ -40,7 +40,7 @@ Rails.application.routes.draw do
 
     resource :me, only: [ :show, :update ], controller: :me do
       collection do
-        post :avatar
+        put :avatar
         put :presence
       end
     end
