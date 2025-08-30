@@ -1,45 +1,111 @@
 class User < ApplicationRecord
+  include EmailConfirmation
+
+  has_email_confirmation
   has_secure_password
+
   has_many :sessions, dependent: :destroy
-  has_many :reading_sessions, dependent: :destroy
-  has_many :synced_books, dependent: :destroy
+  has_one_attached :avatar
 
+  belongs_to :patreon_tier, optional: true
+
+  # normalization
   normalizes :email, with: ->(e) { e.strip.downcase }
-  validates :email, presence: true, uniqueness: true
-  validates :username, presence: true, length: { minimum: 5 }
 
-  # Users this user is following
-  has_many :following_relationships, foreign_key: :follower_id, class_name: "Follow", dependent: :destroy
-  has_many :following, through: :following_relationships, source: :followed
+  # validations
+  before_validation :set_default_patreon_tier, on: :create
+  validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
+  validates :username, presence: true, uniqueness: true, length: { minimum: 5 }
+  validates :password, length: { minimum: 8 }, if: :password_digest_changed?
+  validates :share_online_status, inclusion: { in: [ true, false ] }
+  validates :share_presence, inclusion: { in: [ true, false ] }
 
   # Users following this user
   has_many :follower_relationships, foreign_key: :followed_id, class_name: "Follow", dependent: :destroy
   has_many :followers, through: :follower_relationships, source: :follower
 
-  has_one_attached :avatar
+  # Users this user is following
+  has_many :following_relationships, foreign_key: :follower_id, class_name: "Follow", dependent: :destroy
+  has_many :following, through: :following_relationships, source: :followed
 
-  # Class method
-  def self.find_by_username(query)
-    where("LOWER(username) LIKE ?", "%#{sanitize_sql_like(query.downcase)}%")
+  def email_confirmed?
+    email_confirmed_at.present?
   end
 
-  # synced books related
-  def sync_limit
-    5
+  def confirm_email!
+    update_columns(email_confirmed_at: Time.current)
   end
 
-  # email confirmation
-  def confirmed?
-    confirmed_at.present?
+  def unlink_patreon!
+    update!(
+      patreon_id: nil,
+      patreon_access_token: nil,
+      patreon_refresh_token: nil,
+      patreon_expires_at: nil,
+      patreon_tier: PatreonTier.find_by(name: "Free")
+    )
   end
 
-  def confirm!
-    update_columns(confirmed_at: Time.current, confirmation_token: nil)
+  def patreon_linked?
+    !!patreon_id
   end
 
-  def generate_confirmation_token
-    self.confirmation_token = SecureRandom.urlsafe_base64
-    self.confirmation_sent_at = Time.current
-    self.save!
+  def avatar_url
+    return nil unless avatar.attached?
+    Rails.application.routes.url_helpers.url_for(avatar)
+  end
+
+  def set_online!
+    presence = Rails.cache.read(presence_cache_key) || {}
+    presence[:status] = "online"
+    presence[:last_update] = Time.current.to_i
+    Rails.cache.write(presence_cache_key, presence, expires_in: 48.hours)
+  end
+
+  def set_offline!
+    presence = Rails.cache.read(presence_cache_key)
+    if presence
+      presence[:status] = "offline"
+      presence[:last_update] = Time.current.to_i
+      Rails.cache.write(presence_cache_key, presence, expires_in: 48.hours)
+    end
+  end
+
+  def presence
+    cached_presence = Rails.cache.read(presence_cache_key) || { status: "offline" }
+
+    # Check if last_update exists and is older than 5 minutes
+    if cached_presence[:last_update] && cached_presence[:status] == "online"
+      last_update_time = Time.at(cached_presence[:last_update])
+      if Time.current - last_update_time > 5.minutes
+        cached_presence[:status] = "offline"
+        Rails.cache.write(presence_cache_key, cached_presence, expires_in: 48.hours)
+      end
+    end
+
+    cached_presence
+  end
+
+  def set_presence_activity!(type:, name:)
+    presence = Rails.cache.read(presence_cache_key) || {}
+
+    # Every time presence is updated, it means the user is online
+    presence[:status] = "online"
+    presence[:last_update] = Time.current.to_i
+    presence[:activity_timestamp] = Time.current.to_i
+    presence[:activity_type] = type
+    presence[:activity_name] = name
+
+    Rails.cache.write(presence_cache_key, presence, expires_in: 48.hours)
+  end
+
+  private
+
+  def presence_cache_key
+    "user_presence:#{id}"
+  end
+
+  def set_default_patreon_tier
+    self.patreon_tier = PatreonTier.find_by(name: "Free")
   end
 end

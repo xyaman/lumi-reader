@@ -1,51 +1,32 @@
 class V1::SessionsController < ApplicationController
   allow_unauthenticated_access only: %i[ create ]
-  rate_limit to: 10, within: 3.minutes, only: :create
 
-  # @oas_include
-  # @tags Session
-  # @summary Log in a User (create session)
-  # @no_auth
-  # @request_body User credentials [Hash{email: String, password: String}]
-  # @response Logged in successfully(200) [Hash{user: Hash{id: String, email: String, username: String, share_status: Boolean}}]
-  # @response Invalid credentials(401) [Hash{error: String}]
   def create
-    user = User.authenticate_by(params.permit(:email, :password))
-
+    user = User.authenticate_by(login_params)
     unless user
-      return unauthorized_response("Invalid email or password")
+      return render_error errors: "Invalid email or password.", status: :unauthorized
     end
 
-    unless user.confirmed?
-      return unauthorized_response("Please confirm your email before logging in.")
+    unless user.email_confirmed?
+      return render_error errors: "Please confirm your email before logging in.", status: :unauthorized
     end
 
     start_new_session_for user
-    serialized_user = UserSerializer.basic(user).merge(share_status: user.share_status)
-    success_response({ user: serialized_user })
+    render_success data: UserBlueprint.render_as_json(user, view: :login)
   end
 
-  # @oas_include
-  # @tags Session
-  # @summary Get current logged-in User
-  # @response User info(200) [Hash{user: Hash{id: Integer, email: String, username: String, share_status: Boolean}}]
-  # @response Not logged in(401) [Hash{user: nil, error: String}]
   def show
-    unless Current.session&.user
-      return render json: { user: nil, error: "Not logged in" }, status: :unauthorized
-    end
-
-    user = Current.session.user
-    serialized_user = UserSerializer.basic(user).merge(share_status: user.share_status)
-    success_response({ user: serialized_user })
+    user = Current.user
+    render_success data: UserBlueprint.render_as_json(user, view: :login)
   end
 
-  # @oas_include
-  # @tags Session
-  # @summary Log out current User (destroy session)
-  # @response No content(204) []
   def destroy
     terminate_session
-    no_content_response
+    head :no_content
+  end
+
+  private
+  def login_params
+    params.require(:credentials).permit(:email, :password)
   end
 end

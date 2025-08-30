@@ -1,0 +1,11 @@
+one:
+  follower: xyaman
+  followed: user2
+
+two:
+  follower: user2
+  followed: xyaman
+
+three:
+  follower: xyaman
+  followed: user3

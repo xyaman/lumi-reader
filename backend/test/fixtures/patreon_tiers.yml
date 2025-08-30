@@ -1,0 +1,17 @@
+free:
+  patreon_tier_id: "12345"
+  name: "Free"
+  description: "The free tier with basic access."
+  amount_cents: 0
+  published: true
+  image_url: "http://example.com/free.png"
+  book_sync_limit: 3
+
+supporter:
+  patreon_tier_id: "67890"
+  name: "Supporter"
+  description: "Supporter tier with advanced features."
+  amount_cents: 500
+  published: true
+  image_url: "http://example.com/supporter.png"
+  book_sync_limit: 10

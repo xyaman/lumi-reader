@@ -8,18 +8,13 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
     if Rails.env.test?
       origins "*"
-
-      resource "*",
-        headers: :any,
-        methods: [ :get, :post, :put, :patch, :delete, :options, :head ],
-        credentials: false
     else
-      origins ENV["FRONTEND_URL"].presence || "http://localhost:5173"
-
-      resource "*",
-        headers: :any,
-        methods: [ :get, :post, :put, :patch, :delete, :options, :head ],
-        credentials: true
+      origins ENV.fetch("FRONTEND_URL", "http://localhost:5173")
     end
+
+    resource "*",
+      headers: :any,
+      methods: %i[get post put patch delete options head],
+      credentials: !Rails.env.test?
   end
 end
