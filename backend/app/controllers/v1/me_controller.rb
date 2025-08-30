@@ -1,6 +1,6 @@
 class V1::MeController < ApplicationController
   def show
-    render_success data: UserBlueprint.render_as_json(Current.user, view: :show)
+    render_success data: UserBlueprint.render_as_json(Current.user, view: :login)
   end
 
   def update
@@ -11,6 +11,7 @@ class V1::MeController < ApplicationController
     end
   end
 
+  # TODO: verificar que es una imagen
   def avatar
     unless params[:avatar].present?
       return render_error errors: "Missing avatar file."

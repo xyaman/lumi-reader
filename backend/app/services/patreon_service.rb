@@ -13,17 +13,15 @@ class PatreonService
   CREATOR_ACCESS_TOKEN = ENV["PATREON_CREATOR_ACCESS_TOKEN"]
   CLIENT_ID = ENV["PATREON_CLIENT_ID"]
   CLIENT_SECRET = ENV["PATREON_CLIENT_SECRET"]
-  REDIRECT_URI = ENV["REDIRECT_URI"]
+  PATREON_REDIRECT_URI = ENV["PATREON_REDIRECT_URI"]
 
   # --- Class Methods ---
   def self.authorization_url(session_id)
-    scopes = [ "identity", "identity[memberships]" ].join(" ")
     uri = URI("https://www.patreon.com/oauth2/authorize")
     uri.query = URI.encode_www_form({
       response_type: "code",
       client_id: CLIENT_ID,
-      redirect_uri: REDIRECT_URI,
-      scope: scopes,
+      redirect_uri: PATREON_REDIRECT_URI,
       state: session_id
     })
     uri.to_s
@@ -49,31 +47,30 @@ class PatreonService
 
   def authenticate_and_store(code)
     tokens = get_tokens(code)
-    identity_data = fetch_identity_and_memberships(tokens)
-    set_patreon_fields!(tokens, identity_data)
+    update_user_tokens!(tokens)
+
+    identity_data = fetch_identity_and_memberships(tokens["access_token"])
+    update_patreon_tier!(identity_data)
   end
 
+  def update_and_store
+    ensure_token!
 
-  def fetch_identity_and_memberships(tokens)
+    identity_data = fetch_identity_and_memberships(@user.patreon_access_token)
+    update_patreon_tier!(identity_data)
+  end
+
+  private
+
+  def fetch_identity_and_memberships(access_token)
     uri = URI("#{PATREON_API_BASE}/identity?include=memberships.currently_entitled_tiers&fields%5Btier%5D=title")
     req = Net::HTTP::Get.new(uri)
-    req["Authorization"] = "Bearer #{tokens["access_token"]}"
+    req["Authorization"] = "Bearer #{access_token}"
     res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(req) }
     raise PatreonApiError, "Patreon API error: #{res.code} #{res.body}" unless res.is_a?(Net::HTTPSuccess)
     data = JSON.parse(res.body)
-
-    # TODO: sync_from_api(data)
     data
   end
-
-  # def ensure_token!
-  #   if @user.patreon_expires_at.nil? || @user.patreon_expires_at < 2.minutes.from_now
-  #     tokens = refresh_token(@user.patreon_refresh_token, REDIRECT_URI)
-  #     set_patreon_fields!(tokens)
-  #   end
-  # end
-
-  private
 
   # https://docs.patreon.com/#step-4-validating-receipt-of-the-oauth-token
   def get_tokens(code)
@@ -82,13 +79,13 @@ class PatreonService
       code: code,
       client_id: CLIENT_ID,
       client_secret: CLIENT_SECRET,
-      redirect_uri: REDIRECT_URI
+      redirect_uri: PATREON_REDIRECT_URI
     })
   end
 
 
   # https://docs.patreon.com/?shell#step-7-keeping-up-to-date
-  def refresh_token(refresh_token, redirect_uri)
+  def refresh_token(refresh_token)
     update_token({
       grant_type: "refresh_token",
       refresh_token: refresh_token,
@@ -105,19 +102,44 @@ class PatreonService
     body
   end
 
-  def set_patreon_fields!(tokens, identity_data)
+  def update_user_tokens!(tokens)
     expiry_date = Time.current + tokens["expires_in"].to_i.seconds
+    @user.update!(
+      patreon_access_token: tokens["access_token"],
+      patreon_refresh_token: tokens["refresh_token"],
+      patreon_expires_at: expiry_date
+    )
+  end
+
+  def user_tokens
+    {
+      "access_token" => @user.patreon_access_token,
+      "refresh_token" => @user.patreon_refresh_token,
+    }
+  end
+
+  def ensure_token!
+    raise PatreonApiError, "Patreon API error: No refresh token found. Unlink and login with Patreon again." unless @user.patreon_refresh_token
+
+    if @user.patreon_expires_at.nil? || @user.patreon_expires_at < 2.minutes.from_now
+      tokens = refresh_token(@user.patreon_refresh_token, PATREON_REDIRECT_URI)
+      update_user_tokens!(tokens)
+    end
+  end
+
+  def update_patreon_tier!(identity_data)
     patreon_user_id = identity_data.dig("data", "id")
 
     membership = identity_data.dig("included")&.find { |i| i["type"] == "membership" }
     tier_id = membership&.dig("relationships", "currently_entitled_tiers", "data", 0, "id")
 
-    patreon_tier = PatreonTier.find_by(patreon_tier_id: tier_id) if tier_id
+    if tier_id
+      patreon_tier = PatreonTier.find_by(patreon_tier_id: tier_id)
+    else
+      patreon_tier = PatreonTier.find_by(name: "Free")
+    end
 
     @user.update!(
-      patreon_access_token: tokens["access_token"],
-      patreon_refresh_token: tokens["refresh_token"],
-      patreon_expires_at: expiry_date,
       patreon_id: patreon_user_id,
       patreon_tier: patreon_tier
     )
