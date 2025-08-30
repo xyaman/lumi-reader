@@ -1,5 +1,8 @@
 class V1::MeController < ApplicationController
+  # This function is always called when the frontend loads, make sense
+  # to update user status here
   def show
+    Current.user.set_online!
     render_success data: UserBlueprint.render_as_json(Current.user, view: :login)
   end
 
@@ -31,6 +34,27 @@ class V1::MeController < ApplicationController
       render_success data: { avatar_url: avatar_url }, message: "Avatar updated successfully."
     else
       render_error errors: "Avatar upload failed"
+    end
+  end
+
+  def presence
+    return render_error errors: "Invalid presence update parameters." unless params[:presence]
+
+    status = params[:presence][:status]
+    activity_type = params[:presence][:activity_type]
+    activity_name = params[:presence][:activity_name]
+
+    if status == "online"
+      Current.user.set_online!
+      render_success message: "User set to online."
+    elsif status == "offline"
+      Current.user.set_offline!
+      render_success message: "User set to offline."
+    elsif activity_type.present? && activity_name.present?
+      Current.user.set_presence_activity!(type: activity_type, name: activity_name)
+      render_success message: "User activity updated."
+    else
+      render_error errors: "Invalid presence update parameters."
     end
   end
 

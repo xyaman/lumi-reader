@@ -58,6 +58,7 @@ class User < ApplicationRecord
   def set_online!
     presence = Rails.cache.read(presence_cache_key) || {}
     presence[:status] = "online"
+    presence[:last_update] = Time.current.to_i
     Rails.cache.write(presence_cache_key, presence, expires_in: 48.hours)
   end
 
@@ -65,12 +66,24 @@ class User < ApplicationRecord
     presence = Rails.cache.read(presence_cache_key)
     if presence
       presence[:status] = "offline"
+      presence[:last_update] = Time.current.to_i
       Rails.cache.write(presence_cache_key, presence, expires_in: 48.hours)
     end
   end
 
   def presence
-    Rails.cache.read(presence_cache_key) || { status: "offline" }
+    cached_presence = Rails.cache.read(presence_cache_key) || { status: "offline" }
+
+    # Check if last_update exists and is older than 5 minutes
+    if cached_presence[:last_update] && cached_presence[:status] == "online"
+      last_update_time = Time.at(cached_presence[:last_update])
+      if Time.current - last_update_time > 5.minutes
+        cached_presence[:status] = "offline"
+        Rails.cache.write(presence_cache_key, cached_presence, expires_in: 48.hours)
+      end
+    end
+
+    cached_presence
   end
 
   def set_presence_activity!(type:, name:)
@@ -78,6 +91,7 @@ class User < ApplicationRecord
 
     # Every time presence is updated, it means the user is online
     presence[:status] = "online"
+    presence[:last_update] = Time.current.to_i
     presence[:activity_timestamp] = Time.current.to_i
     presence[:activity_type] = type
     presence[:activity_name] = name

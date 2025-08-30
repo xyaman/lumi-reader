@@ -17,4 +17,28 @@ if ENV["SEED_USERS"]
       user.is_admin = attrs[:is_admin]
     end
   end
+
+  # Create some follow relationships between the seeded users
+  puts "Seeding follow relationships..."
+
+  # Example: xyaman follows user2 and user3
+  xyaman = User.find_by(username: "xyaman")
+  user2 = User.find_by(username: "user2")
+  user3 = User.find_by(username: "user3")
+
+  if xyaman && user2
+    Follow.find_or_create_by!(follower: xyaman, followed: user2)
+    puts "xyaman now follows user2"
+  end
+
+  if xyaman && user3
+    Follow.find_or_create_by!(follower: xyaman, followed: user3)
+    puts "xyaman now follows user3"
+  end
+
+  # Example: user2 follows xyaman
+  if user2 && xyaman
+    Follow.find_or_create_by!(follower: user2, followed: xyaman)
+    puts "user2 now follows xyaman"
+  end
 end
