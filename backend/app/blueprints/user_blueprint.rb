@@ -6,12 +6,13 @@ class UserBlueprint < Blueprinter::Base
 
   view :show do
     fields :bio, :share_online_status, :share_presence, :following_count, :followers_count
-    association :patreon_tier, blueprint: PatreonTierBlueprint, view: :light
+    association :patreon_tier, name: :tier, blueprint: PatreonTierBlueprint, view: :light
   end
 
   view :login do
     include_view :show
     fields :email
+    field :patreon_linked?, name: :is_patreon_linked
   end
 
   view :presence do

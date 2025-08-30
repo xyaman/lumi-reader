@@ -36,6 +36,20 @@ class User < ApplicationRecord
     update_columns(email_confirmed_at: Time.current)
   end
 
+  def unlink_patreon!
+    update!(
+      patreon_id: nil,
+      patreon_access_token: nil,
+      patreon_refresh_token: nil,
+      patreon_expires_at: nil,
+      patreon_tier: PatreonTier.find_by(name: "Free")
+    )
+  end
+
+  def patreon_linked?
+    !!patreon_id
+  end
+
   def avatar_url
     return nil unless avatar.attached?
     Rails.application.routes.url_helpers.url_for(avatar)
@@ -78,6 +92,6 @@ class User < ApplicationRecord
   end
 
   def set_default_patreon_tier
-    self.patreon_tier ||= PatreonTier.find_by(name: "Free")
+    self.patreon_tier = PatreonTier.find_by(name: "Free")
   end
 end

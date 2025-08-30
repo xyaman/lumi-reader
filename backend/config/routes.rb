@@ -21,7 +21,13 @@ Rails.application.routes.draw do
     resource :session, only: [ :create, :show, :destroy ]
 
     get "auth/patreon/callback", to: "auth#patreon"
+    get "auth/patreon/unlink", to: "auth#unlink_patreon"
+    get "auth/patreon/refresh", to: "auth#refresh_patreon"
     get "auth/patreon/generate", to: "auth#generate_patreon_url"
+
+    namespace :webhooks do
+      post :patreon, to: "patreon_webhooks#create"
+    end
 
     resources :users, only: [ :show ], param: :username do
       member do
