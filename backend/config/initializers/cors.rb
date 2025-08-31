@@ -9,7 +9,7 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
     if Rails.env.test?
       origins "*"
     else
-      origins ENV.fetch("FRONTEND_URL", "http://localhost:5173")
+      origins ENV["FRONTEND_URL"].presence || "http://localhost:5173"
     end
 
     resource "*",
