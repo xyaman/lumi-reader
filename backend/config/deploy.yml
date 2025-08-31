@@ -42,6 +42,11 @@ env:
     - MAILGUN_SMTP_LOGIN
     - MAILGUN_SMTP_PASSWORD
     - MAILGUN_DOMAIN
+    - PATREON_CAMPAIGN_ID
+    - PATREON_CREATOR_ACCESS_TOKEN
+    - PATREON_CLIENT_ID
+    - PATREON_CLIENT_SECRET
+    - PATREON_REDIRECT_URI
   clear:
     # Run the Solid Queue Supervisor inside the web server's Puma process to do jobs.
     # When you start using multiple servers, you should split out job processing to a dedicated machine.
