@@ -35,6 +35,7 @@ Rails.application.routes.draw do
         get :following
         put :follow
         put :unfollow
+        get :recent_reading_sessions
       end
     end
 
@@ -42,6 +43,12 @@ Rails.application.routes.draw do
       collection do
         put :avatar
         put :presence
+      end
+    end
+
+    resources :reading_sessions, only: [ :create, :show, :update, :destroy, :index ], param: :snowflake do
+      collection do
+        put :batch_update
       end
     end
 

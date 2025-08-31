@@ -24,7 +24,7 @@ class V1::MeControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should return error if avatar missing" do
-    post avatar_v1_me_url
+    put avatar_v1_me_url
     assert_response :unprocessable_content
     assert_includes @response.body, "Missing avatar file"
   end
