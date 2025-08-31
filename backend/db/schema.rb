@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_29_125043) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_31_052819) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -62,6 +62,24 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_29_125043) do
     t.index ["patreon_tier_id"], name: "index_patreon_tiers_on_patreon_tier_id", unique: true
   end
 
+  create_table "reading_sessions", force: :cascade do |t|
+    t.integer "snowflake", null: false
+    t.integer "user_id", null: false
+    t.string "book_id", null: false
+    t.string "book_title", null: false
+    t.string "book_language", null: false
+    t.datetime "start_time", null: false
+    t.datetime "end_time"
+    t.integer "initial_chars", null: false
+    t.integer "curr_chars", default: 0, null: false
+    t.integer "total_reading_time", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["start_time"], name: "index_reading_sessions_on_start_time"
+    t.index ["user_id", "snowflake"], name: "index_reading_sessions_on_user_id_and_snowflake", unique: true
+    t.index ["user_id"], name: "index_reading_sessions_on_user_id"
+  end
+
   create_table "sessions", force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "ip_address"
@@ -102,6 +120,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_29_125043) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "follows", "users", column: "followed_id"
   add_foreign_key "follows", "users", column: "follower_id"
+  add_foreign_key "reading_sessions", "users"
   add_foreign_key "sessions", "users"
   add_foreign_key "users", "patreon_tiers"
 end

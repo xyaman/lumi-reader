@@ -1,6 +1,6 @@
 require "test_helper"
 
-class V1::WebhooksControllerTest < ActionDispatch::IntegrationTest
+class ReadingSessionTest < ActiveSupport::TestCase
   # test "the truth" do
   #   assert true
   # end
