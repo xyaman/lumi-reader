@@ -60,6 +60,7 @@ class User < ApplicationRecord
     presence[:status] = "online"
     presence[:last_update] = Time.current.to_i
     Rails.cache.write(presence_cache_key, presence, expires_in: 48.hours)
+    broadcast_presence
   end
 
   def set_offline!
@@ -68,6 +69,7 @@ class User < ApplicationRecord
       presence[:status] = "offline"
       presence[:last_update] = Time.current.to_i
       Rails.cache.write(presence_cache_key, presence, expires_in: 48.hours)
+      broadcast_presence
     end
   end
 
@@ -75,11 +77,13 @@ class User < ApplicationRecord
     cached_presence = Rails.cache.read(presence_cache_key) || { status: "offline" }
 
     # Check if last_update exists and is older than 5 minutes
+    # If it's older set user offline and update the presence (websocket)
     if cached_presence[:last_update] && cached_presence[:status] == "online"
       last_update_time = Time.at(cached_presence[:last_update])
       if Time.current - last_update_time > 5.minutes
         cached_presence[:status] = "offline"
         Rails.cache.write(presence_cache_key, cached_presence, expires_in: 48.hours)
+        broadcast_presence
       end
     end
 
@@ -97,9 +101,20 @@ class User < ApplicationRecord
     presence[:activity_name] = name
 
     Rails.cache.write(presence_cache_key, presence, expires_in: 48.hours)
+    broadcast_presence
   end
 
   private
+
+  def broadcast_presence
+    return unless share_online_status
+    followers.each do |follower|
+      UserPresenceChannel.broadcast_to(follower, {
+        user_id: id,
+        presence: presence
+      })
+    end
+  end
 
   def presence_cache_key
     "user_presence:#{id}"
