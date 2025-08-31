@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_31_052819) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_31_093200) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -89,6 +89,22 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_31_052819) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
+  create_table "user_books", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "kind", null: false
+    t.string "unique_id", null: false
+    t.string "title", null: false
+    t.string "creator", null: false
+    t.string "language", null: false
+    t.integer "total_chars", null: false
+    t.integer "curr_chars", default: 0, null: false
+    t.integer "curr_paragraph", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "unique_id"], name: "index_user_books_on_user_id_and_unique_id", unique: true
+    t.index ["user_id"], name: "index_user_books_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email", null: false
     t.string "password_digest", null: false
@@ -122,5 +138,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_31_052819) do
   add_foreign_key "follows", "users", column: "follower_id"
   add_foreign_key "reading_sessions", "users"
   add_foreign_key "sessions", "users"
+  add_foreign_key "user_books", "users"
   add_foreign_key "users", "patreon_tiers"
 end

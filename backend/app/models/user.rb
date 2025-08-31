@@ -6,6 +6,8 @@ class User < ApplicationRecord
 
   has_many :sessions, dependent: :destroy
   has_many :reading_sessions, dependent: :destroy
+  has_many :user_books, dependent: :destroy
+
   has_one_attached :avatar
 
   belongs_to :patreon_tier, optional: true
@@ -35,6 +37,10 @@ class User < ApplicationRecord
 
   def confirm_email!
     update_columns(email_confirmed_at: Time.current)
+  end
+
+  def sync_limit
+    3
   end
 
   def unlink_patreon!
