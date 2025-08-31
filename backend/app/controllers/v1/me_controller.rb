@@ -2,7 +2,6 @@ class V1::MeController < ApplicationController
   # This function is always called when the frontend loads, make sense
   # to update user status here
   def show
-    Current.user.set_online!
     render_success data: UserBlueprint.render_as_json(Current.user, view: :login)
   end
 
