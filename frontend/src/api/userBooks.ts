@@ -4,7 +4,7 @@ import { AsyncResult, ok } from "@/lib/result"
 import { camelToSnake } from "@/lib/utils"
 import { deflate, inflate } from "pako"
 
-export type SyncedBook = {
+export type ApiUserBook = {
     kind: string
     uniqueId: string
     title: string
@@ -13,25 +13,25 @@ export type SyncedBook = {
     totalChars: number
     currChars: number
     currParagraph: number
-    createdAt: number
-    updatedAt: number
+    createdAt: string
+    updatedAt: string
     compressedDataUrl?: string | null
 }
 
 export const syncedBooksApi = {
     async getAll() {
-        return ApiClient.request<{ books: SyncedBook[] }>("/synced_books")
+        return ApiClient.request<ApiUserBook[]>("/user_books")
     },
 
-    async update(uniqueId: string, book: Partial<SyncedBook>) {
-        return ApiClient.request<{ book: SyncedBook }>(`/synced_books/${uniqueId}`, {
-            method: "PATCH",
-            body: JSON.stringify(camelToSnake(book)),
-        })
-    },
+    // async update(uniqueId: string, book: Partial<ApiUserBook>) {
+    //     return ApiClient.request<ApiUserBook>(`/synced_books/${uniqueId}`, {
+    //         method: "PATCH",
+    //         body: JSON.stringify(camelToSnake(book)),
+    //     })
+    // },
 
-    async sync(books: SyncedBook[]) {
-        return ApiClient.request<{ newBooks: SyncedBook[]; updatedBooks: SyncedBook[] }>("/synced_books/sync", {
+    async sync(books: ApiUserBook[]) {
+        return ApiClient.request<{ newBooks: ApiUserBook[]; updatedBooks: ApiUserBook[] }>("/user_books/sync", {
             method: "POST",
             body: JSON.stringify({ books: camelToSnake(books) }),
         })
@@ -53,7 +53,7 @@ export const syncedBooksApi = {
         const compressedData = deflate(JSON.stringify(dataToCompress))
         const formData = new FormData()
         formData.append("compressed_data", new Blob([compressedData]))
-        return ApiClient.request<{ url: string }>(`/synced_books/upload/${uniqueId}`, {
+        return ApiClient.request<{ url: string }>(`/user_books/${uniqueId}/upload_data`, {
             method: "POST",
             body: formData,
         })
@@ -80,7 +80,7 @@ export const syncedBooksApi = {
     },
 
     async delete(uniqueId: string) {
-        return ApiClient.request<{ result: string }>(`/synced_books/${uniqueId}`, {
+        return ApiClient.request<{ result: string }>(`/user_books/${uniqueId}`, {
             method: "DELETE",
         })
     },

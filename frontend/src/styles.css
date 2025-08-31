@@ -41,6 +41,9 @@ body,
 body {
     /* Prevent scrolling in paginated mode iOS */
     overscroll-behavior: none;
+
+    /* Prevent zoom on iOS */
+    touch-action: pan-y;
 }
 
 /* Navbar theme */

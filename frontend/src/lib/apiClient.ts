@@ -26,16 +26,19 @@ export type ApiResult<T> = AsyncResult<ApiResponse<T>, ApiError | ConnectionErro
 
 export class ApiClient {
     static async rawRequest(url: string, options: RequestInit = {}): AsyncResult<Response, ApiError | ConnectionError> {
+        let csrfToken
+
         // All requests methods, except GET, needs the csrfToken. Even for not
         // unprotected routes. The backend puts this cookie on every request
-        let csrfToken
-        try {
-            csrfToken = await this.getCsrfToken()
-            if (!csrfToken) {
-                return err(new ConnectionError("Missing CSRF token"))
+        if (!options.method || options.method !== "GET") {
+            try {
+                csrfToken = await this.getCsrfToken()
+                if (!csrfToken) {
+                    return err(new ConnectionError("Missing CSRF token"))
+                }
+            } catch (e: any) {
+                return err(new ConnectionError(e?.message || "Network Error"))
             }
-        } catch (e: any) {
-            return err(new ConnectionError(e?.message || "Network Error"))
         }
 
         const isFormData = options.body instanceof FormData
@@ -46,7 +49,7 @@ export class ApiClient {
                 ...options,
                 credentials: "include",
                 headers: {
-                    "X-CSRF-TOKEN": csrfToken || "",
+                    ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {}),
                     ...(isFormData ? {} : { "Content-Type": "application/json" }),
                     ...options.headers,
                 },

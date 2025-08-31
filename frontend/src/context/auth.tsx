@@ -11,8 +11,9 @@ type AuthState = {
 }
 
 type AuthDispatch = {
-    login: (credentials: { email: string; password: string }) => ApiResult<{ user: AuthUser }>
+    login: (credentials: { email: string; password: string }) => ApiResult<AuthUser>
     logout: () => ApiResult<void>
+    refreshCurrentUser: () => Promise<void>
 }
 
 const AuthStateContext = createContext<AuthState>()
@@ -32,7 +33,7 @@ export default function AuthProvider(props: { children: JSX.Element }) {
         const res = await authApi.getCurrentUser()
 
         if (res.ok) {
-            setStore("user", res.ok.data!.user)
+            setStore("user", res.ok.data)
             setStore("status", "authenticated")
             return
         }
@@ -51,7 +52,26 @@ export default function AuthProvider(props: { children: JSX.Element }) {
         }
     })
 
-    const login = async (credentials: { email: string; password: string }): ApiResult<{ user: AuthUser }> => {
+    // TODO: handle error
+    const refreshCurrentUser = async () => {
+        setStore("error", null)
+        const cachedUser = lsAuth.currentUser()
+        if (!cachedUser) {
+            setStore("user", null)
+            setStore("status", "unauthenticated")
+            return
+        }
+
+        const res = await authApi.getCurrentUser()
+
+        if (res.ok) {
+            setStore("user", res.ok.data)
+            setStore("status", "authenticated")
+            return
+        }
+    }
+
+    const login = async (credentials: { email: string; password: string }): ApiResult<AuthUser> => {
         setStore("error", null)
         const res = await authApi.login(credentials)
         if (res.error) {
@@ -62,11 +82,11 @@ export default function AuthProvider(props: { children: JSX.Element }) {
 
         // TODO: AuthUser type
         const data = res.ok.data!
-        setStore("user", data.user)
+        setStore("user", data)
         setStore("status", "authenticated")
         setStore("error", null)
 
-        lsAuth.setCurrentUser(data.user)
+        lsAuth.setCurrentUser(data)
 
         return res
     }
@@ -82,7 +102,9 @@ export default function AuthProvider(props: { children: JSX.Element }) {
 
     return (
         <AuthStateContext.Provider value={store}>
-            <AuthDispatchContext.Provider value={{ login, logout }}>{props.children}</AuthDispatchContext.Provider>
+            <AuthDispatchContext.Provider value={{ login, logout, refreshCurrentUser }}>
+                {props.children}
+            </AuthDispatchContext.Provider>
         </AuthStateContext.Provider>
     )
 }

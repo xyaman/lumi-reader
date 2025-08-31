@@ -43,8 +43,8 @@ export class EpubBook implements ReaderSource {
 
     localId!: number
     uniqueId!: string
-    createdAt: number = Math.floor(Date.now() / 1000)
-    updatedAt: number = Math.floor(Date.now() / 1000)
+    createdAt: string = new Date().toISOString()
+    updatedAt: string = new Date().toISOString()
     title!: string
     language!: string
     creator!: string
@@ -265,11 +265,7 @@ function extractMetadata(pkgDocumentXml: any) {
     return metadata
 }
 
-async function extractManifest(
-    zip: JSZip,
-    pkgDocumentXml: any,
-    basePath?: string,
-): Promise<[IEpubManifest, number]> {
+async function extractManifest(zip: JSZip, pkgDocumentXml: any, basePath?: string): Promise<[IEpubManifest, number]> {
     const items = pkgDocumentXml.package?.manifest?.item
     if (!items || !Array.isArray(items)) {
         throw new Error("Package Document Item(s) not found. Not a valid epub file.")
@@ -306,10 +302,7 @@ async function extractManifest(
             xhtmlHref.push(href)
             xhtmlIds.push(item["@_id"])
         } else if (type === "image/jpeg" || type === "image/png" || type === "image/svg+xml") {
-            if (
-                (item["@_id"] as string).includes("cover") ||
-                (item["@_properties"] as string)?.includes("cover")
-            ) {
+            if ((item["@_id"] as string).includes("cover") || (item["@_properties"] as string)?.includes("cover")) {
                 imgsHref.splice(0, 0, href)
                 continue
             }
@@ -321,9 +314,10 @@ async function extractManifest(
     let xhtmlFiles = xhtmlIds.map((id, i) => ({ id, href: xhtmlHref[i] }))
     const spineOrder = extractSpine(pkgDocumentXml)
     if (spineOrder) {
-        xhtmlFiles = spineOrder
-            .map((id) => xhtmlFiles.find((x) => x.id === id))
-            .filter(Boolean) as { id: string; href: string }[]
+        xhtmlFiles = spineOrder.map((id) => xhtmlFiles.find((x) => x.id === id)).filter(Boolean) as {
+            id: string
+            href: string
+        }[]
     }
 
     const [navContent, xhtmlContent, cssContent, imgs] = await Promise.all([

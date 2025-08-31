@@ -2,32 +2,32 @@ import { ApiClient } from "@/lib/apiClient"
 import { type User } from "@/types/api"
 
 export const userApi = {
-    async getProfile(userId: number) {
-        return ApiClient.request<{ user: User }>(`/users/${userId}`)
+    async getProfile(username: string) {
+        return ApiClient.request<User>(`/users/${username}`)
     },
 
-    async getFollowing(userId: number, includePresence = false) {
+    async getFollowing(username: string, includePresence = false) {
         const params = includePresence ? "?presence=1" : ""
-        return ApiClient.request<{ following: User[] }>(`/users/${userId}/following${params}`)
+        return ApiClient.request<User[]>(`/users/${username}/following${params}`)
     },
 
-    async getFollowers(userId: number, includePresence = false) {
+    async getFollowers(username: string, includePresence = false) {
         const params = includePresence ? "?presence=1" : ""
-        return ApiClient.request<{ followers: User[] }>(`/users/${userId}/followers${params}`)
+        return ApiClient.request<User[]>(`/users/${username}/followers${params}`)
     },
 
-    async searchUsers(query: string) {
-        return ApiClient.request<{ users: User[] }>(`/users/search?q=${encodeURIComponent(query)}`)
+    // async searchUsers(query: string) {
+    //     return ApiClient.request<{ users: User[] }>(`/users/search?q=${encodeURIComponent(query)}`)
+    // },
+
+    // Needs auth
+    async follow(username: string) {
+        return ApiClient.request(`/users/${username}/follows`, { method: "PUT" })
     },
 
     // Needs auth
-    async follow(userId: number) {
-        return ApiClient.request(`/session/follows/${userId}`, { method: "PUT" })
-    },
-
-    // Needs auth
-    async unfollow(userId: number) {
-        return ApiClient.request(`/session/follows/${userId}`, { method: "DELETE" })
+    async unfollow(username: string) {
+        return ApiClient.request(`/users/${username}/unfollow`, { method: "PUT" })
     },
 
     // Needs auth
@@ -35,31 +35,24 @@ export const userApi = {
         const formData = new FormData()
         formData.append("avatar", file)
 
-        return ApiClient.request<{ avatarUrl: string }>("/session/avatar", {
-            method: "PATCH",
+        return ApiClient.request<string>("/me/avatar", {
+            method: "PUT",
             body: formData,
         })
     },
 
     // Needs auth
-    async updateDescription(description: string) {
-        return ApiClient.request("/session/description", {
-            method: "PATCH",
-            body: JSON.stringify({ description }),
-        })
-    },
-
-    // Needs auth
-    async updateShareStatus(status: boolean) {
-        return ApiClient.request("/session/share_status", {
-            method: "PATCH",
-            body: JSON.stringify({ share_status: status }),
+    async updateBio(bio: string) {
+        const user = { bio }
+        return ApiClient.request("/me", {
+            method: "PUT",
+            body: JSON.stringify({ user }),
         })
     },
 
     async setUserPresence(activityType: string, activityName: string) {
-        return ApiClient.request("/session/presence", {
-            method: "PATCH",
+        return ApiClient.request("/me/presence", {
+            method: "PUT",
             body: JSON.stringify({
                 activity_name: activityName,
                 activity_type: activityType,

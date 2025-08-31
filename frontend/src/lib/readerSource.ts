@@ -1,9 +1,9 @@
-import { type SyncedBook } from "@/api/syncedBooks"
+import { type ApiUserBook } from "@/api/userBooks"
 
 /**
  * Represents a source for the reader, such as an EPUB file.
  */
-export interface ReaderSource extends SyncedBook {
+export interface ReaderSource extends ApiUserBook {
     readonly localId: number
     currChars: number
     currParagraph: number

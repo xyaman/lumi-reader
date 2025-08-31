@@ -1,28 +1,16 @@
-import { useNavigate, useParams } from "@solidjs/router"
-import {
-    createEffect,
-    createMemo,
-    createResource,
-    createSignal,
-    For,
-    Match,
-    on,
-    onCleanup,
-    onMount,
-    Show,
-    Switch,
-} from "solid-js"
+import { useLocation, useNavigate, useParams } from "@solidjs/router"
+import { createEffect, createResource, createSignal, For, Match, on, onCleanup, onMount, Show, Switch } from "solid-js"
 
 import UserAvatar from "@/components/UserAvatar"
 import { userApi } from "@/api/user"
-import { User, ReadingSession } from "@/types/api"
-import { LumiDb } from "@/lib/db"
+import { User, ApiReadingSession } from "@/types/api"
 import { IndividualSessions } from "@/components/home/readingSessions"
 import { createStore } from "solid-js/store"
-import { readingSessionsApi } from "@/api/readingSessions"
 import Spinner from "@/components/Spinner"
 import { useAuthState } from "@/context/auth"
 import { Button } from "@/ui"
+import { LumiDb } from "@/lib/db"
+import { deserializeApiReadingSession, readingSessionsApi, serializeApiReadingSession } from "@/api/readingSessions"
 
 type UserDescriptionProps = {
     user: User
@@ -32,11 +20,11 @@ type UserDescriptionProps = {
 }
 function UserDescription(props: UserDescriptionProps) {
     return (
-        <Show when={props.isEditing} fallback={<p class="mb-8">{props.user.description || ""}</p>}>
+        <Show when={props.isEditing} fallback={<p class="mb-8">{props.user.bio || ""}</p>}>
             <textarea
                 class="w-full p-2 border rounded my-8"
                 rows={3}
-                value={props.user.description || ""}
+                value={props.user.bio || ""}
                 onInput={(e) => props.onInput?.(e.target.value)}
                 disabled={props.disabled}
             />
@@ -48,39 +36,46 @@ export function Users() {
     const authState = useAuthState()
 
     const params = useParams()
+    const location = useLocation()
     const navigate = useNavigate()
 
-    const userId = createMemo(() => Number(params.id ?? authState.user?.id))
-    const isOwnId = () => authState.user?.id == userId()
+    const username = () => {
+        if (location.pathname === "/me") {
+            return authState.user?.username
+        }
+        return params.username as string
+    }
+
+    const isOwnProfile = () => location.pathname === "/me"
 
     const [editDescription, setEditDescription] = createSignal<string | null>(null)
     const [isLoading, setIsLoading] = createSignal(false)
 
     const [readingStore, setReadingStore] = createStore({
-        sessions: [] as ReadingSession[],
+        sessions: [] as ApiReadingSession[],
         loading: false,
         morePages: true,
         page: 0,
         pages: 1,
     })
 
-    const [userResource, { mutate: mutateUser }] = createResource(userId, async () => {
+    const [userResource, { mutate: mutateUser }] = createResource(username, async () => {
         // this might happen when the auth still is loading
-        if (Number.isNaN(userId())) {
+        if (!username()) {
             return undefined
         }
 
-        const data = await userApi.getProfile(userId())
+        const data = await userApi.getProfile(username()!)
         if (data.error) {
             throw data.error
         }
-        return data.ok.data!.user
+        return data.ok.data
     })
 
     // Go to login page if there is no param and the user is not logged in
     // Otherwise user not found?
     createEffect(() => {
-        if (authState.status !== "loading" && Number.isNaN(userId())) {
+        if (authState.status !== "loading" && !authState.user) {
             return navigate("/login", { replace: true })
         }
     })
@@ -102,8 +97,8 @@ export function Users() {
 
     // load initial sessions when the userId is determined
     createEffect(
-        on(userId, (value) => {
-            if (Number.isNaN(value)) return
+        on(username, (value) => {
+            if (!value) return
             loadMoreSessions()
         }),
     )
@@ -113,7 +108,7 @@ export function Users() {
         setReadingStore("loading", true)
         console.log("loading more..")
 
-        if (isOwnId()) {
+        if (isOwnProfile()) {
             // local sessions
             const res = await LumiDb.getRecentReadingSessions(readingStore.page)
             if (res.length === 0) {
@@ -121,7 +116,7 @@ export function Users() {
                 setReadingStore("morePages", false)
                 return
             }
-            setReadingStore("sessions", (sessions) => [...sessions, ...res])
+            setReadingStore("sessions", (sessions) => [...sessions, ...res.map(serializeApiReadingSession)])
             setReadingStore("page", (page) => page + 1)
         } else {
             // backend sessions (other users)
@@ -133,11 +128,11 @@ export function Users() {
             }
 
             // backend pages starts at 1 (pagy ruby)
-            const res = await readingSessionsApi.getRecent(userId(), readingStore.page + 1)
+            const res = await readingSessionsApi.getRecent(username()!, readingStore.page + 1)
             if (res.ok) {
-                setReadingStore("sessions", (sessions) => [...sessions, ...res.ok.data!.sessions])
+                setReadingStore("sessions", (sessions) => [...sessions, ...res.ok.data.sessions])
                 setReadingStore("page", (page) => page + 1)
-                setReadingStore("pages", res.ok.data!.pagy.pages)
+                setReadingStore("pages", res.ok.data.pagy.pages)
             } else {
                 console.error(res.error)
             }
@@ -161,7 +156,7 @@ export function Users() {
         if (res.error) {
             console.error(res.error)
         } else {
-            mutateUser({ ...userResource()!, avatarUrl: res.ok.data!.avatarUrl })
+            mutateUser({ ...userResource()!, avatarUrl: res.ok.data })
         }
     }
 
@@ -170,9 +165,9 @@ export function Users() {
         let res
         const following = !userResource()!.following
         if (userResource()!.following) {
-            res = await userApi.unfollow(userId())
+            res = await userApi.unfollow(username()!)
         } else {
-            res = await userApi.follow(userId())
+            res = await userApi.follow(username()!)
         }
         if (res.error) throw res.error
         mutateUser({ ...userResource()!, following })
@@ -185,9 +180,9 @@ export function Users() {
         }
 
         setIsLoading(true)
-        const res = await userApi.updateDescription(newDescription)
+        const res = await userApi.updateBio(newDescription)
         if (res.ok) {
-            mutateUser({ ...userResource()!, description: editDescription()! })
+            mutateUser({ ...userResource()!, bio: newDescription })
         } else {
             console.error(res.error)
         }
@@ -208,7 +203,7 @@ export function Users() {
                                 w={40}
                                 h={40}
                                 onAvatarChange={onAvatarChange}
-                                isCurrentUser={isOwnId()}
+                                isCurrentUser={isOwnProfile()}
                             />
                         </div>
 
@@ -231,7 +226,7 @@ export function Users() {
                                             </Button>
                                         </div>
                                     </Match>
-                                    <Match when={authState.user && isOwnId()}>
+                                    <Match when={authState.user && isOwnProfile()}>
                                         <Button
                                             classList={{ "text-center": true }}
                                             onClick={() => setEditDescription("")}
@@ -239,7 +234,7 @@ export function Users() {
                                             Edit description
                                         </Button>
                                     </Match>
-                                    <Match when={authState.user && !isOwnId()}>
+                                    <Match when={authState.user && !isOwnProfile()}>
                                         <Button classList={{ "text-center": true }} onClick={handleFollow}>
                                             {userResource()!.following ? "Unfollow" : "Follow"}
                                         </Button>
@@ -275,7 +270,9 @@ export function Users() {
                     <Show when={readingStore.loading}>
                         <Spinner size={40} base16Color="--base05" />
                     </Show>
-                    <For each={readingStore.sessions}>{(session) => <IndividualSessions session={session} />}</For>
+                    <For each={readingStore.sessions}>
+                        {(session) => <IndividualSessions session={deserializeApiReadingSession(session)} />}
+                    </For>
                 </section>
             </Show>
         </div>

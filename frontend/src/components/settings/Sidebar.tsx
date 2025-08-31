@@ -1,6 +1,6 @@
 import { createMemo, For } from "solid-js"
 import { A, useLocation } from "@solidjs/router"
-import { IconCalendar, IconHome, IconSettings } from "@/components/icons"
+import { IconCalendar, IconHome, IconSettings, IconUser } from "@/components/icons"
 
 type Props = {
     fullSize?: boolean
@@ -15,6 +15,7 @@ export function Sidebar(props: Props) {
         { href: "/settings/reader", label: "Reader", icon: IconHome },
         { href: "/settings/theme", label: "Theme", icon: IconCalendar },
         { href: "/settings/sessions", label: "Sessions", icon: IconSettings },
+        { href: "/settings/account", label: "Account", icon: IconUser },
     ]
 
     return (

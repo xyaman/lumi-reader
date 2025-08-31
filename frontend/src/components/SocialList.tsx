@@ -1,8 +1,7 @@
 import { createResource, For } from "solid-js"
 import consumer from "@/services/websocket"
-import { snakeToCamel, timeAgo } from "@/lib/utils"
+import { timeAgo } from "@/lib/utils"
 import { userApi } from "@/api/user"
-import { User } from "@/types/api"
 import UserAvatar from "./UserAvatar"
 import { useAuthState } from "@/context/auth"
 import { A } from "@solidjs/router"
@@ -12,46 +11,33 @@ export default function SocialList() {
 
     const [follows, { mutate: setFollowers }] = createResource(async () => {
         if (!authState.user) return []
-        const res = await userApi.getFollowing(authState.user!.id, true)
+        const res = await userApi.getFollowing(authState.user!.username, true)
         if (res.error) throw res.error
-        return res.ok.data!.following
+        return res.ok.data
     })
 
-    const channel = consumer.subscriptions.create(
+    // TODO: Handle errors
+    consumer.subscriptions.create(
         { channel: "UserPresenceChannel" },
         {
             connected() {
-                console.log("websocket connected")
-                startHeartbeat()
+                console.log("[websocket]: connected")
             },
             disconnected() {
-                console.log("websocket disconnected")
-                stopHeartbeatInterval()
+                console.log("[websocket]: disconnected")
             },
-            received(data: User) {
-                const camelData = snakeToCamel(data)
+            received(data: { user_id: number; presence: any }) {
                 setFollowers(
                     (prev) =>
                         prev &&
                         prev.map((u) => ({
                             ...u,
-                            presence: { ...(camelData.id === u.id ? camelData : {}) },
+                            presence: { ...(data.user_id === u.id ? data.presence : {}) },
                         })),
                 )
             },
         },
     )
-
-    let heartbeatInterval: number | null = null
-    const startHeartbeat = () => {
-        heartbeatInterval = setInterval(() => {
-            channel.perform("heartbeat", {})
-        }, 30000)
-    }
-
-    const stopHeartbeatInterval = () => {
-        if (heartbeatInterval) clearInterval(heartbeatInterval)
-    }
 
     const formatActivity = (kind?: string, name?: string) => {
         if (!kind || !name) return ""
@@ -67,7 +53,7 @@ export default function SocialList() {
         <div class="space-y-3">
             <For each={follows() || []}>
                 {(user) => (
-                    <A href={`/users/${user.id}`}>
+                    <A href={`/users/${user.username}`} class="block">
                         <div class="flex items-start">
                             <div class="relative">
                                 {/* Avatar */}

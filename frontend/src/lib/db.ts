@@ -1,8 +1,8 @@
 import { openDB, DBSchema, IDBPDatabase } from "idb"
 import type { Bookmark, SourceImage, NavigationItem, Section } from "./readerSource"
-import { SyncedBook } from "@/api/syncedBooks"
+import { ApiUserBook } from "@/api/userBooks"
 
-export type ReaderSourceLightRecord = SyncedBook & {
+export type ReaderSourceLightRecord = ApiUserBook & {
     localId: number
     coverImage?: SourceImage
 }
@@ -27,24 +27,19 @@ export type Bookshelf = {
 export type ReadingSession = {
     snowflake: number // unique session id (snowflake/timestamp)
     userId?: number | null // null or undefined for local users
-
-    bookLocalId?: number // reference to ReaderSourceLightRecord or similar
     bookId: string // reference to the real source (ex. epub identifier)
     bookTitle: string
     bookLanguage: string
-
-    startTime: number // unix timestamp
-    endTime?: number | null // unix timestamp
-
-    totalReadingTime: number // accumulated seconds of active reading
-    lastActiveTime: number // unix timestamp of last activity
-    isPaused: boolean
-
+    startTime: Date
+    endTime?: Date | null
     initialChars: number
     currChars: number
-    sessionsCount: number // number of pause/resume
+    totalReadingTime: number // accumulated seconds of active reading
+    updatedAt?: Date | null
 
-    updatedAt?: number | null
+    // local status
+    lastActiveTime: Date
+    isPaused: boolean
 }
 
 const DB_NAME = "BookReaderDB"
@@ -128,9 +123,9 @@ export class LumiDb {
         return this.dbPromise
     }
 
-    static async saveBookRecord(source: ReaderSourceRecord): Promise<void> {
+    static async saveBookRecord(source: ReaderSourceRecord, updateAt: boolean = true): Promise<void> {
         const db = await this.getDB()
-        source.updatedAt = Math.floor(Date.now() / 1000)
+        if (updateAt) source.updatedAt = new Date().toISOString()
 
         // Prepare lightRecord, omitting localId if not present
         const lightRecord = {
@@ -255,11 +250,11 @@ export class LumiDb {
     }): Promise<ReadingSession> {
         const db = await this.getDB()
         // Date.now returns miliseconds. We need unix timestamp
-        const now = Math.floor(Date.now() / 1000)
+        const snowflake = Math.floor(Date.now() / 1000)
+        const now = new Date()
 
         const session: ReadingSession = {
-            snowflake: now,
-            bookLocalId: book.localId,
+            snowflake: snowflake,
             bookId: book.uniqueId,
             bookTitle: book.title,
             bookLanguage: book.language,
@@ -269,7 +264,6 @@ export class LumiDb {
             isPaused: false,
             initialChars: book.currChars,
             currChars: book.currChars,
-            sessionsCount: 1,
             updatedAt: now,
         }
 
@@ -306,7 +300,7 @@ export class LumiDb {
         const sessions = await db.getAll(STORE_READING_SESSIONS, range)
 
         // sort by startTime descending (newest first)
-        sessions.sort((a, b) => b.startTime - a.startTime)
+        sessions.sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
 
         return sessions.slice(offset, offset + limit)
     }
@@ -325,7 +319,7 @@ export class LumiDb {
 
         console.log("updating", updatedSession)
 
-        updatedSession.updatedAt = Math.floor(Date.now() / 1000)
+        updatedSession.updatedAt = new Date()
         await db.put(STORE_READING_SESSIONS, updatedSession as ReadingSession)
     }
 

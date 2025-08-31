@@ -10,7 +10,7 @@ import { Settings } from "@/pages/settings"
 import { Users, BookReader } from "@/pages"
 
 const settingsFilter: MatchFilters = {
-    name: ["theme", "reader", "sessions"],
+    name: ["theme", "reader", "sessions", "account"],
 }
 
 export function App() {
@@ -24,7 +24,8 @@ export function App() {
                     <Route path="/" component={Library} />
                     <Route path="/sessions" component={ReadingSessions} />
                     <Route path="/social" component={SocialList} />
-                    <Route path="/users/:id?" component={Users} />
+                    <Route path="/me" component={Users} />
+                    <Route path="/users/:username" component={Users} />
                 </Route>
                 <Route path="/reader/:id?" component={BookReader} />
                 <Route path="/settings/:name?" component={Settings} matchFilters={settingsFilter} />

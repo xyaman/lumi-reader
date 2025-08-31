@@ -24,6 +24,7 @@ type LibraryDispatch = {
     // books related
     createBook: (files: File[]) => Promise<void>
     deleteBook: (localId: number) => Promise<void>
+    refreshLibrary: () => Promise<void>
 
     // shelf related
     createShelf: (name: string) => Promise<void>
@@ -51,9 +52,7 @@ export default function LibraryProvider(props: { children: JSX.Element }) {
 
     // Load and sort books on mount
     onMount(async () => {
-        const [books, shelves] = await Promise.all([LumiDb.getAllLightBooks(), LumiDb.getAllBookshelves()])
-        setStore("books", books)
-        setStore("shelves", shelves)
+        await refreshLibrary()
     })
 
     // Handle cover images and remove URL blobs on cleanup
@@ -98,6 +97,12 @@ export default function LibraryProvider(props: { children: JSX.Element }) {
     const deleteBook = async (localId: number) => {
         await LumiDb.deleteBookById(localId)
         setStore("books", (prev) => prev.filter((book) => book.localId !== localId))
+    }
+
+    const refreshLibrary = async () => {
+        const [books, shelves] = await Promise.all([LumiDb.getAllLightBooks(), LumiDb.getAllBookshelves()])
+        setStore("books", books)
+        setStore("shelves", shelves)
     }
 
     // Creates a new shelf
@@ -165,6 +170,7 @@ export default function LibraryProvider(props: { children: JSX.Element }) {
                 value={{
                     createBook,
                     deleteBook,
+                    refreshLibrary,
                     createShelf,
                     deleteShelf,
                     renameShelf,

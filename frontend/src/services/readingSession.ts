@@ -1,7 +1,7 @@
 import { LumiDb, ReadingSession } from "@/lib/db"
 import { createSignal } from "solid-js"
 import { lsReadingSessions } from "./localStorage"
-import { readingSessionsApi } from "@/api/readingSessions"
+import { deserializeApiReadingSession, readingSessionsApi } from "@/api/readingSessions"
 import { AsyncResult, err, ok } from "@/lib/result"
 
 interface IPartialSource {
@@ -35,24 +35,25 @@ export default class ReadingSessionManager {
         }
 
         // 1. get local changes since last sync
-        const now = Math.floor(Date.now() / 1000)
+        // const now = new Date()
         const lastSyncTime = lsReadingSessions.lastSyncTime()
+        console.log(lastSyncTime)
         const localIds = await LumiDb.getAllReadingSessionIds()
 
         // 2. get remote diffs
-        const diffRes = await readingSessionsApi.diff(lastSyncTime, localIds)
+        const diffRes = await readingSessionsApi.index(lastSyncTime, localIds)
         if (diffRes.error) {
             return diffRes
         }
 
         // 3.1 Update local sessions
-        const remoteOnlySessions = diffRes.ok.data!.remoteOnlySessions
+        const remoteOnlySessions = diffRes.ok.data.remoteOnlySessions
         if (remoteOnlySessions.length === 0) {
             return ok(false)
         }
 
         for (const rs of remoteOnlySessions) {
-            await LumiDb.createReadingSessionFromCloud(rs)
+            await LumiDb.createReadingSessionFromCloud(deserializeApiReadingSession(rs))
         }
 
         // 3.  Handle different types of changes
@@ -70,12 +71,15 @@ export default class ReadingSessionManager {
 
         // 3.3 Updated (Nothing to do?)
         // 3.4 Created (Nothing to do?)
-        lsReadingSessions.setLastSyncTime(diffRes.ok.data!.syncTimestamp)
+        lsReadingSessions.setLastSyncTime(diffRes.ok.data.syncTimestamp)
         return ok(true)
     }
 
     async startSession(source: IPartialSource) {
-        if (this.activeSession()) return
+        if (this.activeSession()) {
+            this.finishSession()
+            console.error("Last session wasn't finished")
+        }
         const session = await LumiDb.createReadingSession(source)
         this.setActiveSession(session)
         await readingSessionsApi.create(session)
@@ -84,6 +88,8 @@ export default class ReadingSessionManager {
     async finishSession(): Promise<void> {
         const session = this.activeSession()
         if (!session) return
+        this.setActiveSession(null)
+
         // remove the session from the database if characters count is 0
         // or if updateTime is undefined
         if (session.currChars === session.initialChars) {
@@ -96,20 +102,19 @@ export default class ReadingSessionManager {
             await this.pauseSession()
         }
 
-        const now = Math.floor(Date.now() / 1000)
+        const now = new Date()
         const updatedSession = { ...session, endTime: now }
-        this.setActiveSession(updatedSession)
 
         await LumiDb.updateReadingSession(updatedSession)
         await readingSessionsApi.update(updatedSession.snowflake, updatedSession)
-        this.setActiveSession(null)
+        console.log("Finished", updatedSession)
     }
 
     async pauseSession() {
         const session = this.activeSession()
         if (!session) return
 
-        const now = Math.floor(Date.now() / 1000)
+        const now = new Date()
         const updatedSession = {
             ...session,
             lastActiveTime: now,
@@ -123,7 +128,7 @@ export default class ReadingSessionManager {
         const session = this.activeSession()
         if (!session) return
 
-        const now = Math.floor(Date.now() / 1000)
+        const now = new Date()
         const updatedSession = {
             ...session,
             lastActiveTime: now,
@@ -139,10 +144,12 @@ export default class ReadingSessionManager {
         const session = this.activeSession()
         if (!session || session.isPaused) return
 
-        const now = Math.floor(Date.now() / 1000)
+        const now = new Date()
+        const totalReadingTime =
+            session.totalReadingTime + Math.floor((now.getTime() - session.lastActiveTime.getTime()) / 1000)
         const updatedSession = {
             ...session,
-            totalReadingTime: session.totalReadingTime + (now - session.lastActiveTime),
+            totalReadingTime,
             currChars: charsPosition,
             lastActiveTime: now,
         }

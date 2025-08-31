@@ -8,7 +8,7 @@ import { userApi } from "@/api/user"
 type UserModalProps = {
     open: boolean
     onClose: () => void
-    userId: number
+    username: string
     type: "followers" | "following"
 }
 
@@ -18,13 +18,13 @@ function UserModal(props: UserModalProps) {
         () => props.open,
         async () => {
             if (props.type === "followers") {
-                const res = await userApi.getFollowers(props.userId)
+                const res = await userApi.getFollowers(props.username)
                 if (res.error) return []
-                else return res.ok.data!.followers
+                else return res.ok.data
             } else {
-                const res = await userApi.getFollowing(props.userId)
+                const res = await userApi.getFollowing(props.username)
                 if (res.error) return []
-                else return res.ok.data!.following
+                else return res.ok.data
             }
         },
     )
@@ -52,8 +52,8 @@ function UserModal(props: UserModalProps) {
                         <p class="text-xl">{props.type}</p>
                         <UserList
                             users={users() ?? []}
-                            onUserClick={(id) => {
-                                navigate(`/users/${id}`)
+                            onUserClick={(username) => {
+                                navigate(`/users/${username}`)
                                 props.onClose()
                             }}
                         />
@@ -127,10 +127,10 @@ export default function UserCard(props: UserCardProps) {
             <Show when={props.isOwnProfile}>
                 <div class="w-full flex items-center justify-between gap-2 text-xs font-medium">
                     <span
-                        class={`flex items-center gap-1 ${user().shareStatus ? "text-(--base0B)" : "text-(--base03)"}`}
+                        class={`flex items-center gap-1 ${user().shareOnlineStatus ? "text-(--base0B)" : "text-(--base03)"}`}
                     >
-                        {user().shareStatus ? "Status: Sharing" : "Status: Not sharing"}
-                        {user().shareStatus ? (
+                        {user().shareOnlineStatus ? "Status: Sharing" : "Status: Not sharing"}
+                        {user().shareOnlineStatus ? (
                             <svg width="14" height="14" fill="currentColor">
                                 <circle cx="7" cy="7" r="6" />
                             </svg>
@@ -141,7 +141,7 @@ export default function UserCard(props: UserCardProps) {
                         )}
                     </span>
                     <button class="button-alt px-2 py-1 text-xs" onClick={props.onToggleShareStatus}>
-                        {user().shareStatus ? "Hide" : "Share"}
+                        {user().shareOnlineStatus ? "Hide" : "Share"}
                     </button>
                 </div>
             </Show>
@@ -166,7 +166,12 @@ export default function UserCard(props: UserCardProps) {
                     {user().followingCount} following
                 </span>
             </p>
-            <UserModal open={modalOpen()} onClose={() => setModalOpen(false)} userId={user().id} type={modalType()} />
+            <UserModal
+                open={modalOpen()}
+                onClose={() => setModalOpen(false)}
+                username={user().username}
+                type={modalType()}
+            />
         </div>
     )
 }

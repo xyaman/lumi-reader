@@ -2,7 +2,7 @@ import { formatTime } from "@/lib/utils"
 import { createSignal, For, Show } from "solid-js"
 import { IconCalendar, IconClock, IconLanguage, IconTick, IconTrendingUp } from "@/components/icons"
 
-import { ReadingSession } from "@/types/api"
+import { ReadingSession } from "@/lib/db"
 
 type GroupSession = ReadingSession & {
     internals?: ReadingSession[]
@@ -59,7 +59,7 @@ export function IndividualSessions(props: { grouped?: boolean; session: ReadingS
             <div class="flex flex-col md:flex-row md:items-center md:justify-between">
                 <div>
                     {!props.grouped && <h2 class="mb-2 text-sm truncate">{props.session.bookTitle}</h2>}
-                    <h3>Session on {dateFromTimestamp(props.session.startTime)}</h3>
+                    Session on {dateFromTimestamp(Math.floor(new Date(props.session.startTime).getTime() / 1000))}
                     <div class="flex items-center space-x-4 mt-1">
                         <span class="text-sm text-base04 flex items-center">
                             <IconClock class="mr-1" />

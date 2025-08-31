@@ -188,7 +188,7 @@ function ReadingSessionSidebar() {
         } else {
             // Add time since last update for real-time display
             const now = currentTime()
-            return s.totalReadingTime + (now - s.lastActiveTime)
+            return s.totalReadingTime + (now - s.lastActiveTime.getTime() / 1000)
         }
     }
 
@@ -203,7 +203,7 @@ function ReadingSessionSidebar() {
             await ReadingSessionManager.getInstance().startSession(readerState.book)
         }
 
-        setCurrentTime(session()!.lastActiveTime)
+        setCurrentTime(session()!.lastActiveTime.getTime() / 1000)
     }
 
     const charactersRead = () => {

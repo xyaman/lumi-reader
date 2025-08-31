@@ -7,9 +7,10 @@ import { Sidebar } from "@/components/settings/Sidebar"
 import { ReaderSettings } from "./readerSettings"
 import { SessionSettings } from "./sessionSettings"
 import { ThemeSettings } from "./themeSettings"
+import { AccountSettings } from "./accountSettings"
 import { useIsMobile } from "@/hooks"
 
-type Menu = "theme" | "reader" | "sessions"
+type Menu = "theme" | "reader" | "sessions" | "account"
 
 export function Settings() {
     const params = useParams()
@@ -62,6 +63,9 @@ export function Settings() {
                                 </Match>
                                 <Match when={selectedMenu() === "sessions"}>
                                     <SessionSettings />
+                                </Match>
+                                <Match when={selectedMenu() === "account"}>
+                                    <AccountSettings />
                                 </Match>
                             </Switch>
                         </div>

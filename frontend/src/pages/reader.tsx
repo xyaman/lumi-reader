@@ -9,7 +9,7 @@ import ReaderContent from "@/components/reader/ReaderContent"
 import { LumiDb } from "@/lib/db"
 import { ReaderSource } from "@/lib/readerSource"
 import { CharacterCounter, KeymapManager } from "@/components/reader"
-import { useUserActivity } from "@/hooks"
+import { useUserPresence } from "@/hooks"
 
 /**
  * BookReader component for displaying and managing the reading experience of an EPUB book.
@@ -28,7 +28,7 @@ export function BookReader(): JSX.Element {
     const id = Number(params.id)
 
     const navigate = useNavigate()
-    const userActivity = useUserActivity()
+    const userActivity = useUserPresence()
     if (!id) navigate("/", { replace: true })
 
     // -- signals

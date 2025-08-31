@@ -26,6 +26,11 @@ function getOrTrue(key: string) {
     return item !== null ? item === "true" : true
 }
 
+function getStringOr(key: string, or: string) {
+    const item = localStorage.getItem(key)
+    return item || or
+}
+
 function set(key: string, value: unknown) {
     if (typeof value === "object" && value != null) {
         localStorage.setItem(key, JSON.stringify(value))
@@ -74,8 +79,8 @@ export const lsReadingSessions = {
     autoSync: () => getOrTrue(LS_AUTOSYNC),
     setAutoStart: (value: unknown) => set(LS_AUTOSTART, value),
     setAutoSync: (value: unknown) => set(LS_AUTOSYNC, value),
-    lastSyncTime: () => getNumberOr(LS_LASTSYNC, 0),
-    setLastSyncTime: (value: number) => set(LS_LASTSYNC, value),
+    lastSyncTime: () => getStringOr(LS_LASTSYNC, new Date().toISOString()),
+    setLastSyncTime: (value: string) => set(LS_LASTSYNC, value),
 }
 
 export const lsAuth = {

@@ -5,7 +5,7 @@ import { useAuthState } from "@/context/auth"
 export type ActivityName = string
 export type ActivityType = "reading"
 
-export function useUserActivity() {
+export function useUserPresence() {
     const authState = useAuthState()
 
     async function setPresence(activity: ActivityType, name: ActivityName) {
