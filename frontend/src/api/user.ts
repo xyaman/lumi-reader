@@ -16,9 +16,9 @@ export const userApi = {
         return ApiClient.request<User[]>(`/users/${username}/followers${params}`)
     },
 
-    // async searchUsers(query: string) {
-    //     return ApiClient.request<{ users: User[] }>(`/users/search?q=${encodeURIComponent(query)}`)
-    // },
+    async searchUsers(query: string) {
+        return ApiClient.request<User[]>(`/users?query=${encodeURIComponent(query)}`)
+    },
 
     // Needs auth
     async follow(username: string) {

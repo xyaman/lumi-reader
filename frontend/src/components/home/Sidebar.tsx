@@ -1,12 +1,13 @@
 import { createMemo, createSignal, For, Show } from "solid-js"
 import { A, useLocation } from "@solidjs/router"
-import { IconCalendar, IconHome, IconSettings } from "@/components/icons"
+import { IconCalendar, IconHome, IconSearch, IconSettings } from "@/components/icons"
 import SocialList from "@/components/SocialList"
 import UserAvatar from "@/components/UserAvatar"
 import { useAuthState } from "@/context/auth"
 import { useLibraryDispatch, useLibraryState } from "@/context/library"
 import { ShelfModal } from "./ShelfModal"
 import { Bookshelf } from "@/db"
+import { SocialSearchModal } from "./SocialSearchModal"
 
 export function Sidebar() {
     const location = useLocation()
@@ -21,6 +22,8 @@ export function Sidebar() {
         { href: "/sessions", label: "Sessions", icon: IconCalendar },
         { href: "/settings", label: "Settings", icon: IconSettings },
     ]
+
+    const [showUserSearch, setShowUserSearch] = createSignal(false)
 
     // shelf modal
     const [shelfShowModal, setShowModal] = createSignal(false)
@@ -137,12 +140,22 @@ export function Sidebar() {
                 </div>
 
                 {/* Social */}
-                <div class="p-4">
-                    <h2 class="font-semibold mb-2">Social Activity</h2>
-                    <Show when={authState.status == "authenticated"}>
+                <Show when={authState.status == "authenticated"}>
+                    <div class="p-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <h2 class="font-semibold">Social Activity</h2>
+                            <button
+                                class="p-1 hover:bg-base02 rounded"
+                                onClick={() => setShowUserSearch(true)}
+                                title="Search users"
+                            >
+                                <IconSearch class="w-4 h-4" />
+                            </button>
+                        </div>
                         <SocialList />
-                    </Show>
-                </div>
+                    </div>
+                    <SocialSearchModal show={showUserSearch()} onDismiss={() => setShowUserSearch(false)} />
+                </Show>
             </div>
         </>
     )
