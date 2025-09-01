@@ -11,6 +11,7 @@ import { useAuthState } from "@/context/auth"
 import { Button } from "@/ui"
 import { LumiDb } from "@/db"
 import { deserializeApiReadingSession, readingSessionsApi, serializeApiReadingSession } from "@/api/readingSessions"
+import { FollowModal } from "@/components/users"
 
 type UserDescriptionProps = {
     user: User
@@ -50,6 +51,15 @@ export function Users() {
 
     const [editDescription, setEditDescription] = createSignal<string | null>(null)
     const [isLoading, setIsLoading] = createSignal(false)
+
+    // Follow modal related
+    const [modalOpen, setModalOpen] = createSignal(false)
+    const [modalType, setModalType] = createSignal<"followers" | "following">("followers")
+
+    const openModal = (type: "followers" | "following") => {
+        setModalType(type)
+        setModalOpen(true)
+    }
 
     const [readingStore, setReadingStore] = createStore({
         sessions: [] as ApiReadingSession[],
@@ -248,15 +258,29 @@ export function Users() {
 
                             {/* Stats */}
                             <div class="flex gap-8">
-                                <div>
-                                    <span class="block text-2xl font-bold">{userResource()!.followersCount || 0}</span>
-                                    <span class="text-sm">Followers</span>
-                                </div>
-                                <div>
-                                    <span class="block text-2xl font-bold">{userResource()!.followingCount || 0}</span>
-                                    <span class="text-sm">Following</span>
-                                </div>
+                                <button
+                                    class="text-2xl font-bold cursor-pointer hover:text-base0D transition"
+                                    onClick={() => openModal("followers")}
+                                    aria-label="View followers"
+                                >
+                                    {userResource()!.followersCount || 0}
+                                    <span class="block text-sm">Followers</span>
+                                </button>
+                                <button
+                                    class="text-2xl font-bold cursor-pointer hover:text-base0D transition"
+                                    onClick={() => openModal("following")}
+                                    aria-label="View following"
+                                >
+                                    {userResource()!.followingCount || 0}
+                                    <span class="block text-sm">Following</span>
+                                </button>
                             </div>
+                            <FollowModal
+                                open={modalOpen()}
+                                onDismiss={() => setModalOpen(false)}
+                                username={userResource()!.username}
+                                type={modalType()}
+                            />
                         </div>
                     </div>
                 </section>

@@ -56,6 +56,9 @@ export function SocialSearchModal(props: UserSearchModalProps) {
 
     return (
         <Modal show={props.show} onDismiss={props.onDismiss}>
+            <button class="absolute top-4 right-4 text-xl cursor-pointer" onClick={props.onDismiss} aria-label="Close">
+                ×
+            </button>
             <h2 class="font-semibold mb-4">Search Users</h2>
 
             {/* Search Input */}
