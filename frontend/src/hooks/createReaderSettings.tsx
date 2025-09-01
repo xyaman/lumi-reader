@@ -1,6 +1,17 @@
 import { lsReader } from "@/services/localStorage"
 import { createEffect, createSignal, onCleanup, onMount } from "solid-js"
 
+const initial = {
+    fontSize: Math.max(lsReader.fontSize(), 1),
+    lineHeight: Math.max(lsReader.lineHeight(), 1),
+    verticalPadding: Math.max(lsReader.verticalPadding(), 0),
+    horizontalPadding: Math.max(lsReader.horizontalPadding(), 0),
+    vertical: lsReader.vertical(),
+    paginated: lsReader.paginated(),
+    showFurigana: lsReader.showFurigana(),
+}
+const [settings, setSettings] = createSignal(initial)
+
 /**
  * Creates and manages reader settings, syncing with localStorage and reflecting
  * changes in CSS variables. Saves are automatically updated on the local storage.
@@ -8,18 +19,6 @@ import { createEffect, createSignal, onCleanup, onMount } from "solid-js"
  * @param [autoReflectChanges=true] default true. update the css after any change
  */
 export function createReaderSettings(autoReflectChanges: boolean = false) {
-    const initial = {
-        fontSize: Math.max(lsReader.fontSize(), 1),
-        lineHeight: Math.max(lsReader.lineHeight(), 1),
-        verticalPadding: Math.max(lsReader.verticalPadding(), 0),
-        horizontalPadding: Math.max(lsReader.horizontalPadding(), 0),
-        vertical: lsReader.vertical(),
-        paginated: lsReader.paginated(),
-        showFurigana: lsReader.showFurigana(),
-    }
-
-    const [settings, setSettings] = createSignal(initial)
-
     function setReaderSetting<K extends keyof typeof initial>(key: K, value: (typeof initial)[K]) {
         switch (key) {
             case "fontSize":

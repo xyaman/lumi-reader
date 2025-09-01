@@ -78,11 +78,13 @@ export function ReaderSettings(props: { isEmbedded?: boolean }) {
                 <LabeledSlider
                     label="Vertical Padding (%)"
                     unit="%"
+                    value={settings().verticalPadding}
                     onChange={(v) => setSettings("verticalPadding", v)}
                 />
                 <LabeledSlider
                     label="Horizontal Padding (%)"
                     unit="%"
+                    value={settings().horizontalPadding}
                     onChange={(v) => setSettings("horizontalPadding", v)}
                 />
             </div>
