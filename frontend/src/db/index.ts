@@ -209,7 +209,7 @@ export class LumiDbClass extends Dexie {
         return this.readingSessions.toCollection().primaryKeys() as Promise<number[]>
     }
 
-    async getReadingSessionByDateRange(start: number, end: number, limit = 20, offset = 0) {
+    async getReadingSessionByDateRange(start: Date, end: Date, limit = 20, offset = 0) {
         const sessions = await this.readingSessions
             .filter((s) => s.startTime >= new Date(start) && s.startTime <= new Date(end))
             .toArray()

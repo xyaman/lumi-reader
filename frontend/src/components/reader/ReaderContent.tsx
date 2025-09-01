@@ -24,6 +24,7 @@ export default function ReaderContent() {
 
     let containerRef: HTMLDivElement | undefined
 
+    // TODO: readersettings is not global
     const [readerSettings] = createReaderSettings()
     const isPaginated = () => readerSettings().paginated
     const isVertical = () => readerSettings().vertical

@@ -1,6 +1,6 @@
 import { LumiDb } from "@/db"
 import { formatTime } from "@/lib/utils"
-import { createResource, createSignal, Match, onMount, Show, Switch } from "solid-js"
+import { createEffect, createResource, createSignal, Match, Show, Switch } from "solid-js"
 import { IconArrowPath, IconError, IconTick } from "@/components/icons"
 
 import ReadingSessionManager from "@/services/readingSession"
@@ -22,14 +22,14 @@ export function ReadingSessions() {
             console.error(didChange.error)
             setSyncError(didChange.error.message)
         } else if (didChange.ok) {
-            await refetch()
+            await refetchLocalSessions()
         }
 
         setIsSyncing(false)
     }
 
     // update sessions with the backend
-    onMount(() => syncSessions())
+    createEffect(() => syncSessions())
 
     const totalReadingTime = () => formatTime(sessions()?.reduce((a, b) => a + b.totalReadingTime, 0) || 0)
 
@@ -63,15 +63,11 @@ export function ReadingSessions() {
     const [showCalendar, setShowCalendar] = createSignal(false)
     const [selectedOpt, setSelectedOpt] = createSignal<"today" | "this week" | "range">("today")
 
-    const [sessions, { refetch }] = createResource(dateRange, async () => {
+    const [sessions, { refetch: refetchLocalSessions }] = createResource(dateRange, async () => {
         const range = dateRange()
-        // TODO: Should i return something if its null? what is best UX?
         if (range.from === null) return []
         if (range.to === null) return []
-
-        const start = Math.floor(range.from.getTime() / 1000)
-        const end = Math.floor(range.to.getTime() / 1000)
-        return await LumiDb.getReadingSessionByDateRange(start, end)
+        return await LumiDb.getReadingSessionByDateRange(range.from, range.to)
     })
 
     return (
