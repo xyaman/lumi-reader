@@ -1,7 +1,6 @@
 class V1::UserBooksController < ApplicationController
   def index
     user_books = Current.user.user_books.includes(compressed_data_attachment: :blob)
-    puts "user_books: #{user_books}"
     render_success data: UserBookBlueprint.render_as_json(user_books)
   end
 

@@ -18,10 +18,12 @@ class User < ApplicationRecord
   # validations
   before_validation :set_default_patreon_tier, on: :create
   validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
-  validates :username, presence: true, uniqueness: true, length: { minimum: 5 }
   validates :password, length: { minimum: 8 }, if: :password_digest_changed?
   validates :share_online_status, inclusion: { in: [ true, false ] }
   validates :share_presence, inclusion: { in: [ true, false ] }
+
+  normalizes :username, with: ->(u) { u.strip.downcase }
+  validates :username, presence: true, uniqueness: { case_sensitive: false }, length: { minimum: 5 }
 
   # Users following this user
   has_many :follower_relationships, foreign_key: :followed_id, class_name: "Follow", dependent: :destroy
@@ -30,6 +32,8 @@ class User < ApplicationRecord
   # Users this user is following
   has_many :following_relationships, foreign_key: :follower_id, class_name: "Follow", dependent: :destroy
   has_many :following, through: :following_relationships, source: :followed
+
+  scope :search, ->(query) { where("LOWER(username) LIKE ?", "%#{sanitize_sql_like(query.downcase)}%").limit(10) }
 
   def email_confirmed?
     email_confirmed_at.present?

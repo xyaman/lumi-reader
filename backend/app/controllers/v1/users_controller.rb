@@ -1,5 +1,12 @@
 class V1::UsersController < ApplicationController
-  allow_unauthenticated_access only: %i[ show following followers recent_reading_sessions ]
+  allow_unauthenticated_access only: %i[ index show following followers recent_reading_sessions ]
+
+  def index
+    return render_error errors: "`query` parameter is not present" unless params[:query]
+
+    users = User.search(params[:query]) || []
+    render_success data: UserBlueprint.render_as_json(users, view: :show)
+  end
 
   def show
     user = User.find_by(username: params[:username])

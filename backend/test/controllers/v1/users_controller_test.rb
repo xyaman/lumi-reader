@@ -65,6 +65,15 @@ class V1::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "should search user" do
+    user = users(:xyaman)
+    # get v1_user_url(username: user.username)
+    get v1_users_url(query: "xya")
+    assert_response :success
+    json = JSON.parse(@response.body)
+    assert_equal user.username, json["data"][0]["username"]
+  end
+
   test "should show user" do
     user = users(:xyaman)
     get v1_user_url(username: user.username)

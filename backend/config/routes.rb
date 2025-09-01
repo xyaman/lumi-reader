@@ -29,7 +29,7 @@ Rails.application.routes.draw do
       post :patreon, to: "patreon_webhooks#create"
     end
 
-    resources :users, only: [ :show ], param: :username do
+    resources :users, only: [ :index, :show ], param: :username do
       member do
         get :followers
         get :following
