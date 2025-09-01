@@ -1,7 +1,7 @@
 import { createEffect, createSignal, Show } from "solid-js"
 import { useLibraryDispatch } from "@/context/library"
 import Modal from "@/components/Modal"
-import { Bookshelf } from "@/lib/db"
+import { Bookshelf } from "@/db"
 import { Button } from "@/ui"
 
 type Props = {

@@ -1,7 +1,8 @@
-import { LumiDb, ReaderSourceLightRecord } from "@/lib/db"
+import { LumiDb, ReaderSourceLightRecord } from "@/db"
 import { EpubBook } from "@/lib/epub"
-import { batch, createContext, createEffect, JSX, onCleanup, onMount, useContext } from "solid-js"
-import { createStore } from "solid-js/store"
+import { liveQuery } from "dexie"
+import { batch, createContext, JSX, onCleanup, onMount, useContext } from "solid-js"
+import { createStore, reconcile } from "solid-js/store"
 
 type SortField = "byLastUpdate" | "byCreationDate"
 type SortDirection = "asc" | "desc"
@@ -24,7 +25,6 @@ type LibraryDispatch = {
     // books related
     createBook: (files: File[]) => Promise<void>
     deleteBook: (localId: number) => Promise<void>
-    refreshLibrary: () => Promise<void>
 
     // shelf related
     createShelf: (name: string) => Promise<void>
@@ -50,83 +50,92 @@ export default function LibraryProvider(props: { children: JSX.Element }) {
         dir: "desc",
     })
 
-    // Load and sort books on mount
-    onMount(async () => {
-        await refreshLibrary()
-    })
+    // Memoized displayed books: automatically filters and sorts.
+    // Components just use this and never have to worry about sorting/filtering logic.
+    // const displayedBooks = createMemo(() => {
+    //     const shelf = store.activeShelfId ? store.shelves.find((s) => s.id === store.activeShelfId) : null
+    //
+    //     const books = shelf ? store.books.filter((book) => shelf.bookIds.includes(book.localId)) : [...store.books] // Use a copy to avoid mutating the original store
+    //
+    //     return books.sort((a, b) => {
+    //         const dateA = new Date(store.sort === "byCreationDate" ? a.createdAt : a.updatedAt).getTime()
+    //         const dateB = new Date(store.sort === "byCreationDate" ? b.createdAt : b.updatedAt).getTime()
+    //         return store.dir === "asc" ? dateA - dateB : dateB - dateA
+    //     })
+    // })
 
-    // Handle cover images and remove URL blobs on cleanup
-    createEffect(() => {
+    // TODO: only generate the url of covers that changed
+    const generateAndSetCoverUrls = () => {
+        Object.values(store.coverUrls).forEach(URL.revokeObjectURL)
+
         const coverMap: Record<number, string> = {}
-        const urls: string[] = []
-
         store.books.forEach((book) => {
             if (book.coverImage) {
                 const url = URL.createObjectURL(book.coverImage.blob)
                 coverMap[book.localId] = url
-                urls.push(url)
             }
         })
-
         setStore("coverUrls", coverMap)
-        onCleanup(() => urls.forEach(URL.revokeObjectURL))
+    }
+
+    // Load and sort books on mount
+    onMount(() => {
+        // -- Dexie reactive data
+        const booksSub = liveQuery(() => LumiDb.getAllLightBooks()).subscribe((books) => {
+            setStore("books", reconcile(books || []))
+            generateAndSetCoverUrls()
+        })
+
+        const shelvesSub = liveQuery(() => LumiDb.getAllBookshelves()).subscribe((shelves) =>
+            setStore("shelves", reconcile(shelves || [])),
+        )
+
+        // -- bfcache restores (handle invalid cover blobs)
+        const handlePageShow = (event: PageTransitionEvent) => {
+            if (event.persisted) generateAndSetCoverUrls()
+        }
+        window.addEventListener("pageshow", handlePageShow)
+
+        onCleanup(() => {
+            booksSub.unsubscribe()
+            shelvesSub.unsubscribe()
+            window.removeEventListener("pageshow", handlePageShow)
+            Object.values(store.coverUrls).forEach(URL.revokeObjectURL)
+        })
     })
 
     const createBook = async (files: File[]) => {
-        const newBooks: ReaderSourceLightRecord[] = []
-
         for (const file of files) {
             if (!file.type.includes("epub") && !file.name.endsWith(".epub")) continue
-
-            // TODO: this also creates the image blob.. check??
+            // TODO: find a better way and that doesnt need to call deinit
             const book = await EpubBook.fromFile(file)
             book.deinit()
-            if (!book.localId) continue
-
-            const light = await LumiDb.getLightBookById(book.localId)
-            if (light) {
-                newBooks.push(light)
-            }
-        }
-
-        if (newBooks.length > 0) {
-            setStore("books", (prev) => [...prev, ...newBooks])
         }
     }
 
     const deleteBook = async (localId: number) => {
         await LumiDb.deleteBookById(localId)
-        setStore("books", (prev) => prev.filter((book) => book.localId !== localId))
-    }
-
-    const refreshLibrary = async () => {
-        const [books, shelves] = await Promise.all([LumiDb.getAllLightBooks(), LumiDb.getAllBookshelves()])
-        setStore("books", books)
-        setStore("shelves", shelves)
     }
 
     // Creates a new shelf
     // Updates both the local store and persists the changes to the database.
     const createShelf = async (name: string) => {
-        const shelf = await LumiDb.createBookShelf(name)
-        setStore("shelves", (shelves) => [...shelves, shelf])
+        await LumiDb.createBookShelf(name)
     }
 
     // Deletes an existing shelf
     // Updates both the local store and persists the changes to the database.
     const deleteShelf = async (shelfId: number) => {
         await LumiDb.deleteBookshelfById(shelfId)
-        setStore("shelves", (shelves) => shelves.filter((s) => s.id !== shelfId))
     }
 
     // Renames a shelf
     // Updates both the local store and persists the changes to the database.
     const renameShelf = async (shelfId: number, name: string) => {
-        const shelfIndex = store.shelves.findIndex((s) => s.id === shelfId)
-        if (shelfIndex === -1) return
-
-        await LumiDb.updateBookshelf({ id: shelfId, name, bookIds: Array.from(store.shelves[shelfIndex].bookIds) })
-        setStore("shelves", shelfIndex, "name", name)
+        const shelf = store.shelves.find((s) => s.id === shelfId)
+        if (shelf) {
+            await LumiDb.updateBookshelf({ ...shelf, name })
+        }
     }
 
     // Toggles the presence of a book in a specific shelf.
@@ -135,16 +144,7 @@ export default function LibraryProvider(props: { children: JSX.Element }) {
         const shelf = store.shelves.find((s) => s.id === shelfId)
         if (!shelf) return
 
-        const exists = shelf.bookIds.includes(bookId)
-
-        setStore(
-            "shelves",
-            (s) => s.id === shelfId,
-            "bookIds",
-            (ids) => (exists ? ids.filter((id) => id !== bookId) : [...ids, bookId]),
-        )
-
-        if (exists) {
+        if (shelf.bookIds.includes(bookId)) {
             await LumiDb.removeBookFromShelf(shelfId, bookId)
         } else {
             await LumiDb.addBookToShelf(shelfId, bookId)
@@ -170,7 +170,6 @@ export default function LibraryProvider(props: { children: JSX.Element }) {
                 value={{
                     createBook,
                     deleteBook,
-                    refreshLibrary,
                     createShelf,
                     deleteShelf,
                     renameShelf,

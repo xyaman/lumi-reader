@@ -10,6 +10,7 @@
         "@rails/actioncable": "^8.0.200",
         "@solidjs/router": "^0.15.3",
         "@types/rails__actioncable": "^6.1.11",
+        "dexie": "^4.2.0",
         "fast-xml-parser": "^5.2.2",
         "htmlparser2": "^10.0.0",
         "idb": "^8.0.2",
@@ -614,6 +615,8 @@
     "dequal": ["dequal@2.0.3", "", {}, "sha512-0je+qPKHEMohvfRTCEo3CrPG6cAzAYgmzKyxRiYSSDkS6eGJdyVJm7WaYA5ECaAD9wLB2T4EEeymA5aFVcYXCA=="],
 
     "detect-libc": ["detect-libc@2.0.4", "", {}, "sha512-3UDv+G9CsCKO1WKMGw9fwq/SWJYbI0c5Y7LU1AXYoDdbhE2AHQ6N6Nb34sG8Fj7T5APy8qXDCKuuIHd1BR0tVA=="],
+
+    "dexie": ["dexie@4.2.0", "", {}, "sha512-OSeyyWOUetDy9oFWeddJgi83OnRA3hSFh3RrbltmPgqHszE9f24eUCVLI4mPg0ifsWk0lQTdnS+jyGNrPMvhDA=="],
 
     "dom-accessibility-api": ["dom-accessibility-api@0.5.16", "", {}, "sha512-X7BJ2yElsnOJ30pZF4uIIDfBEVgF4XEBxL9Bxhy6dnrm5hkzqmsWHGTiHqRiITNhMyFLyAiWndIJP7Z1NTteDg=="],
 

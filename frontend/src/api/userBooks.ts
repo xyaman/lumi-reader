@@ -1,5 +1,5 @@
 import { ApiClient } from "@/lib/apiClient"
-import { ReaderSourceData } from "@/lib/db"
+import { ReaderSourceData } from "@/db"
 import { AsyncResult, ok } from "@/lib/result"
 import { camelToSnake } from "@/lib/utils"
 import { deflate, inflate } from "pako"

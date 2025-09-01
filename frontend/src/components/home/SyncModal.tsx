@@ -1,14 +1,11 @@
 import { createEffect, createResource, createSignal, For } from "solid-js"
-import { LumiDb, ReaderSourceData, ReaderSourceLightRecord, ReaderSourceRecord } from "@/lib/db"
+import { LumiDb, ReaderSourceData, ReaderSourceLightRecord, ReaderSourceRecord } from "@/db"
 import { syncedBooksApi } from "@/api/userBooks"
 import Modal from "@/components/Modal"
 import Checkbox from "@/ui/checkbox"
-import { useLibraryDispatch } from "@/context/library"
 
 export function SyncModal(props: { show: boolean; onDismiss?: () => void; books: ReaderSourceLightRecord[] }) {
     const [selectedBooks, setSelectedBooks] = createSignal<Set<string>>(new Set())
-
-    const libraryDispatch = useLibraryDispatch()
 
     const toggleSelected = (id: string) => {
         setSelectedBooks((prev) => {
@@ -60,8 +57,6 @@ export function SyncModal(props: { show: boolean; onDismiss?: () => void; books:
                 false,
             )
         }
-
-        await libraryDispatch.refreshLibrary()
     }
 
     const onSyncHandler = async () => {
@@ -132,8 +127,6 @@ export function SyncModal(props: { show: boolean; onDismiss?: () => void; books:
                 }
             }),
         )
-
-        await libraryDispatch.refreshLibrary()
         props.onDismiss?.()
     }
 

@@ -1,4 +1,4 @@
-import { useLocation, useNavigate, useParams } from "@solidjs/router"
+import { A, useLocation, useNavigate, useParams } from "@solidjs/router"
 import { createEffect, createResource, createSignal, For, Match, on, onCleanup, onMount, Show, Switch } from "solid-js"
 
 import UserAvatar from "@/components/UserAvatar"
@@ -9,7 +9,7 @@ import { createStore } from "solid-js/store"
 import Spinner from "@/components/Spinner"
 import { useAuthState } from "@/context/auth"
 import { Button } from "@/ui"
-import { LumiDb } from "@/lib/db"
+import { LumiDb } from "@/db"
 import { deserializeApiReadingSession, readingSessionsApi, serializeApiReadingSession } from "@/api/readingSessions"
 
 type UserDescriptionProps = {
@@ -75,7 +75,8 @@ export function Users() {
     // Go to login page if there is no param and the user is not logged in
     // Otherwise user not found?
     createEffect(() => {
-        if (authState.status !== "loading" && !authState.user) {
+        console.log(authState.status)
+        if (isOwnProfile() && authState.status === "unauthenticated") {
             return navigate("/login", { replace: true })
         }
     })
@@ -212,34 +213,29 @@ export function Users() {
                             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 md:mb-0">
                                 <h1 class="text-3xl font-bold">{userResource()!.username}</h1>
 
-                                <Switch>
-                                    <Match when={editDescription() !== null}>
-                                        <div class="flex gap-2">
-                                            <Button
-                                                classList={{ "text-center": true }}
-                                                onClick={() => setEditDescription(null)}
-                                            >
-                                                Cancel
+                                <div class="flex gap-2">
+                                    <Switch>
+                                        <Match when={editDescription() !== null}>
+                                            <Button onClick={() => setEditDescription(null)}>Cancel</Button>
+                                            <Button onClick={handleSaveDescription}>Save</Button>
+                                        </Match>
+
+                                        <Match when={authState.user && isOwnProfile()}>
+                                            <>
+                                                <Button onClick={() => setEditDescription("")}>Edit description</Button>
+                                                <A href="/settings">
+                                                    <Button>Settings</Button>
+                                                </A>
+                                            </>
+                                        </Match>
+
+                                        <Match when={authState.user && !isOwnProfile()}>
+                                            <Button onClick={handleFollow}>
+                                                {userResource()!.following ? "Unfollow" : "Follow"}
                                             </Button>
-                                            <Button classList={{ "text-center": true }} onClick={handleSaveDescription}>
-                                                Save
-                                            </Button>
-                                        </div>
-                                    </Match>
-                                    <Match when={authState.user && isOwnProfile()}>
-                                        <Button
-                                            classList={{ "text-center": true }}
-                                            onClick={() => setEditDescription("")}
-                                        >
-                                            Edit description
-                                        </Button>
-                                    </Match>
-                                    <Match when={authState.user && !isOwnProfile()}>
-                                        <Button classList={{ "text-center": true }} onClick={handleFollow}>
-                                            {userResource()!.following ? "Unfollow" : "Follow"}
-                                        </Button>
-                                    </Match>
-                                </Switch>
+                                        </Match>
+                                    </Switch>
+                                </div>
                             </div>
 
                             {/* Description */}

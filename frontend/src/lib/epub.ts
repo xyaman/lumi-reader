@@ -3,7 +3,7 @@ import { Bookmark, SourceImage, NavigationItem, ReaderSource, Section } from "./
 import { XMLParser } from "fast-xml-parser"
 import { Parser } from "htmlparser2"
 import { assert, parseCss } from "./utils"
-import { LumiDb, ReaderSourceRecord } from "./db"
+import { LumiDb, ReaderSourceRecord } from "../db"
 
 interface IEpubMetadata {
     identifier: string

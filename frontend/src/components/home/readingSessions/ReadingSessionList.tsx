@@ -2,7 +2,7 @@ import { formatTime } from "@/lib/utils"
 import { createSignal, For, Show } from "solid-js"
 import { IconCalendar, IconClock, IconLanguage, IconTick, IconTrendingUp } from "@/components/icons"
 
-import { ReadingSession } from "@/lib/db"
+import { ReadingSession } from "@/db"
 
 type GroupSession = ReadingSession & {
     internals?: ReadingSession[]

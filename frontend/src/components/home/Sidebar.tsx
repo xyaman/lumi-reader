@@ -6,7 +6,7 @@ import UserAvatar from "@/components/UserAvatar"
 import { useAuthState } from "@/context/auth"
 import { useLibraryDispatch, useLibraryState } from "@/context/library"
 import { ShelfModal } from "./ShelfModal"
-import { Bookshelf } from "@/lib/db"
+import { Bookshelf } from "@/db"
 
 export function Sidebar() {
     const location = useLocation()

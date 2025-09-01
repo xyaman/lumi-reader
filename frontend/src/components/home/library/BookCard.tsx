@@ -1,4 +1,4 @@
-import { ReaderSourceLightRecord } from "@/lib/db"
+import { ReaderSourceLightRecord } from "@/db"
 import { A } from "@solidjs/router"
 import { createEffect, createSignal, For, Show } from "solid-js"
 import { IconFolderOpen, IconTrash } from "@/components/icons"

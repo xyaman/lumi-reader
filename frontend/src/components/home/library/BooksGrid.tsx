@@ -1,5 +1,5 @@
 import { createMemo, createSignal, For, onCleanup, onMount } from "solid-js"
-import { ReaderSourceLightRecord } from "@/lib/db"
+import { ReaderSourceLightRecord } from "@/db"
 import { isTouchDevice } from "@/lib/utils"
 import { useLibraryState } from "@/context/library"
 import { BookCard, BookshelfModal } from "@/components/home/library"

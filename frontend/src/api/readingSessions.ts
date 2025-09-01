@@ -1,7 +1,7 @@
 import { ApiClient } from "@/lib/apiClient"
 import { camelToSnake } from "@/lib/utils"
 import { type ApiReadingSession } from "@/types/api"
-import { type ReadingSession } from "@/lib/db"
+import { type ReadingSession } from "@/db"
 
 // -- helpers
 export function serializeApiReadingSession(session: ReadingSession): ApiReadingSession {

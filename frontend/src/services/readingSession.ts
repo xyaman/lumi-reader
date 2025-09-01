@@ -1,4 +1,4 @@
-import { LumiDb, ReadingSession } from "@/lib/db"
+import { LumiDb, ReadingSession } from "@/db"
 import { createSignal } from "solid-js"
 import { lsReadingSessions } from "./localStorage"
 import { deserializeApiReadingSession, readingSessionsApi } from "@/api/readingSessions"

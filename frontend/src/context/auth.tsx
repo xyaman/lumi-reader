@@ -28,7 +28,10 @@ export default function AuthProvider(props: { children: JSX.Element }) {
 
     onMount(async () => {
         const cachedUser = lsAuth.currentUser()
-        if (!cachedUser) return
+        if (!cachedUser) {
+            setStore("status", "unauthenticated")
+            return
+        }
 
         const res = await authApi.getCurrentUser()
 

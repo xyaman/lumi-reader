@@ -1,4 +1,4 @@
-import { LumiDb } from "@/lib/db"
+import { LumiDb } from "@/db"
 import { formatTime } from "@/lib/utils"
 import { createResource, createSignal, Match, onMount, Show, Switch } from "solid-js"
 import { IconArrowPath, IconError, IconTick } from "@/components/icons"
