@@ -46,7 +46,7 @@ export function Users() {
         return params.username as string
     }
 
-    const isOwnProfile = () => location.pathname === "/me"
+    const isOwnProfile = () => location.pathname === "/me" || params.username === authState.user?.username
 
     const [editDescription, setEditDescription] = createSignal<string | null>(null)
     const [isLoading, setIsLoading] = createSignal(false)
