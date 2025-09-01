@@ -1,7 +1,7 @@
 import { LumiDb, ReaderSourceLightRecord } from "@/db"
 import { EpubBook } from "@/lib/epub"
 import { liveQuery } from "dexie"
-import { batch, createContext, JSX, onCleanup, onMount, useContext } from "solid-js"
+import { batch, createContext, createEffect, JSX, onCleanup, onMount, useContext } from "solid-js"
 import { createStore, reconcile } from "solid-js/store"
 
 type SortField = "byLastUpdate" | "byCreationDate"
@@ -12,6 +12,7 @@ type Shelf = { id: number; name: string; bookIds: number[] }
 
 type LibraryState = {
     books: ReaderSourceLightRecord[]
+    displayedBooks: ReaderSourceLightRecord[]
     shelves: Shelf[]
     activeShelf: number | null
 
@@ -43,6 +44,7 @@ const LibraryDispatchContext = createContext<LibraryDispatch>()
 export default function LibraryProvider(props: { children: JSX.Element }) {
     const [store, setStore] = createStore<LibraryState>({
         books: [],
+        displayedBooks: [],
         shelves: [],
         activeShelf: null,
         coverUrls: {},
@@ -52,17 +54,18 @@ export default function LibraryProvider(props: { children: JSX.Element }) {
 
     // Memoized displayed books: automatically filters and sorts.
     // Components just use this and never have to worry about sorting/filtering logic.
-    // const displayedBooks = createMemo(() => {
-    //     const shelf = store.activeShelfId ? store.shelves.find((s) => s.id === store.activeShelfId) : null
-    //
-    //     const books = shelf ? store.books.filter((book) => shelf.bookIds.includes(book.localId)) : [...store.books] // Use a copy to avoid mutating the original store
-    //
-    //     return books.sort((a, b) => {
-    //         const dateA = new Date(store.sort === "byCreationDate" ? a.createdAt : a.updatedAt).getTime()
-    //         const dateB = new Date(store.sort === "byCreationDate" ? b.createdAt : b.updatedAt).getTime()
-    //         return store.dir === "asc" ? dateA - dateB : dateB - dateA
-    //     })
-    // })
+    createEffect(() => {
+        const shelf = store.activeShelf ? store.shelves.find((s) => s.id === store.activeShelf) : null
+        const books = shelf ? store.books.filter((book) => shelf.bookIds.includes(book.localId)) : [...store.books] // Use a copy to avoid mutating the original store
+        setStore(
+            "displayedBooks",
+            books.sort((a, b) => {
+                const dateA = new Date(store.sort === "byCreationDate" ? a.createdAt : a.updatedAt).getTime()
+                const dateB = new Date(store.sort === "byCreationDate" ? b.createdAt : b.updatedAt).getTime()
+                return store.dir === "asc" ? dateA - dateB : dateB - dateA
+            }),
+        )
+    })
 
     // TODO: only generate the url of covers that changed
     const generateAndSetCoverUrls = () => {

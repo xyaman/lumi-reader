@@ -1,4 +1,4 @@
-import { createMemo, createSignal, For, onCleanup, onMount } from "solid-js"
+import { createSignal, For, onCleanup, onMount } from "solid-js"
 import { ReaderSourceLightRecord } from "@/db"
 import { isTouchDevice } from "@/lib/utils"
 import { useLibraryState } from "@/context/library"
@@ -39,17 +39,9 @@ export function BooksGrid() {
         }
     }
 
-    // Filter books by active shelf if set.
-    const visibleBooks = createMemo(() => {
-        if (!libraryState.activeShelf) return libraryState.books
-        return libraryState.books.filter((book) =>
-            libraryState.shelves.find((shelf) => shelf.id === libraryState.activeShelf)?.bookIds.includes(book.localId),
-        )
-    })
-
     return (
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-            <For each={visibleBooks()}>
+            <For each={libraryState.displayedBooks}>
                 {(book) => (
                     <BookCard
                         book={book}
