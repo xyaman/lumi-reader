@@ -22,7 +22,7 @@ export const userApi = {
 
     // Needs auth
     async follow(username: string) {
-        return ApiClient.request(`/users/${username}/follows`, { method: "PUT" })
+        return ApiClient.request(`/users/${username}/follow`, { method: "PUT" })
     },
 
     // Needs auth
