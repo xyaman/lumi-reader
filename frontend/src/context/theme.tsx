@@ -25,6 +25,16 @@ export function ThemeProvider(props: { children: JSX.Element }) {
         customThemes: getCustomThemes(),
     })
 
+    const selectTheme = (scheme: string) => {
+        setGlobalTheme(scheme)
+        setStore("selectedTheme", scheme)
+    }
+
+    function updateThemes(updatedCustom: ITheme[]) {
+        setStore("customThemes", updatedCustom)
+        setStore("allThemes", [...defaultThemes, ...updatedCustom])
+    }
+
     function saveTheme(theme: ITheme, oldName?: string) {
         let updated = getCustomThemes()
         if (oldName) {
@@ -33,35 +43,31 @@ export function ThemeProvider(props: { children: JSX.Element }) {
             updated = [...updated, theme]
         }
         saveCustomThemes(updated)
-        setStore("customThemes", updated)
+        updateThemes(updated)
     }
 
     const deleteTheme = (scheme: string) => {
         const updated = store.customThemes.filter((t) => t.scheme !== scheme)
         saveCustomThemes(updated)
-        setStore("customThemes", updated)
+        updateThemes(updated)
         if (scheme === store.selectedTheme) {
             selectTheme(defaultThemes[1].scheme)
         }
     }
 
-    const selectTheme = (scheme: string) => {
-        setGlobalTheme(scheme)
-        setStore("selectedTheme", scheme)
-    }
-
     const duplicateTheme = (theme: ITheme) => {
         const existing = getCustomThemes()
         let name = `${theme.scheme} (copy)`
+        const author = "unknown"
         let count = 2
         while (existing.some((t) => t.scheme === name)) {
             name = `${theme.scheme} (copy ${count})`
             count++
         }
-        const newTheme = { ...theme, scheme: name }
+        const newTheme = { ...theme, scheme: name, author: author }
         const updated = [...existing, newTheme]
         saveCustomThemes(updated)
-        setStore("customThemes", updated)
+        updateThemes(updated)
     }
 
     return (

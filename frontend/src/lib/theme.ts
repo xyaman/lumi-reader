@@ -62,7 +62,7 @@ export const defaultThemes: ITheme[] = [
     },
     {
         scheme: "Catppuccin Macchiato",
-        author: "https://github.com/catppuccin/catppuccin",
+        author: "lumireader",
         base00: "#24273a",
         base01: "#1e2030",
         base02: "#363a4f",
