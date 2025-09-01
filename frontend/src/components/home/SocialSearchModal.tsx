@@ -1,5 +1,5 @@
 // components/UserSearchModal.tsx
-import { createResource, createSignal, For, onCleanup, Show } from "solid-js"
+import { createEffect, createResource, createSignal, For, onCleanup, Show } from "solid-js"
 import { userApi } from "@/api/user"
 import Modal from "@/components/Modal"
 import UserAvatar from "@/components/UserAvatar"
@@ -38,6 +38,13 @@ export function SocialSearchModal(props: UserSearchModalProps) {
         }
     }
 
+    let inputRef: HTMLInputElement | undefined
+    createEffect(() => {
+        if (props.show && inputRef) {
+            inputRef.focus()
+        }
+    })
+
     onCleanup(() => {
         if (timer) clearTimeout(timer)
     })
@@ -54,6 +61,7 @@ export function SocialSearchModal(props: UserSearchModalProps) {
             {/* Search Input */}
             <div class="relative mb-4">
                 <input
+                    ref={inputRef}
                     class="w-full p-3 pl-10 border border-base02 rounded-lg bg-base00 text-base05"
                     placeholder="Search users..."
                     value={query()}
