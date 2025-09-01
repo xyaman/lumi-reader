@@ -16,7 +16,7 @@ type UserListProps = {
 export default function UserList(props: UserListProps) {
     return (
         <div class="max-w-md mx-auto">
-            <Show when={props.users.length > 0} fallback={<p class="text-center text-gray-500">No users found.</p>}>
+            <Show when={props.users.length > 0}>
                 <For each={props.users}>
                     {(user) => (
                         <div
