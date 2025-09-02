@@ -1,8 +1,8 @@
 import { ApiClient } from "@/lib/apiClient"
 import { ReaderSourceData } from "@/db"
-import { AsyncResult, ok } from "@/lib/result"
+import { AsyncResult, err, ok } from "@/lib/result"
 import { camelToSnake } from "@/lib/utils"
-import { deflate, inflate } from "pako"
+import StreamingCompressor from "@/lib/compressor"
 
 export type ApiUserBook = {
     kind: string
@@ -37,46 +37,36 @@ export const syncedBooksApi = {
         })
     },
 
-    async uploadData(uniqueId: string, data: ReaderSourceData) {
-        const imagesWithBase64 = await Promise.all(
-            data.images.map(async (img) => {
-                const base64 = await blobToBase64(img.blob)
-                return { ...img, data: base64 }
-            }),
-        )
+    async uploadData(uniqueId: string, data: ReaderSourceData): AsyncResult<any, Error> {
+        try {
+            const compressedBlob = await StreamingCompressor.compressData(data)
 
-        const dataToCompress = {
-            ...data,
-            images: imagesWithBase64,
+            const formData = new FormData()
+            formData.append("compressed_data", compressedBlob)
+            const response = await ApiClient.request<any>(`/user_books/${uniqueId}/upload_data`, {
+                method: "POST",
+                body: formData,
+            })
+
+            if (response.error) return response
+            return ok(response.ok.data)
+        } catch (error) {
+            return err(error instanceof Error ? error : new Error("Upload failed"))
         }
-
-        const compressedData = deflate(JSON.stringify(dataToCompress))
-        const formData = new FormData()
-        formData.append("compressed_data", new Blob([compressedData]))
-        return ApiClient.request<{ url: string }>(`/user_books/${uniqueId}/upload_data`, {
-            method: "POST",
-            body: formData,
-        })
     },
 
     async fetchData(compressedDataUrl: string): AsyncResult<ReaderSourceData, Error> {
-        const res = await ApiClient.rawRequest(compressedDataUrl)
-        if (res.error) return res
+        try {
+            const response = await ApiClient.rawRequest(compressedDataUrl)
+            if (response.error) return response
 
-        const arrayBuffer = await res.ok.arrayBuffer()
-        const decompressedJson = inflate(new Uint8Array(arrayBuffer), { to: "string" })
-        const data = JSON.parse(decompressedJson) as ReaderSourceData
+            const compressedBlob = await response.ok.blob()
+            const decompressedData = await StreamingCompressor.decompressData<ReaderSourceData>(compressedBlob)
 
-        const imagesWithBlobs = data.images.map((img) => ({
-            ...img,
-            // @ts-ignore
-            blob: base64ToBlob(img.data, "image/jpg"),
-        }))
-
-        return ok({
-            ...data,
-            images: imagesWithBlobs,
-        } as ReaderSourceData)
+            return ok(decompressedData)
+        } catch (error) {
+            return err(error instanceof Error ? error : new Error("Failed to fetch or decompress data"))
+        }
     },
 
     async delete(uniqueId: string) {
@@ -84,19 +74,4 @@ export const syncedBooksApi = {
             method: "DELETE",
         })
     },
-}
-
-async function blobToBase64(blob: Blob): Promise<string> {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onloadend = () => resolve(reader.result as string)
-        reader.onerror = reject
-        reader.readAsDataURL(blob)
-    })
-}
-
-function base64ToBlob(base64: string, mime: string): Blob {
-    const byteString = atob(base64.split(",")[1])
-    const byteArray = Uint8Array.from(byteString, (c) => c.charCodeAt(0))
-    return new Blob([byteArray], { type: mime })
 }
