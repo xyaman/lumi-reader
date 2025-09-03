@@ -39,7 +39,7 @@ export interface User {
     shareOnlineStatus: boolean
     sharePresence: boolean
     // present if the user is logged in
-    following?: boolean
+    isFollowing?: boolean
 
     presence?: Presence
 }

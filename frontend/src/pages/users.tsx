@@ -174,14 +174,14 @@ export function Users() {
     // -- buttons handlers
     const handleFollow = async () => {
         let res
-        const following = !userResource()!.following
-        if (userResource()!.following) {
+        const isFollowing = !userResource()!.isFollowing
+        if (userResource()!.isFollowing) {
             res = await userApi.unfollow(username()!)
         } else {
             res = await userApi.follow(username()!)
         }
         if (res.error) throw res.error
-        mutateUser({ ...userResource()!, following })
+        mutateUser({ ...userResource()!, isFollowing })
     }
 
     const handleSaveDescription = async () => {
@@ -241,7 +241,7 @@ export function Users() {
 
                                         <Match when={authState.user && !isOwnProfile()}>
                                             <Button onClick={handleFollow}>
-                                                {userResource()!.following ? "Unfollow" : "Follow"}
+                                                {userResource()!.isFollowing ? "Unfollow" : "Follow"}
                                             </Button>
                                         </Match>
                                     </Switch>
