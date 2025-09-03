@@ -30,7 +30,7 @@ export function ReaderSettings(props: { isEmbedded?: boolean }) {
                 </div>
 
                 <div class="space-y-2">
-                    <label class="block">Font Size (px)</label>
+                    <label class="block">Line Height</label>
                     <div class="relative">
                         <Input
                             type="number"
@@ -39,7 +39,7 @@ export function ReaderSettings(props: { isEmbedded?: boolean }) {
                             value={settings().lineHeight}
                             onChange={(e) => setSettings("lineHeight", Number(e.target.value))}
                         />
-                        <span class="absolute right-3 top-2">px</span>
+                        <span class="absolute right-3 top-2">units</span>
                     </div>
                 </div>
             </div>
