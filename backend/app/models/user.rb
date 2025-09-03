@@ -77,7 +77,7 @@ class User < ApplicationRecord
     presence[:status] = "online"
     presence[:last_update] = Time.current.to_i
     Rails.cache.write(presence_cache_key, presence, expires_in: 48.hours)
-    broadcast_presence
+    broadcast_presence(presence)
   end
 
   def set_offline!
@@ -86,7 +86,7 @@ class User < ApplicationRecord
       presence[:status] = "offline"
       presence[:last_update] = Time.current.to_i
       Rails.cache.write(presence_cache_key, presence, expires_in: 48.hours)
-      broadcast_presence
+      broadcast_presence(presence)
     end
   end
 
@@ -100,7 +100,7 @@ class User < ApplicationRecord
       if Time.current - last_update_time > 5.minutes
         cached_presence[:status] = "offline"
         Rails.cache.write(presence_cache_key, cached_presence, expires_in: 48.hours)
-        broadcast_presence
+        broadcast_presence(cached_presence)
       end
     end
 
@@ -118,17 +118,17 @@ class User < ApplicationRecord
     presence[:activity_name] = name
 
     Rails.cache.write(presence_cache_key, presence, expires_in: 48.hours)
-    broadcast_presence
+    broadcast_presence(presence)
   end
 
   private
 
-  def broadcast_presence
+  def broadcast_presence(new_presence)
     return unless share_online_status
     followers.each do |follower|
       UserPresenceChannel.broadcast_to(follower, {
         user_id: id,
-        presence: presence
+        presence: new_presence
       })
     end
   end
