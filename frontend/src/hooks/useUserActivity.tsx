@@ -9,7 +9,7 @@ export function useUserPresence() {
     const authState = useAuthState()
 
     async function setPresence(activity: ActivityType, name: ActivityName) {
-        if (authState.status !== "unauthenticated" || !navigator.onLine) return
+        if (authState.status !== "authenticated" || !navigator.onLine) return
 
         const res = await userApi.setUserPresence(activity, name)
         if (res.error) {
