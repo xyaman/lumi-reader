@@ -10,7 +10,7 @@ class User < ApplicationRecord
 
   has_one_attached :avatar
 
-  belongs_to :patreon_tier, optional: true
+  belongs_to :patreon_tier, optional: false
 
   # normalization
   normalizes :email, with: ->(e) { e.strip.downcase }
@@ -43,8 +43,14 @@ class User < ApplicationRecord
     update_columns(email_confirmed_at: Time.current)
   end
 
-  def sync_limit
-    3
+  def can_create_book?
+    return true if is_admin?
+    user_books.count < patreon_tier.book_sync_limit
+  end
+
+  def can_update_book?
+    return true if is_admin?
+    user_books.count <= patreon_tier.book_sync_limit
   end
 
   def unlink_patreon!

@@ -1,15 +1,12 @@
-import { createSignal } from "solid-js"
-import { useLibraryDispatch, useLibraryState } from "@/context/library"
+import { useLibraryDispatch } from "@/context/library"
 import { IconCloud, IconUpload } from "@/components/icons"
-import { SyncModal } from "@/components/home/SyncModal"
 import { BooksGrid, SortPopover } from "@/components/home/library"
 import { Button } from "@/ui"
+import { useNavigate } from "@solidjs/router"
 
 export function Library() {
-    const libraryState = useLibraryState()
     const libraryDispatch = useLibraryDispatch()
-
-    const [showModal, setShowModal] = createSignal(false)
+    const navigate = useNavigate()
 
     const handleUpload = async (e: Event) => {
         const files = Array.from((e.target as HTMLInputElement).files || [])
@@ -25,7 +22,7 @@ export function Library() {
                         {/* Sync button */}
                         <Button
                             classList={{ "max-h-[40px] flex items-center": true }}
-                            onClick={() => setShowModal(true)}
+                            onClick={() => navigate("/syncbooks")}
                         >
                             <IconCloud />
                             <span class="ml-2">Sync</span>
@@ -51,11 +48,6 @@ export function Library() {
             </header>
 
             <BooksGrid />
-
-            {/* Server sync
-                TODO: Modal fails to open when there is no connection to the server? Hide when offline?
-            */}
-            <SyncModal show={showModal()} onDismiss={() => setShowModal(false)} books={libraryState.books} />
         </>
     )
 }

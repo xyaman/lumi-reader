@@ -1,5 +1,5 @@
 import { ApiResponse } from "@/types/api"
-import { AsyncResult, err, ok } from "@/lib/result"
+import { AsyncResult, err, ok, Result } from "@/lib/result"
 import { snakeToCamel } from "@/lib/utils"
 
 const API_URL = import.meta.env.PROD ? "https://api.lumireader.app" : "http://localhost:3000"
@@ -82,6 +82,112 @@ export class ApiClient {
         return ok(snakeToCamel(data) as ApiResponse<T>)
     }
 
+    static async requestWithProgress<T>(
+        endpoint: string,
+        options: RequestInit = {},
+        onProgress?: (progress: { type: "upload" | "download"; percent: number }) => void,
+        responseType: "json" | "blob" = "json",
+    ): Promise<Result<ApiResponse<T> | Blob, Error>> {
+        let url
+        if (endpoint.startsWith("http")) {
+            url = endpoint
+        } else {
+            url = `${API_URL}/${API_VERSION}${endpoint}`
+        }
+
+        return new Promise<Result<ApiResponse<T> | Blob, Error>>(async (resolve) => {
+            let csrfToken: string | null = null
+
+            if (!options.method || options.method !== "GET") {
+                try {
+                    csrfToken = await this.getCsrfToken()
+                    if (!csrfToken) {
+                        resolve(err(new ConnectionError("Missing CSRF token")))
+                        return
+                    }
+                } catch (e: any) {
+                    resolve(err(new ConnectionError(e?.message || "Network Error")))
+                    return
+                }
+            }
+
+            const xhr = new XMLHttpRequest()
+            xhr.open(options.method || "GET", url, true)
+            xhr.withCredentials = true
+            xhr.responseType = responseType
+
+            // headers
+            if (csrfToken) xhr.setRequestHeader("X-CSRF-TOKEN", csrfToken)
+            if (!(options.body instanceof FormData)) {
+                xhr.setRequestHeader("Content-Type", "application/json")
+            }
+
+            if (options.headers) {
+                for (const [key, value] of Object.entries(options.headers)) {
+                    xhr.setRequestHeader(key, value as string)
+                }
+            }
+
+            // progress events
+            if (xhr.upload && onProgress) {
+                xhr.upload.onprogress = (event) => {
+                    if (event.lengthComputable) {
+                        const percent = Math.round((event.loaded / event.total) * 100)
+                        onProgress({ type: "upload", percent })
+                    }
+                }
+            }
+
+            if (onProgress) {
+                xhr.onprogress = (event) => {
+                    if (event.lengthComputable) {
+                        const percent = Math.round((event.loaded / event.total) * 100)
+                        onProgress({ type: "download", percent })
+                    }
+                }
+            }
+
+            xhr.onload = () => {
+                if (xhr.status < 200 || xhr.status >= 300) {
+                    resolve(err(new ApiError(xhr.response, xhr.status)))
+                    return
+                }
+
+                if (responseType === "blob") {
+                    resolve(ok(xhr.response as Blob))
+                } else if (responseType === "json") {
+                    let data: any = xhr.response
+                    if (!data) {
+                        // Fallback for browsers that don't parse JSON automatically
+                        // brave idk?
+                        try {
+                            data = JSON.parse(xhr.responseText)
+                        } catch {
+                            resolve(err(new ApiError({ errors: ["Invalid JSON response"] } as ApiResponse, xhr.status)))
+                            return
+                        }
+                    }
+                    resolve(ok(snakeToCamel(data) as ApiResponse<T>))
+                } else {
+                    let data: any
+                    try {
+                        data = JSON.parse(xhr.responseText)
+                    } catch {
+                        resolve(err(new ApiError({ errors: ["Invalid JSON response"] } as ApiResponse, xhr.status)))
+                        return
+                    }
+                    resolve(ok(snakeToCamel(data) as ApiResponse<T>))
+                }
+            }
+
+            xhr.onerror = () => {
+                resolve(err(new ConnectionError("Network error")))
+            }
+
+            xhr.send(options.body as any)
+        })
+    }
+
     private static async getCsrfToken(): Promise<string | null> {
         const cookie = document.cookie
             .split("; ")
@@ -89,7 +195,8 @@ export class ApiClient {
             ?.split("=")[1]
 
         if (cookie) return cookie
-
+        {
+        }
         await fetch(`${API_URL}/csrf`, { credentials: "include" })
         return (
             document.cookie

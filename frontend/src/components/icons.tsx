@@ -1,16 +1,17 @@
 interface IconProps {
     class?: string
     fill?: boolean
+    "stroke-width"?: number
 }
 
 function iconClass(props: IconProps) {
     return `w-5 h-5 ${props.class || ""}`.trim()
 }
 
-function strokeProps(fill?: boolean) {
+function strokeProps(fill?: boolean, strokeWidth?: number) {
     return fill
         ? { fill: "currentColor", stroke: "none", "stroke-width": "0" }
-        : { fill: "none", stroke: "currentColor", "stroke-width": "1.5" }
+        : { fill: "none", stroke: "currentColor", "stroke-width": strokeWidth ?? 1.5 }
 }
 
 export function IconToc(props: IconProps) {
@@ -25,6 +26,23 @@ export function IconToc(props: IconProps) {
                 stroke-line-cap="round"
                 stroke-line-join="round"
                 d="M3.75 6.75h16.5m-16.5 5.25h16.5m-16.5 5.25h16.5"
+            />
+        </svg>
+    )
+}
+
+export function IconHardDrive(props: IconProps) {
+    return (
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            {...strokeProps(props.fill, props["stroke-width"])}
+            class={iconClass(props)}
+        >
+            <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M21.75 17.25v-.228a4.5 4.5 0 0 0-.12-1.03l-2.268-9.64a3.375 3.375 0 0 0-3.285-2.602H7.923a3.375 3.375 0 0 0-3.285 2.602l-2.268 9.64a4.5 4.5 0 0 0-.12 1.03v.228m19.5 0a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3m19.5 0a3 3 0 0 0-3-3H5.25a3 3 0 0 0-3 3m16.5 0h.008v.008h-.008v-.008Zm-3 0h.008v.008h-.008v-.008Z"
             />
         </svg>
     )

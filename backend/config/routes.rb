@@ -54,11 +54,10 @@ Rails.application.routes.draw do
 
     resources :patreon_tiers, only: [ :index, :show ]
 
-    resources :user_books, only: [ :index, :update, :destroy ], param: :unique_id do
+    resources :user_books, only: [ :index, :create, :update, :destroy ], param: :unique_id do
       collection do
-        post :sync
+        put :sync
       end
-      post :upload_data
     end
   end
 end

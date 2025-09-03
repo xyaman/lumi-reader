@@ -5,7 +5,7 @@ import AuthProvider from "@/context/auth"
 import SocialList from "@/components/SocialList"
 
 import { Login, Register } from "@/pages/auth"
-import { Home, Library, ReadingSessions } from "@/pages/home"
+import { Home, Library, ReadingSessions, SyncBooks } from "@/pages/home"
 import { Settings } from "@/pages/settings"
 import { Users, BookReader } from "@/pages"
 
@@ -22,6 +22,7 @@ export function App() {
             <Router>
                 <Route path="/" component={Home}>
                     <Route path="/" component={Library} />
+                    <Route path="/syncbooks" component={SyncBooks} />
                     <Route path="/sessions" component={ReadingSessions} />
                     <Route path="/social" component={SocialList} />
                     <Route path="/me" component={Users} />

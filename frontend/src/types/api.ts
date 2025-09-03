@@ -17,7 +17,7 @@ export interface Presence {
     activityTimestamp?: number // unix timestamp
 }
 
-export interface PatreonTier {
+export interface Tier {
     id: number
     patreonTierId: string
     name: string
@@ -25,6 +25,7 @@ export interface PatreonTier {
     description: string | null
     imageUrl: string | null
     published: boolean
+    bookSyncLimit: number
 }
 
 export interface User {
@@ -34,7 +35,7 @@ export interface User {
     avatarUrl?: string
     followingCount?: number
     followersCount?: number
-    patreonTier: PatreonTier | null
+    tier: Tier
     shareOnlineStatus: boolean
     sharePresence: boolean
     // present if the user is logged in
