@@ -53,7 +53,7 @@ export function PatreonTiers() {
                             fallback={
                                 <span>
                                     Already a patron?{" "}
-                                    <A href="/login" class="underline text-primary">
+                                    <A href="/login" class="underline text-0D">
                                         Sync your account
                                     </A>
                                 </span>
@@ -61,9 +61,9 @@ export function PatreonTiers() {
                         >
                             <Match when={authState.user?.isPatreonLinked}>
                                 <span>
-                                    Tier not being updated? <span>Force a refresh.</span>
-                                    <A href="/settings/account" class="underline text-primary">
-                                        Sync your account
+                                    Tier not being updated?{" "}
+                                    <A href="/settings/account" class="underline text-0D">
+                                        Force a refresh
                                     </A>
                                 </span>
                             </Match>
