@@ -54,8 +54,10 @@ export const userApi = {
         return ApiClient.request("/me/presence", {
             method: "PUT",
             body: JSON.stringify({
-                activity_name: activityName,
-                activity_type: activityType,
+                presence: {
+                    activity_name: activityName,
+                    activity_type: activityType,
+                },
             }),
         })
     },
