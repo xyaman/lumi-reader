@@ -1,6 +1,6 @@
 import { createResource, For } from "solid-js"
 import consumer from "@/services/websocket"
-import { timeAgo } from "@/lib/utils"
+import { snakeToCamel, timeAgo } from "@/lib/utils"
 import { userApi } from "@/api/user"
 import UserAvatar from "./UserAvatar"
 import { useAuthState } from "@/context/auth"
@@ -27,23 +27,25 @@ export default function SocialList() {
                 console.log("[websocket]: disconnected")
             },
             received(data: { user_id: number; presence: any }) {
+                const camelData = snakeToCamel(data)
                 setFollowers(
                     (prev) =>
                         prev &&
-                        prev.map((u) => ({
-                            ...u,
-                            presence: { ...(data.user_id === u.id ? data.presence : {}) },
-                        })),
+                        prev.map((u) =>
+                            u.id === camelData.userId ? { ...u, presence: { ...camelData.presence } } : u,
+                        ),
                 )
+
+                console.log(follows())
             },
         },
     )
 
-    const formatActivity = (kind?: string, name?: string) => {
+    const formatActivity = (kind: string | undefined, name: string | undefined, isOnline: boolean) => {
         if (!kind || !name) return ""
 
         if (kind === "reading") {
-            return `Reading ${name}`
+            return isOnline ? `Reading ${name}` : `Was reading ${name}`
         }
 
         return name
@@ -67,7 +69,11 @@ export default function SocialList() {
                             <div class="flex-1 ml-2 min-w-0">
                                 <p class="text-sm">{user.username}</p>
                                 <p class="text-sm truncate">
-                                    {formatActivity(user.presence?.activityType, user.presence?.activityName)}
+                                    {formatActivity(
+                                        user.presence?.activityType,
+                                        user.presence?.activityName,
+                                        user.presence?.status === "online",
+                                    )}
                                 </p>
                                 <p class="text-xs text-base04 mt-1">{timeAgo(user.presence?.activityTimestamp)}</p>
                             </div>
