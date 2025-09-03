@@ -1,6 +1,6 @@
 import { createMemo, createSignal, For, Show } from "solid-js"
 import { A, useLocation } from "@solidjs/router"
-import { IconCalendar, IconHome, IconSearch, IconSettings } from "@/components/icons"
+import { IconCalendar, IconHeart, IconHome, IconSearch, IconSettings } from "@/components/icons"
 import SocialList from "@/components/SocialList"
 import UserAvatar from "@/components/UserAvatar"
 import { useAuthState } from "@/context/auth"
@@ -19,6 +19,7 @@ export function Sidebar() {
     const activePath = createMemo(() => location.pathname)
     const navItems = [
         { href: "/", label: "Home", icon: IconHome },
+        { href: "/patreon", label: "Patreon", icon: IconHeart },
         { href: "/sessions", label: "Sessions", icon: IconCalendar },
         { href: "/settings", label: "Settings", icon: IconSettings },
     ]

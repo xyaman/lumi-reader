@@ -2,7 +2,7 @@ import { authApi } from "@/api/auth"
 import { IconPatreon } from "@/components/icons"
 import { useAuthDispatch, useAuthState } from "@/context/auth"
 import { Button } from "@/ui/button"
-import { useNavigate } from "@solidjs/router"
+import { A, useNavigate } from "@solidjs/router"
 import { createEffect, Show } from "solid-js"
 
 export function AccountSettings() {
@@ -44,6 +44,11 @@ export function AccountSettings() {
         <section>
             <h2 class="text-2xl font-semibold">Account Settings</h2>
             <div class="mt-4 flex gap-2">
+                <span class="my-2">
+                    <A href="/patreon" class="underline text-primary">
+                        Patreon Tiers
+                    </A>
+                </span>
                 <Show when={!authState.user?.isPatreonLinked}>
                     <Button
                         onClick={handleLink}

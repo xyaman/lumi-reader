@@ -21,7 +21,7 @@ export interface Tier {
     id: number
     patreonTierId: string
     name: string
-    ammountCents: number
+    amountCents: number
     description: string | null
     imageUrl: string | null
     published: boolean
