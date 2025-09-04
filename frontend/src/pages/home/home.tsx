@@ -2,13 +2,17 @@ import Resizable from "@corvu/resizable"
 import LibraryProvider from "@/context/library"
 import { useIsMobile } from "@/hooks"
 import { useLocation } from "@solidjs/router"
-import { JSX, Show } from "solid-js"
+import { createEffect, createSignal, JSX, Show } from "solid-js"
 
 import { Sidebar, TabNavigator } from "@/components/home"
+import { lsHome } from "@/services/localStorage"
 
 export function Home(props: { children?: JSX.Element }) {
     const isMobile = useIsMobile()
     const location = useLocation()
+
+    const [sizes, setSizes] = createSignal(lsHome.resizableSizes())
+    createEffect(() => lsHome.setResizableSizes(sizes()))
 
     // note: the main-container id attribute is used by UserPage.tsx
     return (
@@ -18,19 +22,14 @@ export function Home(props: { children?: JSX.Element }) {
                 fallback={
                     // Desktop version
                     <div class="size-full">
-                        <Resizable class="size-full">
-                            <Resizable.Panel initialSize={0.2} minSize={0.1} class="overflow-hidden">
+                        <Resizable class="size-full" sizes={sizes()} onSizesChange={setSizes}>
+                            <Resizable.Panel minSize={0.1} class="overflow-hidden">
                                 <Sidebar />
                             </Resizable.Panel>
                             <Resizable.Handle class="group basis-3 px-0.75">
                                 <div class="size-full rounded-sm transition-colors group-data-active:bg-base02 group-data-dragging:bg-base03" />
                             </Resizable.Handle>
-                            <Resizable.Panel
-                                initialSize={0.8}
-                                minSize={0.7}
-                                class="overflow-y-auto"
-                                id="main-container"
-                            >
+                            <Resizable.Panel minSize={0.7} class="overflow-y-auto" id="main-container">
                                 <div class="p-10">{props.children}</div>
                             </Resizable.Panel>
                         </Resizable>

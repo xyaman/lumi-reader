@@ -1,5 +1,8 @@
 import { type AuthUser } from "@/api/auth"
 
+// home page
+const LS_RESIZABLE_SIZES = "home:resizableSizes"
+
 // -- reader settings
 const LS_FONT_SIZE = "reader:fontSize"
 const LS_LINE_HEIGHT = "reader:lineHeight"
@@ -48,7 +51,7 @@ function remove(key: string) {
 // TODO: change T
 function get<T>(key: string, json: boolean = true): T | undefined {
     const item = localStorage.getItem(key)
-    return json && item ? JSON.parse(item as string) : item
+    return json && item ? JSON.parse(item) : item
 }
 
 export const lsReader = {
@@ -87,4 +90,9 @@ export const lsAuth = {
     currentUser: () => get<AuthUser | undefined>(LS_CURRUSER),
     setCurrentUser: (user: AuthUser) => set(LS_CURRUSER, user),
     removeCurrentUser: () => remove(LS_CURRUSER),
+}
+
+export const lsHome = {
+    resizableSizes: () => get<number[]>(LS_RESIZABLE_SIZES, true) || [0.2, 0.8],
+    setResizableSizes: (sizes: number[]) => set(LS_RESIZABLE_SIZES, sizes),
 }
