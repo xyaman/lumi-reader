@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_31_093200) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_04_024656) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -101,6 +101,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_31_093200) do
     t.integer "curr_paragraph", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.json "bookmarks"
     t.index ["user_id", "unique_id"], name: "index_user_books_on_user_id_and_unique_id", unique: true
     t.index ["user_id"], name: "index_user_books_on_user_id"
   end

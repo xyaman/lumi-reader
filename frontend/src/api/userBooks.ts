@@ -4,6 +4,7 @@ import { err, ok } from "@/lib/result"
 import { camelToSnake } from "@/lib/utils"
 import StreamingCompressor from "@/lib/compressor"
 import { ApiResponse } from "@/types/api"
+import { Bookmark } from "@/lib/readerSource"
 
 export type ApiUserBook = {
     kind: string
@@ -14,6 +15,7 @@ export type ApiUserBook = {
     totalChars: number
     currChars: number
     currParagraph: number
+    bookmarks: Bookmark[]
     createdAt: string
     updatedAt: string
     compressedDataUrl?: string | null
@@ -41,6 +43,7 @@ export const syncedBooksApi = {
             formData.append("user_book[total_chars]", String(bookData.totalChars))
             formData.append("user_book[curr_chars]", String(bookData.currChars))
             formData.append("user_book[curr_paragraph]", String(bookData.currParagraph))
+            formData.append("user_book[bookmarks]", JSON.stringify(camelToSnake(bookData.bookmarks)))
             formData.append("user_book[updated_at]", bookData.updatedAt)
             formData.append("user_book[compressed_data]", compressedBlob)
 

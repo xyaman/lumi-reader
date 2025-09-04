@@ -1,8 +1,14 @@
+# frozen_string_literal: true
+
 class UserBookBlueprint < Blueprinter::Base
   identifier :unique_id
 
   view :default do
     fields :kind, :title, :creator, :language, :total_chars, :curr_chars, :curr_paragraph, :created_at, :updated_at
+    fields :bookmarks do |book, _options|
+      book.bookmarks || []
+    end
+
     field :compressed_data_url do |book, _options|
       if book.compressed_data.attached?
         Rails.application.routes.url_helpers.url_for(book.compressed_data)

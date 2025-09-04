@@ -1,5 +1,5 @@
 import Dexie, { Table } from "dexie"
-import type { Bookmark, SourceImage, NavigationItem, Section } from "@/lib/readerSource"
+import type { SourceImage, NavigationItem, Section } from "@/lib/readerSource"
 
 import { ApiUserBook } from "@/api/userBooks"
 
@@ -11,9 +11,7 @@ export type ReaderSourceLightRecord = ApiUserBook & {
 export type ReaderSourceData = {
     sections: Section[]
     nav: NavigationItem[]
-    bookmarks: Bookmark[]
     images: SourceImage[]
-
     css: string
 }
 
@@ -66,6 +64,7 @@ export class LumiDbClass extends Dexie {
     // ---------- BOOKS ----------
     async saveBookRecord(source: ReaderSourceRecord, updateAt = true): Promise<void> {
         if (updateAt) source.updatedAt = new Date().toISOString()
+        console.log(source)
 
         const lightRecord: Partial<ReaderSourceLightRecord> = {
             kind: source.kind,
@@ -73,6 +72,7 @@ export class LumiDbClass extends Dexie {
             uniqueId: source.uniqueId,
             language: source.language,
             creator: source.creator,
+            bookmarks: source.bookmarks,
             coverImage: source.images[0],
             updatedAt: source.updatedAt,
             createdAt: source.createdAt,

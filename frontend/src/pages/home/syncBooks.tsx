@@ -50,8 +50,6 @@ export function SyncBooks() {
             const lb = localBooksMap.get(cb.uniqueId)
             if (!lb) return { ...cb, syncStatus: "cloud-only" as const }
 
-            console.log("cloud:", cb.updatedAt, "local:", lb.updatedAt)
-
             if (lb.updatedAt > cb.updatedAt) {
                 return { ...cb, syncStatus: "local-new" as const }
             } else if (cb.updatedAt > lb.updatedAt) {
@@ -82,7 +80,7 @@ export function SyncBooks() {
         const res = await syncedBooksApi.sync(localBook)
         if (res.error) {
             setInProgress(false)
-            return console.log("Error while syncing:", res.error)
+            return console.error("Error while syncing:", res.error)
         }
 
         // it means the server had a more updated version
@@ -95,6 +93,7 @@ export function SyncBooks() {
 
             const newBook = {
                 ...localBook,
+                bookmarks: cloudBook.bookmarks,
                 totalChars: cloudBook.totalChars,
                 currChars: cloudBook.currChars,
                 currParagraph: cloudBook.currParagraph,
@@ -116,11 +115,10 @@ export function SyncBooks() {
     }
 
     // -- handlers
-    const uploadHandler = async (book: ApiUserBook, setProgress: (p: number) => void) => {
+    const uploadHandler = async (bookData: ApiUserBook, setProgress: (p: number) => void) => {
         if (inProgress()) return
 
         setInProgress(true)
-        const bookData = book
         const fullBook = await LumiDb.getBookByUniqueId(bookData.uniqueId)
         if (!fullBook) {
             setInProgress(false)
@@ -130,14 +128,12 @@ export function SyncBooks() {
         const data = {
             sections: fullBook.sections,
             nav: fullBook.nav,
-            bookmarks: fullBook.bookmarks,
             images: fullBook.images,
             css: fullBook.css,
         }
 
         const onProgress = (progress: { type: "upload" | "download"; percent: number }) => {
             if (progress.type == "upload") {
-                console.log("Upload percentage:", progress.percent)
                 setProgress(progress.percent)
             }
         }
@@ -145,7 +141,7 @@ export function SyncBooks() {
         const res = await syncedBooksApi.upload(bookData, data, onProgress)
         if (res.error) {
             setInProgress(false)
-            return console.log(res.error)
+            return console.error(res.error)
         }
 
         const cloudBook = { ...bookData, syncStatus: "up-to-date" as const }
@@ -160,7 +156,6 @@ export function SyncBooks() {
         setInProgress(true)
         const onProgress = (progress: { type: "upload" | "download"; percent: number }) => {
             if (progress.type === "download") {
-                console.log("Download percentage:", progress.percent)
                 setProgress(progress.percent)
             }
         }
@@ -178,11 +173,15 @@ export function SyncBooks() {
             return
         }
 
+        // solid-js reactivity doesnt allow to save into the db
+        const plainBookmarks = book.bookmarks.map((b) => ({ ...b }))
+        const resBook = { ...book, bookmarks: plainBookmarks }
+
         if (book.kind === "epub") {
             // TODO: problem because local id is not defined
             await LumiDb.saveBookRecord(
                 {
-                    ...book,
+                    ...resBook,
                     ...res.ok,
                 } as ReaderSourceRecord,
                 false,

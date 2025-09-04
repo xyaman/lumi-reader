@@ -90,7 +90,20 @@ class V1::UserBooksController < ApplicationController
 
   private
   def user_book_params
-    params.require(:user_book).permit(:kind, :unique_id, :title, :creator, :language, :total_chars, :curr_chars, :curr_paragraph, :updated_at)
+    permitted = params.require(:user_book).permit(
+      :kind, :unique_id, :title, :creator, :language, :total_chars, 
+      :curr_chars, :curr_paragraph, :updated_at, :bookmarks
+    )
+
+    # Handle JSON string from FormData (:create)- parse it if it's a string
+    if permitted[:bookmarks].present? && permitted[:bookmarks].is_a?(String)
+      begin
+        permitted[:bookmarks] = JSON.parse(permitted[:bookmarks])
+      rescue JSON::ParserError
+        permitted[:bookmarks] = []
+      end
+    end
+    permitted
   end
 
   def check_file_size
