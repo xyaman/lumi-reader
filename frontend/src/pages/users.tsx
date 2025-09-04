@@ -7,7 +7,7 @@ import { User, ApiReadingSession } from "@/types/api"
 import { IndividualSessions } from "@/components/home/readingSessions"
 import { createStore } from "solid-js/store"
 import Spinner from "@/components/Spinner"
-import { useAuthState } from "@/context/auth"
+import { useAuthDispatch, useAuthState } from "@/context/auth"
 import { Button } from "@/ui"
 import { LumiDb } from "@/db"
 import { deserializeApiReadingSession, readingSessionsApi, serializeApiReadingSession } from "@/api/readingSessions"
@@ -35,6 +35,7 @@ function UserDescription(props: UserDescriptionProps) {
 
 export function Users() {
     const authState = useAuthState()
+    const authDispatch = useAuthDispatch()
 
     const params = useParams()
     const location = useLocation()
@@ -73,6 +74,10 @@ export function Users() {
         // this might happen when the auth still is loading
         if (!username()) {
             return undefined
+        }
+
+        if (isOwnProfile()) {
+            return authState.user
         }
 
         const data = await userApi.getProfile(username()!)
@@ -153,11 +158,9 @@ export function Users() {
     }
 
     // -- input handler
-    const descriptionOnInput = (v: string) => {
-        setEditDescription(v)
-    }
-
     const onAvatarChange = async (f: File) => {
+        if (!isOwnProfile()) return
+
         if (f.size / 1000000 > 2) {
             alert("Max file size: 2MB")
             return
@@ -167,6 +170,7 @@ export function Users() {
         if (res.error) {
             console.error(res.error)
         } else {
+            await authDispatch.refreshCurrentUser()
             mutateUser({ ...userResource()!, avatarUrl: res.ok.data })
         }
     }
@@ -252,7 +256,7 @@ export function Users() {
                             <UserDescription
                                 user={userResource()!}
                                 isEditing={editDescription() !== null}
-                                onInput={descriptionOnInput}
+                                onInput={setEditDescription}
                                 disabled={isLoading()}
                             />
 

@@ -30,7 +30,7 @@ class V1::MeController < ApplicationController
     Current.user.avatar.attach(params[:avatar])
     if Current.user.avatar.attached?
       avatar_url = url_for(Current.user.avatar)
-      render_success data: { avatar_url: avatar_url }, message: "Avatar updated successfully."
+      render_success data: avatar_url, message: "Avatar updated successfully."
     else
       render_error errors: "Avatar upload failed"
     end
