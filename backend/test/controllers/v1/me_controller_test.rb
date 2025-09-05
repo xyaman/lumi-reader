@@ -11,7 +11,7 @@ class V1::MeControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "should update user with valid params" do
+  test "should update user bio" do
     patch v1_me_url, params: { user: { bio: "New bio" } }
     assert_response :success
     @user.reload
@@ -34,7 +34,7 @@ class V1::MeControllerTest < ActionDispatch::IntegrationTest
 
     assert_not @user.avatar.attached?
     @user.avatar.stubs(:attach)
-    post avatar_v1_me_url, params: { avatar: file }
+    put avatar_v1_me_url, params: { avatar: file }
     assert_response :success
   end
 

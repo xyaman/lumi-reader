@@ -16,7 +16,7 @@ class UserBlueprint < Blueprinter::Base
     field :presence, if: ->(_field_name, user, _options) { user.share_presence }
 
     field :is_following do |_user, options|
-      options[:is_following]
+      options[:is_following] || nil
     end
   end
 
