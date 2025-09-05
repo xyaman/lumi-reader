@@ -5,8 +5,10 @@ class User < ApplicationRecord
   has_secure_password
 
   has_many :sessions, dependent: :destroy
-  has_many :reading_sessions, dependent: :destroy
   has_many :user_books, dependent: :destroy
+
+  has_many :reading_sessions, dependent: :destroy
+  has_many :reading_events, dependent: :destroy
 
   has_one_attached :avatar
 

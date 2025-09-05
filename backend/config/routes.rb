@@ -52,6 +52,8 @@ Rails.application.routes.draw do
       end
     end
 
+    resources :reading_events, only: [ :create, :index ]
+
     resources :patreon_tiers, only: [ :index, :show ]
 
     resources :user_books, only: [ :index, :create, :update, :destroy ], param: :unique_id do
