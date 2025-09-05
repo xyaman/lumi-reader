@@ -46,17 +46,22 @@ export interface User {
 
 export interface ApiReadingSession {
     snowflake: number
-    userId?: number | null
+    userId?: number // set during sync
     bookId: string
     bookTitle: string
     bookLanguage: string
-    startTime: string
-    endTime?: string | null
-    initialChars: number
-    currChars: number
-    totalReadingTime: number
+    charsRead: number
+    timeSpent: number
+    createdAt: string
+    updatedAt: string
+}
 
-    // TODO: status
-    // status?: "active" | "finished"
-    updatedAt?: string | null
+export interface GroupedReadingSession {
+    lastSnowflake: number
+    userId?: number
+    bookId: string
+    bookTitle: string
+    bookLanguage: string
+    totalCharsRead: number
+    totalTimeSpent: number
 }

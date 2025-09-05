@@ -45,11 +45,11 @@ export function ReaderProvider(props: { book: ReaderSource; children: JSX.Elemen
 
     onMount(() => {
         if (lsReadingSessions.autoStart()) {
-            ReadingSessionManager.getInstance().startSession(props.book)
+            ReadingSessionManager.getInstance().startReading(props.book)
         }
 
         onCleanup(() => {
-            ReadingSessionManager.getInstance().finishSession()
+            ReadingSessionManager.getInstance().endReading()
         })
     })
 
@@ -89,7 +89,7 @@ export function ReaderProvider(props: { book: ReaderSource; children: JSX.Elemen
         setStore("currIndex", lastIndex)
         setStore("currChars", currChars)
 
-        ReadingSessionManager.getInstance().updateReadingProgress(currChars, true)
+        ReadingSessionManager.getInstance().updateProgress(currChars)
         return lastIndex
     }
 

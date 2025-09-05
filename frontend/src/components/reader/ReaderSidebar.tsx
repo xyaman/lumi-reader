@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal, For, onCleanup, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, For, Show } from "solid-js"
 import Sidebar from "@/components/Sidebar"
 import ThemeList from "@/components/settings/Themelist"
 import { ThemeProvider } from "@/context/theme"
@@ -152,65 +152,22 @@ export function BookmarksSidebarContent(props: { onItemClick: (b: Bookmark) => v
 
 function ReadingSessionSidebar() {
     const readerState = useReaderState()
-    const session = () => ReadingSessionManager.getInstance().activeSession()
-    const [currentTime, setCurrentTime] = createSignal(Math.floor(Date.now() / 1000))
-
-    let intervalId: number | null = null
-    const startTimer = () => {
-        if (intervalId) return
-        setInterval(() => {
-            setCurrentTime(Math.floor(Date.now() / 1000))
-        }, 1000)
-    }
-
-    const stopTimer = () => {
-        if (!intervalId) return
-        clearInterval(intervalId)
-        intervalId = null
-    }
-
-    createEffect(() => {
-        if (readerState.sideBar === "session") {
-            startTimer()
-        } else {
-            stopTimer()
-        }
-    })
-
-    onCleanup(() => stopTimer())
-
-    const totalReadingTime = () => {
-        const s = session()
-        if (!s) return 0
-
-        if (s.isPaused) {
-            return s.totalReadingTime
-        } else {
-            // Add time since last update for real-time display
-            const now = currentTime()
-            return s.totalReadingTime + (now - s.lastActiveTime.getTime() / 1000)
-        }
-    }
+    const isPaused = () => ReadingSessionManager.getInstance().isPaused()
+    const totalReadingTime = () => ReadingSessionManager.getInstance().readingTime()
 
     const toggleSession = async () => {
-        if (session()) {
-            if (session()!.isPaused) {
-                await ReadingSessionManager.getInstance().resumeSession()
+        if (ReadingSessionManager.getInstance().isReading()) {
+            if (isPaused()) {
+                await ReadingSessionManager.getInstance().resume()
             } else {
-                await ReadingSessionManager.getInstance().pauseSession()
+                await ReadingSessionManager.getInstance().pause()
             }
         } else {
-            await ReadingSessionManager.getInstance().startSession(readerState.book)
+            await ReadingSessionManager.getInstance().startReading(readerState.book)
         }
-
-        setCurrentTime(session()!.lastActiveTime.getTime() / 1000)
     }
 
-    const charactersRead = () => {
-        const s = session()
-        if (!s) return 0
-        return s.currChars - s.initialChars
-    }
+    const charactersRead = () => readerState.book.currChars - ReadingSessionManager.getInstance().initialCharsPosition()
 
     const readingSpeed = () => {
         const time = totalReadingTime()
@@ -224,11 +181,11 @@ function ReadingSessionSidebar() {
 
     return (
         <div class="max-h-[90vh] overflow-y-auto">
-            <p class="text-md mb-2">Session: {session() ? (session()!.isPaused ? "Paused" : "Active") : "None"}</p>
+            <p class="text-md mb-2">Session: {isPaused() ? "Paused" : "Active"}</p>
 
             <div class="space-y-4">
                 <button class="button px-4 py-2 font-semibold" onClick={toggleSession}>
-                    {session() ? (session()!.isPaused ? "Resume" : "Pause") : "Start"}
+                    {isPaused() ? "Resume" : "Pause"}
                 </button>
 
                 <div class="bg-(--base02) p-4 rounded">

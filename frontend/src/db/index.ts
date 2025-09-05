@@ -1,7 +1,10 @@
+import readingSessions from "./readingSessions.ts"
+
 import Dexie, { Table } from "dexie"
 import type { SourceImage, NavigationItem, Section } from "@/lib/readerSource"
 
 import { ApiUserBook } from "@/api/userBooks"
+import { ApiReadingSession } from "@/types/api.ts"
 
 export type ReaderSourceLightRecord = ApiUserBook & {
     localId: number
@@ -23,30 +26,20 @@ export type Bookshelf = {
     bookIds: number[]
 }
 
-export type ReadingSession = {
-    snowflake: number
-    userId?: number | null
-    bookId: string
-    bookTitle: string
-    bookLanguage: string
-    startTime: Date
-    endTime?: Date | null
-    initialChars: number
-    currChars: number
-    totalReadingTime: number
-    updatedAt?: Date | null
-    lastActiveTime: Date
-    isPaused: boolean
+export type LocalReadingSession = Omit<ApiReadingSession, "createdAt" | "updatedAt"> & {
+    synced: number
+    createdAt: Date
+    updatedAt: Date
 }
 
 const DB_NAME = "BookReaderDB"
-const DB_VERSION = 1
+const DB_VERSION = 3
 
 export class LumiDbClass extends Dexie {
     readerSources!: Table<ReaderSourceRecord, number>
     readerLightSources!: Table<ReaderSourceLightRecord, number>
     bookshelves!: Table<Bookshelf, number>
-    readingSessions!: Table<ReadingSession, number>
+    readingSessions!: Table<LocalReadingSession, number>
 
     constructor() {
         super(DB_NAME)
@@ -54,10 +47,8 @@ export class LumiDbClass extends Dexie {
         this.version(DB_VERSION).stores({
             readerSources: "++localId,&uniqueId",
             readerLightSources: "++localId,&uniqueId",
-
             bookshelves: "++id",
-
-            readingSessions: "snowflake, bookId",
+            readingSessions: "snowflake,bookId,synced,createdAt,updatedAt",
         })
     }
 
@@ -164,83 +155,9 @@ export class LumiDbClass extends Dexie {
         shelf.bookIds = shelf.bookIds.filter((id) => id !== bookId)
         await this.updateBookshelf(shelf)
     }
-
-    // ---------- READING SESSIONS ----------
-    async createReadingSession(book: {
-        localId: number
-        uniqueId: string
-        title: string
-        language: string
-        currChars: number
-    }): Promise<ReadingSession> {
-        const snowflake = Math.floor(Date.now() / 1000)
-
-        const now = new Date()
-        const session: ReadingSession = {
-            snowflake,
-            bookId: book.uniqueId,
-            bookTitle: book.title,
-            bookLanguage: book.language,
-            startTime: now,
-            totalReadingTime: 0,
-            lastActiveTime: now,
-            isPaused: false,
-            initialChars: book.currChars,
-            currChars: book.currChars,
-            updatedAt: now,
-        }
-        await this.readingSessions.add(session)
-        return session
-    }
-
-    createReadingSessionFromCloud(session: Partial<ReadingSession>) {
-        return this.readingSessions.put(session as ReadingSession)
-    }
-
-    getAllReadingSessions() {
-        return this.readingSessions.toArray()
-    }
-
-    getReadingSessionById(id: number) {
-        return this.readingSessions.get(id)
-    }
-
-    getAllReadingSessionIds() {
-        return this.readingSessions.toCollection().primaryKeys() as Promise<number[]>
-    }
-
-    async getReadingSessionByDateRange(start: Date, end: Date, limit = 20, offset = 0) {
-        const sessions = await this.readingSessions
-            .filter((s) => s.startTime >= new Date(start) && s.startTime <= new Date(end))
-            .toArray()
-
-        sessions.sort((a, b) => b.startTime.getTime() - a.startTime.getTime())
-        return sessions.slice(offset, offset + limit)
-    }
-
-    async updateReadingSession(newSession: Partial<ReadingSession>) {
-        if (!newSession.snowflake) throw new Error("Undefined id/snowflake")
-
-        const curr = await this.getReadingSessionById(newSession.snowflake)
-        if (!curr) return
-
-        const updated = { ...curr, ...newSession, updatedAt: new Date() }
-        await this.readingSessions.put(updated)
-    }
-
-    async getRecentReadingSessions(page: number) {
-        const results = await this.readingSessions
-            .orderBy("snowflake")
-            .reverse()
-            .offset(page * 6)
-            .limit(6)
-            .toArray()
-        return results
-    }
-
-    deleteReadingSession(id: number) {
-        return this.readingSessions.delete(id)
-    }
 }
 
 export const LumiDb = new LumiDbClass()
+export default {
+    readingSessions,
+}

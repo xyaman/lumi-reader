@@ -9,8 +9,8 @@ import { createStore } from "solid-js/store"
 import Spinner from "@/components/Spinner"
 import { useAuthDispatch, useAuthState } from "@/context/auth"
 import { Button } from "@/ui"
-import { LumiDb } from "@/db"
-import { deserializeApiReadingSession, readingSessionsApi, serializeApiReadingSession } from "@/api/readingSessions"
+import db from "@/db"
+import { readingSessionsApi } from "@/api/readingSessions"
 import { FollowModal } from "@/components/users"
 
 type UserDescriptionProps = {
@@ -126,13 +126,16 @@ export function Users() {
 
         if (isOwnProfile()) {
             // local sessions
-            const res = await LumiDb.getRecentReadingSessions(readingStore.page)
+            const res = await db.readingSessions.index({})
             if (res.length === 0) {
                 setReadingStore("loading", false)
                 setReadingStore("morePages", false)
                 return
             }
-            setReadingStore("sessions", (sessions) => [...sessions, ...res.map(serializeApiReadingSession)])
+            setReadingStore(
+                "sessions",
+                res.map((s) => ({ ...s, updatedAt: s.updatedAt.toISOString(), createdAt: s.createdAt.toISOString() })),
+            )
             setReadingStore("page", (page) => page + 1)
         } else {
             // backend sessions (other users)
@@ -144,11 +147,11 @@ export function Users() {
             }
 
             // backend pages starts at 1 (pagy ruby)
-            const res = await readingSessionsApi.getRecent(username()!, readingStore.page + 1)
+            const res = await readingSessionsApi.index({ username: username(), group: true })
             if (res.ok) {
-                setReadingStore("sessions", (sessions) => [...sessions, ...res.ok.data.sessions])
+                setReadingStore("sessions", (sessions) => [...sessions, ...res.ok.data])
                 setReadingStore("page", (page) => page + 1)
-                setReadingStore("pages", res.ok.data.pagy.pages)
+                // setReadingStore("pages", res.ok.data.pagy.pages)
             } else {
                 console.error(res.error)
             }
@@ -295,7 +298,16 @@ export function Users() {
                         <Spinner size={40} base16Color="--base05" />
                     </Show>
                     <For each={readingStore.sessions}>
-                        {(session) => <IndividualSessions session={deserializeApiReadingSession(session)} />}
+                        {(session) => (
+                            <IndividualSessions
+                                session={{
+                                    ...session,
+                                    updatedAt: new Date(session.updatedAt),
+                                    createdAt: new Date(session.createdAt),
+                                    synced: 1,
+                                }}
+                            />
+                        )}
                     </For>
                 </section>
             </Show>

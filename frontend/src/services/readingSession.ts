@@ -1,10 +1,10 @@
-import { LumiDb, ReadingSession } from "@/db"
+import { readingSessionsApi } from "@/api/readingSessions"
+import db from "@/db"
+import { ok } from "@/lib/result"
 import { createSignal } from "solid-js"
-import { lsReadingSessions } from "./localStorage"
-import { deserializeApiReadingSession, readingSessionsApi } from "@/api/readingSessions"
-import { AsyncResult, err, ok } from "@/lib/result"
+import { lsAuth } from "./localStorage"
 
-interface IPartialSource {
+interface IBookSource {
     localId: number
     uniqueId: string
     title: string
@@ -12,150 +12,160 @@ interface IPartialSource {
     currChars: number
 }
 
-// TODO: use a hook
 export default class ReadingSessionManager {
-    private static sharedInstance: ReadingSessionManager | null = null
-    activeSession: () => ReadingSession | null
-    setActiveSession: (session: ReadingSession | null) => void
+    private static instance: ReadingSessionManager | null = null
 
-    private constructor() {
-        ;[this.activeSession, this.setActiveSession] = createSignal<ReadingSession | null>(null)
+    isPaused: () => boolean
+    private setIsPaused: (b: boolean) => void
+    sessionSnowflake: () => number | null
+    private setSessionSnowflake: (s: number | null) => void
+
+    sessionStartTime: () => Date | null
+    private setSessionStartTime: (d: Date | null) => void
+
+    readingTime: () => number
+    private setReadingTime: (t: number) => void
+
+    lastActiveTime: () => Date | null
+    private setLastActiveTime: (d: Date | null) => void
+
+    currentBook: () => IBookSource | null
+    private setCurrentBook: (b: IBookSource | null) => void
+    initialCharsPosition: () => number
+    private setInitialCharsPosition: (n: number) => void
+
+    static getInstance() {
+        if (!this.instance) {
+            this.instance = new ReadingSessionManager()
+        }
+        return this.instance
     }
 
-    static getInstance(): ReadingSessionManager {
-        if (!ReadingSessionManager.sharedInstance) {
-            ReadingSessionManager.sharedInstance = new ReadingSessionManager()
-        }
-        return ReadingSessionManager.sharedInstance
+    constructor() {
+        ;[this.isPaused, this.setIsPaused] = createSignal(false)
+        ;[this.sessionSnowflake, this.setSessionSnowflake] = createSignal(null)
+        ;[this.currentBook, this.setCurrentBook] = createSignal<IBookSource | null>(null)
+        ;[this.readingTime, this.setReadingTime] = createSignal<number>(0)
+        ;[this.sessionStartTime, this.setSessionStartTime] = createSignal<Date | null>(null)
+        ;[this.lastActiveTime, this.setLastActiveTime] = createSignal<Date | null>(null)
+        ;[this.initialCharsPosition, this.setInitialCharsPosition] = createSignal(0)
     }
 
-    static async syncWithBackend(): AsyncResult<boolean, Error> {
-        if (!navigator.onLine) {
-            return err(new Error("offline"))
-        }
-
-        // 1. get local changes since last sync
-        // const now = new Date()
-        const lastSyncTime = lsReadingSessions.lastSyncTime()
-        console.log(lastSyncTime)
-        const localIds = await LumiDb.getAllReadingSessionIds()
-
-        // 2. get remote diffs
-        const diffRes = await readingSessionsApi.index(lastSyncTime, localIds)
-        if (diffRes.error) {
-            return diffRes
-        }
-
-        // 3.1 Update local sessions
-        const remoteOnlySessions = diffRes.ok.data.remoteOnlySessions
-        if (remoteOnlySessions.length === 0) {
-            return ok(false)
-        }
-
-        for (const rs of remoteOnlySessions) {
-            await LumiDb.createReadingSessionFromCloud(deserializeApiReadingSession(rs))
-        }
-
-        // 3.  Handle different types of changes
-        if (localIds.length > 0) {
-            const localOnlySessions = await Promise.all(localIds.map((id) => LumiDb.getReadingSessionById(id)))
-            const updateRes = await readingSessionsApi.batchUpdate(localOnlySessions.filter((s) => s !== undefined))
-            if (updateRes.error) {
-                return updateRes
-            }
-            console.log(updateRes.ok.data)
-        }
-
-        // 3.2 Conflicts (ignore for now)
-        // TODO
-
-        // 3.3 Updated (Nothing to do?)
-        // 3.4 Created (Nothing to do?)
-        lsReadingSessions.setLastSyncTime(diffRes.ok.data.syncTimestamp)
-        return ok(true)
+    isReading() {
+        return this.currentBook() != null
     }
 
-    async startSession(source: IPartialSource) {
-        if (this.activeSession()) {
-            this.finishSession()
-            console.error("Last session wasn't finished")
-        }
-        const session = await LumiDb.createReadingSession(source)
-        this.setActiveSession(session)
-        await readingSessionsApi.create(session)
-    }
-
-    async finishSession(): Promise<void> {
-        const session = this.activeSession()
-        if (!session) return
-        this.setActiveSession(null)
-
-        // remove the session from the database if characters count is 0
-        // or if updateTime is undefined
-        if (session.currChars === session.initialChars) {
-            await LumiDb.deleteReadingSession(session.snowflake)
-            await readingSessionsApi.delete(session.snowflake)
-            return
-        }
-
-        if (!session.isPaused) {
-            await this.pauseSession()
+    async startReading(book: IBookSource) {
+        // Auto-finish previous session
+        if (this.isReading()) {
+            await this.endReading()
         }
 
         const now = new Date()
-        const updatedSession = { ...session, endTime: now }
+        this.setCurrentBook(book)
+        this.setSessionStartTime(now)
+        this.setLastActiveTime(now)
+        this.setInitialCharsPosition(book.currChars)
 
-        await LumiDb.updateReadingSession(updatedSession)
-        await readingSessionsApi.update(updatedSession.snowflake, updatedSession)
-        console.log("Finished", updatedSession)
-    }
-
-    async pauseSession() {
-        const session = this.activeSession()
-        if (!session) return
-
-        const now = new Date()
-        const updatedSession = {
-            ...session,
-            lastActiveTime: now,
-            isPaused: true,
-        }
-        this.setActiveSession(updatedSession)
-        await LumiDb.updateReadingSession(updatedSession)
-    }
-
-    async resumeSession() {
-        const session = this.activeSession()
-        if (!session) return
-
-        const now = new Date()
-        const updatedSession = {
-            ...session,
-            lastActiveTime: now,
-            isPaused: false,
+        const event = {
+            userId: undefined,
+            bookId: book.uniqueId,
+            bookTitle: book.title,
+            bookLanguage: book.language,
+            charsRead: 0,
+            timeSpent: 0,
+            synced: 0,
         }
 
-        this.setActiveSession(updatedSession)
-        await LumiDb.updateReadingSession(updatedSession)
+        const snowflake = await db.readingSessions.create(event)
+        this.setSessionSnowflake(snowflake)
     }
 
-    // called in reader context
-    async updateReadingProgress(charsPosition: number, syncBackend: boolean = false) {
-        const session = this.activeSession()
-        if (!session || session.isPaused) return
+    async resume() {
+        if (!this.isPaused()) return
 
-        const now = new Date()
-        const totalReadingTime =
-            session.totalReadingTime + Math.floor((now.getTime() - session.lastActiveTime.getTime()) / 1000)
-        const updatedSession = {
-            ...session,
-            totalReadingTime,
-            currChars: charsPosition,
-            lastActiveTime: now,
+        this.setIsPaused(false)
+        this.setLastActiveTime(new Date())
+    }
+
+    async pause() {
+        if (this.isPaused()) return
+
+        // If we're not paused and are in a session, update the time first.
+        if (!this.isPaused() && this.isReading()) {
+            const now = new Date()
+            const lastTime = this.lastActiveTime()!
+            const timeSpent = this.readingTime() + Math.floor((now.getTime() - lastTime.getTime()) / 1000)
+            this.setReadingTime(timeSpent)
         }
 
-        this.setActiveSession(updatedSession)
-        await LumiDb.updateReadingSession(updatedSession)
-        if (syncBackend) await readingSessionsApi.update(session.snowflake, session)
+        this.setIsPaused(true)
+        this.setLastActiveTime(new Date())
+    }
+
+    async updateProgress(charsPosition: number) {
+        if (!this.isReading() || !this.currentBook() || !this.sessionSnowflake()) return
+        if (this.isPaused()) return
+
+        console.log("updating progress:", charsPosition)
+
+        const now = new Date()
+        const lastTime = this.lastActiveTime()!
+        const charsRead = charsPosition - this.initialCharsPosition()
+        const timeSpent = this.readingTime() + Math.floor((now.getTime() - lastTime.getTime()) / 1000)
+        this.setReadingTime(timeSpent)
+
+        await db.readingSessions.updateProgress(this.sessionSnowflake()!, {
+            charsRead,
+            timeSpent,
+        })
+        console.log("written")
+        this.setLastActiveTime(now)
+    }
+
+    async endReading() {
+        if (!this.isReading() || !this.currentBook()) return
+        // const snowflake = this.sessionSnowflake()!
+
+        // less than 30 seconds, remove the session
+        if (this.readingTime() < 30) {
+            db.readingSessions.delete(this.sessionSnowflake()!)
+        }
+
+        this.setCurrentBook(null)
+        this.setSessionSnowflake(null)
+        this.setSessionStartTime(null)
+        this.setLastActiveTime(null)
+        this.setReadingTime(0)
+
+        // try to sync if online
+        if (navigator.onLine) {
+            await this.syncEvents()
+            // await db.readingSessions.updateSyncedBatch([snowflake], true)
+        }
+    }
+
+    async syncEvents() {
+        const unsyncedSessions = await db.readingSessions.index({ synced: false })
+        console.log("session", unsyncedSessions)
+        if (unsyncedSessions.length === 0) return ok(null)
+
+        const user = lsAuth.currentUser()
+        if (!user) return ok(null)
+
+        const apiSessions = unsyncedSessions.map((s) => ({
+            ...s,
+            userId: user.id,
+            updatedAt: s.updatedAt.toISOString(),
+            createdAt: s.createdAt.toISOString(),
+        }))
+
+        const response = await readingSessionsApi.create(apiSessions)
+        if (response.error) return response
+
+        const result = response.ok.data
+        const syncedSessions = result.filter((s) => s.status === "created").map((s) => s.snowflake)
+        await db.readingSessions.updateSyncedBatch(syncedSessions, true)
+        return ok(null)
     }
 }

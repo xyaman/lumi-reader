@@ -1,118 +1,88 @@
 class V1::ReadingSessionsController < ApplicationController
-  def create
-    reading_session = Current.user.reading_sessions.new(reading_session_params)
-    if reading_session.save
-      render_success data: ReadingSessionBlueprint.render_as_json(reading_session), status: :created
-    else
-      render_error errors: reading_session.errors.full_messages
-    end
-  end
+  allow_unauthenticated_access only: %i[ index ]
 
   def index
-    # note: Array(nil) returns []
-    local_sessions_ids = params[:local_sessions_ids]&.split(",")&.map(&:to_i) || []
-    last_sync = params[:last_sync_time]&.to_i || 0
+    user = request_user
+    return render_error errors: "User not found." unless user
 
-    # Get all modified sessions since last_sync
-    modified_sessions = Current.user.reading_sessions
-      .where("updated_at > ?", Time.at(last_sync))
+    offset = params[:offset].to_i || 0
+    limit = [ params[:limit].to_i, 50 ].min
+    group = params[:group] == "true"
 
-    # Get sessions that doesn't exist in this device
-    remote_only_sessions = Current.user.reading_sessions
-      .where.not(snowflake: local_sessions_ids)
+    sessions = user.reading_sessions
 
-    render_success data: {
-      modified_sessions: ReadingSessionBlueprint.render_as_json(modified_sessions),
-      remote_only_sessions: ReadingSessionBlueprint.render_as_json(remote_only_sessions),
-      sync_timestamp: Time.current
-    }
-  end
-
-  def show
-    reading_session = Current.user.reading_sessions.find_by(snowflake: params[:snowflake])
-    if reading_session
-      render_success data: ReadingSessionBlueprint.render_as_json(reading_session)
-    else
-      render_error errors: "Reading Session not found.", status: :not_found
-    end
-  end
-
-  def update
-    reading_session = Current.user.reading_sessions.find_by(snowflake: params[:snowflake])
-    return render_error errors: "Reading Session not found.", status: :not_found unless reading_session
-
-    if reading_session.update(reading_session_params)
-      render_success message: "Reading Session updated successfully."
-    else
-      render_error errors: reading_session.errors.full_messages
-    end
-  end
-
-  def batch_update
-    sessions = params[:sessions]
-    return render_error errors: "Invalid parameters: `sessions` is not present." unless sessions
-    return render_error errors: "Invalid parameters: `sessions` must be an array." unless sessions.is_a?(Array)
-
-
-    results = sessions.map do |client_session|
-      permitted = client_session.permit(:snowflake, :book_id, :book_title, :book_language, :start_time, :end_time, :total_reading_time, :status, :initial_chars)
-      client_updated_at = Time.iso8601(client_session[:updated_at])
-      permitted[:updated_at] = client_updated_at
-      session = Current.user.reading_sessions.find_by(snowflake: client_session[:snowflake])
-
-      if session
-        # check for conflicts using updated_at timestamps
-        if client_updated_at < session.updated_at
-          # server version is newer, conflict detected
-          {
-            snowflake: session.snowflake,
-            status: "conflict",
-            server_version: ReadingSessionBlueprint.render_as_json(session),
-            client_version: client_session
-          }
-        elsif session.updated_at < client_updated_at
-          # safe to update
-          session.update(permitted)
-
-          {
-            snowflake: session.snowflake,
-            status: "updated"
-          }
-        end
+    if params[:start_date].present?
+      start_ms = snowflake_from(str: params[:start_date], beginning_of_day: true)
+      end_ms = if params[:end_date].present?
+        snowflake_from(str: params[:end_date], end_of_day: true)
       else
-        # the session doesnt exist in the server - create it
-        Current.user.reading_sessions.create(permitted)
+        snowflake_from(str: params[:start_date], end_of_day: true)
+      end
+
+      sessions = sessions.where(snowflake: start_ms..end_ms)
+    end
+
+    if group
+      sessions = sessions.by_book.map do |book_id, title, lang, chars, time, last_snowflake|
         {
-          snowflake: client_session[:snowflake],
-          status: "created"
+          book_id: book_id,
+          book_title: title,
+          book_language: lang,
+          total_chars_read: chars,
+          total_time_spent: time,
+          last_snowflake: last_snowflake
         }
+      end
+    else
+      sessions = sessions.order(snowflake: :desc).limit(limit).offset(offset)
+    end
+
+    render_success data: sessions
+  end
+
+
+  def create
+    sessions_params = params[:sessions]
+    return render_error errors: "Events must be an array" unless sessions_params.is_a?(Array)
+
+    results = []
+    sessions_params.each do |session_data|
+      session = Current.user.reading_sessions.new(
+        snowflake: session_data[:snowflake],
+        book_id: session_data[:book_id],
+        book_title: session_data[:book_title],
+        book_language: session_data[:book_language],
+        chars_read: session_data[:chars_read],
+        time_spent: session_data[:time_spent],
+      )
+
+      if session.save
+        results << { snowflake: session_data[:snowflake], status: "created" }
+      else
+        results << { snowflake: session_data[:snowflake], status: "error", errors: session.errors.full_messages }
       end
     end
 
-    render_success data: results.compact
-  end
-
-  def destroy
-    reading_session = Current.user.reading_sessions.find_by(snowflake: params[:snowflake])
-    return render_error errors: "Reading Session not found.", status: :not_found unless reading_session
-
-    reading_session.destroy
-    render_success message: "Reading session deleted successfully."
+    render_success data: results
   end
 
   private
 
-  def reading_session_params
-    params.expect(reading_session: [
-      :snowflake,
-      :book_id,
-      :book_title,
-      :book_language,
-      :start_time,
-      :end_time,
-      :initial_chars,
-      :curr_chars,
-      :total_reading_time
-    ])
+  def request_user
+    User.find_by(username: params[:username]) || Current.user
   end
+
+  def snowflake_from(str: nil, date: nil, beginning_of_day: false, end_of_day: false)
+    raise ArgumentError, "Invalid snowflake argument provided" unless str || date
+    date ||= Date.parse(str)
+
+    if beginning_of_day
+      date.beginning_of_day.to_i * 1000
+    elsif end_of_day
+      date.end_of_day.to_i * 1000
+    else
+      date.to_i * 1000
+    end
+  end
+
 end

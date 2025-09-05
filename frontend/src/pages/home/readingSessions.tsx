@@ -1,4 +1,4 @@
-import { LumiDb } from "@/db"
+import db from "@/db"
 import { formatTime } from "@/lib/utils"
 import { createEffect, createResource, createSignal, Match, Show, Switch } from "solid-js"
 import { IconArrowPath, IconError, IconTick } from "@/components/icons"
@@ -17,21 +17,24 @@ export function ReadingSessions() {
         if (!authState.user) return
         setIsSyncing(true)
         setSyncError(null)
-        const didChange = await ReadingSessionManager.syncWithBackend()
-        if (didChange.error) {
-            console.error(didChange.error)
-            setSyncError(didChange.error.message)
-        } else if (didChange.ok) {
+
+        const res = await ReadingSessionManager.getInstance().syncEvents()
+        if (res.error) {
+            console.error(res.error)
+            setSyncError(res.error.message)
+        } else {
             await refetchLocalSessions()
         }
-
         setIsSyncing(false)
     }
 
     // update sessions with the backend
     createEffect(() => syncSessions())
 
-    const totalReadingTime = () => formatTime(sessions()?.reduce((a, b) => a + b.totalReadingTime, 0) || 0)
+    const totalReadingTime = () =>
+        sessions()
+            ?.map((s) => s.timeSpent)
+            .reduce((b, a) => b + a)
 
     const totalBooks = () => {
         const allSessions = sessions() || []
@@ -40,7 +43,7 @@ export function ReadingSessions() {
     }
 
     const longestReadingSession = () => {
-        const times = sessions()?.map((s) => s.totalReadingTime)
+        const times = sessions()?.map((s) => s.timeSpent)
         if (!times) return "-"
         const max = Math.max(...times)
         if (!isFinite(max) || isNaN(max)) return "-"
@@ -67,7 +70,7 @@ export function ReadingSessions() {
         const range = dateRange()
         if (range.from === null) return []
         if (range.to === null) return []
-        return await LumiDb.getReadingSessionByDateRange(range.from, range.to)
+        return await db.readingSessions.index({ from: range.from, to: range.to })
     })
 
     return (

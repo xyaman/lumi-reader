@@ -2,19 +2,19 @@ import { formatTime } from "@/lib/utils"
 import { createSignal, For, Show } from "solid-js"
 import { IconCalendar, IconClock, IconLanguage, IconTick, IconTrendingUp } from "@/components/icons"
 
-import { ReadingSession } from "@/db"
+import { LocalReadingSession } from "@/db"
 
-type GroupSession = ReadingSession & {
-    internals?: ReadingSession[]
+type GroupSession = LocalReadingSession & {
+    internals?: LocalReadingSession[]
 }
 
-export function ReadingSessionsList(props: { sessions: ReadingSession[]; groupByBook?: boolean }) {
+export function ReadingSessionsList(props: { sessions: LocalReadingSession[]; groupByBook?: boolean }) {
     const internalSessions = () => {
         if (!props.groupByBook) return props.sessions
         let groupSessions: Record<string, GroupSession> = {}
         props.sessions.forEach((s) => {
             if (groupSessions[s.bookTitle]) {
-                groupSessions[s.bookTitle].totalReadingTime += s.totalReadingTime
+                groupSessions[s.bookTitle].timeSpent += s.timeSpent
                 groupSessions[s.bookTitle].internals!.push(s)
             } else {
                 groupSessions[s.bookTitle] = { ...s, internals: [s] }
@@ -37,7 +37,7 @@ export function ReadingSessionsList(props: { sessions: ReadingSession[]; groupBy
     )
 }
 
-export function IndividualSessions(props: { grouped?: boolean; session: ReadingSession }) {
+export function IndividualSessions(props: { grouped?: boolean; session: LocalReadingSession }) {
     const dateFromTimestamp = (unixtimestamp: number) => {
         const date = new Date(unixtimestamp * 1000)
         const month = date.toLocaleString("en-US", { month: "short" })
@@ -47,9 +47,9 @@ export function IndividualSessions(props: { grouped?: boolean; session: ReadingS
         return `${month} ${day} ${hours}:${minutes}`
     }
 
-    const totalChars = () => props.session.currChars - props.session.initialChars
+    const totalChars = () => props.session.charsRead
     const readingSpeed = () => {
-        const time = props.session.totalReadingTime
+        const time = props.session.timeSpent
         if (totalChars() === 0 || time === 0) return 0
         return Math.ceil((totalChars() * 3600) / time)
     }
@@ -59,15 +59,15 @@ export function IndividualSessions(props: { grouped?: boolean; session: ReadingS
             <div class="flex flex-col md:flex-row md:items-center md:justify-between">
                 <div>
                     {!props.grouped && <h2 class="mb-2 text-sm truncate">{props.session.bookTitle}</h2>}
-                    Session on {dateFromTimestamp(Math.floor(new Date(props.session.startTime).getTime() / 1000))}
+                    Session on {dateFromTimestamp(Math.floor(props.session.createdAt.getTime() / 1000))}
                     <div class="flex items-center space-x-4 mt-1">
                         <span class="text-sm text-base04 flex items-center">
                             <IconClock class="mr-1" />
-                            {formatTime(props.session.totalReadingTime)}
+                            {formatTime(props.session.timeSpent)}
                         </span>
                         <span class="text-sm text-base04 flex items-center">
                             <IconTick class="mr-1" />
-                            {props.session.currChars - props.session.initialChars} chars
+                            {props.session.charsRead} chars
                         </span>
                         <span class="text-sm text-base04 flex items-center">
                             <IconTrendingUp class="mr-1" />
@@ -89,11 +89,10 @@ export function IndividualSessions(props: { grouped?: boolean; session: ReadingS
 export function GroupCard(props: { group: GroupSession }) {
     const [showNested, setShowNested] = createSignal(false)
 
-    const totalChars = () => props.group.currChars - props.group.initialChars
     const readingSpeed = () => {
-        const time = props.group.totalReadingTime
-        if (totalChars() === 0 || time === 0) return 0
-        return Math.ceil((totalChars() * 3600) / time)
+        const time = props.group.timeSpent
+        if (props.group.charsRead === 0 || time === 0) return 0
+        return Math.ceil((props.group.charsRead * 3600) / time)
     }
     return (
         <>
@@ -112,7 +111,7 @@ export function GroupCard(props: { group: GroupSession }) {
                                 </span>
                                 <span class="text-sm text-base04 flex items-center">
                                     <IconClock class="mr-1" />
-                                    {formatTime(props.group.totalReadingTime)}
+                                    {formatTime(props.group.timeSpent)}
                                 </span>
                                 <span class="text-sm text-base04 flex items-center">
                                     <IconCalendar class="mr-1" />
@@ -123,7 +122,7 @@ export function GroupCard(props: { group: GroupSession }) {
                     </div>
                     <div class="mt-2 md:mt-0">
                         <div class="flex space-x-2">
-                            <span class="bg-base03 px-2 py-1 rounded text-sm">{totalChars()} chars</span>
+                            <span class="bg-base03 px-2 py-1 rounded text-sm">{props.group.charsRead} chars</span>
                             <span class="bg-base03 px-2 py-1 rounded text-sm">{readingSpeed()} cph</span>
                         </div>
                     </div>

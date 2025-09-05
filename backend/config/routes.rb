@@ -46,11 +46,7 @@ Rails.application.routes.draw do
       end
     end
 
-    resources :reading_sessions, only: [ :create, :show, :update, :destroy, :index ], param: :snowflake do
-      collection do
-        put :batch_update
-      end
-    end
+    resources :reading_sessions, only: [ :create, :index ]
 
     resources :patreon_tiers, only: [ :index, :show ]
 
