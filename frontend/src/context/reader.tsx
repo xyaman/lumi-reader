@@ -49,6 +49,7 @@ export function ReaderProvider(props: { book: ReaderSource; children: JSX.Elemen
         }
 
         onCleanup(() => {
+            ReadingSessionManager.getInstance().updateProgress(props.book.currChars)
             ReadingSessionManager.getInstance().endReading()
         })
     })
