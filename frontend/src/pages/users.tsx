@@ -4,12 +4,11 @@ import { createEffect, createResource, createSignal, For, Match, on, onCleanup, 
 import UserAvatar from "@/components/UserAvatar"
 import { userApi } from "@/api/user"
 import { User, ApiReadingSession } from "@/types/api"
-import { IndividualSessions } from "@/components/home/readingSessions"
 import { createStore } from "solid-js/store"
 import Spinner from "@/components/Spinner"
 import { useAuthDispatch, useAuthState } from "@/context/auth"
 import { Button } from "@/ui"
-import db from "@/db"
+import { LumiDb } from "@/db"
 import { readingSessionsApi } from "@/api/readingSessions"
 import { FollowModal } from "@/components/users"
 import { IconBook, IconClock } from "@/components/icons"
@@ -64,11 +63,10 @@ export function Users() {
     }
 
     const [readingStore, setReadingStore] = createStore({
-        sessions: [] as ApiReadingSession[],
+        todaySessions: [] as ApiReadingSession[],
+        lastWeekSessions: [] as ApiReadingSession[],
+        restSessions: [] as ApiReadingSession[],
         loading: false,
-        morePages: true,
-        page: 0,
-        pages: 1,
     })
 
     const [userResource, { mutate: mutateUser }] = createResource(username, async () => {
@@ -102,14 +100,14 @@ export function Users() {
         const container = document.getElementById("main-container")
         if (!container) return console.error("main container not found")
 
-        function onScroll() {
-            if (container!.scrollTop + container!.clientHeight >= container!.scrollHeight - 300) {
-                loadMoreSessions()
-            }
-        }
+        // function onScroll() {
+        //     if (container!.scrollTop + container!.clientHeight >= container!.scrollHeight - 300) {
+        //         loadMoreSessions()
+        //     }
+        // }
 
-        container.addEventListener("scroll", onScroll)
-        onCleanup(() => container.removeEventListener("scroll", onScroll))
+        // container.addEventListener("scroll", onScroll)
+        // onCleanup(() => container.removeEventListener("scroll", onScroll))
     })
 
     // load initial sessions when the userId is determined
@@ -121,41 +119,37 @@ export function Users() {
     )
 
     const loadMoreSessions = async () => {
-        if (readingStore.loading || !readingStore.morePages) return
+        if (readingStore.loading) return
         setReadingStore("loading", true)
-        console.log("loading more..")
 
-        if (isOwnProfile()) {
-            // local sessions
-            const res = await db.readingSessions.index({})
-            if (res.length === 0) {
-                setReadingStore("loading", false)
-                setReadingStore("morePages", false)
-                return
-            }
+        const res = await readingSessionsApi.index({ username: username(), group: true })
+        if (res.ok) {
+            const now = new Date()
+            const todayStart = new Date(now)
+            todayStart.setHours(0, 0, 0, 0)
+            const todaySnowflake = todayStart.getTime()
+
             setReadingStore(
-                "sessions",
-                res.map((s) => ({ ...s, updatedAt: s.updatedAt.toISOString(), createdAt: s.createdAt.toISOString() })),
+                "todaySessions",
+                res.ok.data.filter((s) => s.snowflake > todaySnowflake),
             )
-            setReadingStore("page", (page) => page + 1)
-        } else {
-            // backend sessions (other users)
-            // it means we are at the end
-            if (readingStore.page >= readingStore.pages) {
-                setReadingStore("loading", false)
-                setReadingStore("morePages", false)
-                return
-            }
 
-            // backend pages starts at 1 (pagy ruby)
-            const res = await readingSessionsApi.index({ username: username(), group: true })
-            if (res.ok) {
-                setReadingStore("sessions", (sessions) => [...sessions, ...res.ok.data])
-                setReadingStore("page", (page) => page + 1)
-                // setReadingStore("pages", res.ok.data.pagy.pages)
-            } else {
-                console.error(res.error)
-            }
+            const lastWeekStart = new Date(now)
+            lastWeekStart.setDate(now.getDate() - 6)
+            lastWeekStart.setHours(0, 0, 0, 0)
+            const lastWeekSnowflake = lastWeekStart.getTime()
+
+            setReadingStore(
+                "lastWeekSessions",
+                res.ok.data.filter((s) => s.snowflake > lastWeekSnowflake && s.snowflake < todaySnowflake),
+            )
+
+            setReadingStore(
+                "restSessions",
+                res.ok.data.filter((s) => s.snowflake <= lastWeekSnowflake),
+            )
+        } else {
+            console.error(res.error)
         }
 
         setReadingStore("loading", false)
@@ -322,20 +316,70 @@ export function Users() {
                     <Show when={readingStore.loading}>
                         <Spinner size={40} base16Color="--base05" />
                     </Show>
-                    <For each={readingStore.sessions}>
-                        {(session) => (
-                            <IndividualSessions
-                                session={{
-                                    ...session,
-                                    updatedAt: new Date(session.updatedAt),
-                                    createdAt: new Date(session.createdAt),
-                                    synced: 1,
-                                }}
-                            />
-                        )}
-                    </For>
+                    <div class="bg-base01 divide-y divide-base02">
+                        <Show when={readingStore.todaySessions.length > 0}>
+                            <h3 class="px-6 pt-4 pb-2 text-sm font-medium text-base04">TODAY</h3>
+                            <For each={readingStore.todaySessions}>
+                                {(session) => <SessionCard session={session} />}
+                            </For>
+                        </Show>
+
+                        <Show when={readingStore.lastWeekSessions.length > 0}>
+                            <h3 class="px-6 pt-4 pb-2 text-sm font-medium text-base04">THIS WEEK</h3>
+                            <For each={readingStore.lastWeekSessions}>
+                                {(session) => <SessionCard session={session} />}
+                            </For>
+                        </Show>
+
+                        <Show when={readingStore.restSessions.length > 0}>
+                            <h3 class="px-6 pt-4 pb-2 text-sm font-medium text-base04">OLDER</h3>
+                            <For each={readingStore.restSessions}>{(session) => <SessionCard session={session} />}</For>
+                        </Show>
+                    </div>
                 </section>
             </Show>
+        </div>
+    )
+}
+
+function SessionCard(props: { session: ApiReadingSession }) {
+    const [coverUrl, setCoverUrl] = createSignal("")
+    createEffect(async () => {
+        const uniqueId = props.session.bookId
+        const lightbook = await LumiDb.readerLightSources.get({ uniqueId })
+        if (lightbook) {
+            const blobUrl = URL.createObjectURL(lightbook.coverImage!.blob)
+            setCoverUrl(blobUrl)
+            onCleanup(() => {
+                URL.revokeObjectURL(blobUrl)
+            })
+        }
+    })
+
+    const timeSpent = () => (props.session.timeSpent / 3600).toFixed(2)
+    const date = () => new Date(props.session.snowflake).toDateString()
+
+    return (
+        <div class="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-start gap-4">
+                <Show when={coverUrl()} fallback={<IconBook />}>
+                    <img src={coverUrl()} class="w-12 h-16 rounded object-cover" />
+                </Show>
+                <div>
+                    <h4>{props.session.bookTitle}</h4>
+                    <p class="text-sm text-base04">Last read: {date()}</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                <div>
+                    <p>Time</p>
+                    <p class="font-medium">{timeSpent()} hours</p>
+                </div>
+                <div>
+                    <p>Chars Read</p>
+                    <p class="font-medium">{props.session.charsRead} chars</p>
+                </div>
+            </div>
         </div>
     )
 }

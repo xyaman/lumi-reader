@@ -75,12 +75,6 @@ export function IndividualSessions(props: { grouped?: boolean; session: LocalRea
                         </span>
                     </div>
                 </div>
-                <div class="mt-2 md:mt-0 flex space-x-2">
-                    <button class="cursor-pointer px-3 py-1 bg-base03 rounded-md text-sm font-medium">Edit</button>
-                    <button class="cursor-pointer px-3 py-1 bg-base03 hover:bg-base08 rounded-md text-sm font-medium">
-                        Delete
-                    </button>
-                </div>
             </div>
         </div>
     )
