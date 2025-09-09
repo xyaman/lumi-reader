@@ -22,6 +22,15 @@ class ReadingSession < ApplicationRecord
     )
   end
 
+  def self.stats_for(user)
+    sessions = where(user: user)
+    total_seconds = sessions.sum(:time_spent)
+    {
+      total_books: sessions.select(:book_id).distinct.count,
+      total_reading_hours: (total_seconds / 3600.0).round(2)
+    }
+  end
+
   # scope :for_language, ->(language) { where(book_language: language) }
 
   # def self.stats(date = Date.current)

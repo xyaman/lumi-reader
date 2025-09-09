@@ -15,6 +15,10 @@ class UserBlueprint < Blueprinter::Base
 
     field :presence, if: ->(_field_name, user, _options) { user.share_presence }
 
+    field :stats do |user, _options|
+      ReadingSession.stats_for(user)
+    end
+
     field :is_following do |_user, options|
       options[:is_following] || nil
     end

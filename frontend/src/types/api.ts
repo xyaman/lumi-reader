@@ -28,6 +28,11 @@ export interface Tier {
     bookSyncLimit: number
 }
 
+export interface ReadingStats {
+    totalBooks: number
+    totalReadingHours: number
+}
+
 export interface User {
     id: number
     username: string
@@ -38,10 +43,11 @@ export interface User {
     tier: Tier
     shareOnlineStatus: boolean
     sharePresence: boolean
+    stats: ReadingStats
+    presence?: Presence
+
     // present if the user is logged in
     isFollowing?: boolean
-
-    presence?: Presence
 }
 
 export interface ApiReadingSession {

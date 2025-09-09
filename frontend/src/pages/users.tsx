@@ -12,6 +12,7 @@ import { Button } from "@/ui"
 import db from "@/db"
 import { readingSessionsApi } from "@/api/readingSessions"
 import { FollowModal } from "@/components/users"
+import { IconBook, IconClock } from "@/components/icons"
 
 type UserDescriptionProps = {
     user: User
@@ -291,6 +292,30 @@ export function Users() {
                         </div>
                     </div>
                 </section>
+
+                {/* Stats section */}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+                    <div class="bg-base01 rounded-xl p-6 flex items-center gap-3">
+                        <span class="bg-base02 p-5 rounded-xl">
+                            <IconBook />
+                        </span>
+                        <div>
+                            <p>Books Read</p>
+                            <p class="text-2xl font-bold">{userResource()?.stats.totalBooks}</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-base01 rounded-xl p-6 flex items-center gap-3">
+                        <span class="bg-base02 p-5 rounded-xl">
+                            <IconClock />
+                        </span>
+                        <div>
+                            <p>Hours read</p>
+                            <p class="text-2xl font-bold">{userResource()?.stats.totalReadingHours}</p>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Sessions/Activity */}
                 <section class="mt-12">
                     <h2 class="text-2xl font-bold mb-6 p-2 border-b border-base03">Recent Reading Activity</h2>
