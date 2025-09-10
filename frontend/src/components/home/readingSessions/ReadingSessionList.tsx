@@ -1,134 +1,169 @@
-import { formatTime } from "@/lib/utils"
-import { createSignal, For, Show } from "solid-js"
-import { IconCalendar, IconClock, IconLanguage, IconTick, IconTrendingUp } from "@/components/icons"
+import { LocalReadingSession, LumiDb } from "@/db"
+import { createEffect, createSignal, For, on, onCleanup, Show } from "solid-js"
 
-import { LocalReadingSession } from "@/db"
-
-type GroupSession = LocalReadingSession & {
-    internals?: LocalReadingSession[]
+export type ReadingSessionsListProps = {
+    sessions: LocalReadingSession[]
+    groupByBook: boolean
+    onEdit?: (session: LocalReadingSession) => void
+    onDelete?: (session: LocalReadingSession) => void
 }
 
-export function ReadingSessionsList(props: { sessions: LocalReadingSession[]; groupByBook?: boolean }) {
-    const internalSessions = () => {
-        if (!props.groupByBook) return props.sessions
-        let groupSessions: Record<string, GroupSession> = {}
+export function ReadingSessionsList(props: ReadingSessionsListProps) {
+    const [coversUrl, setCoversUrl] = createSignal<Record<string, string>>({})
+
+    const groupedSessions = () => {
+        const map: Record<string, LocalReadingSession[]> = {}
         props.sessions.forEach((s) => {
-            if (groupSessions[s.bookTitle]) {
-                groupSessions[s.bookTitle].timeSpent += s.timeSpent
-                groupSessions[s.bookTitle].internals!.push(s)
-            } else {
-                groupSessions[s.bookTitle] = { ...s, internals: [s] }
-            }
+            if (!map[s.bookTitle]) map[s.bookTitle] = []
+            map[s.bookTitle].push(s)
         })
-        return Object.values(groupSessions)
+        return map
     }
 
-    return (
-        <div>
-            <h2 class="text-xl font-semibold mb-4">{props.groupByBook ? "Books" : "All Sessions"}</h2>
-            <div class="grid grid-cols-1 gap-6">
-                <For each={internalSessions()}>
-                    {(session) =>
-                        props.groupByBook ? <GroupCard group={session} /> : <IndividualSessions session={session} />
+    // Helpers
+    const parseDate = (session: LocalReadingSession) => new Date(session.snowflake).toLocaleString()
+    const parseTimeSpent = (session: LocalReadingSession) => `${(session.timeSpent / 3600).toFixed(2)} hours`
+    const summarizeSessions = (sessions: LocalReadingSession[]) => {
+        const totalTime = sessions.reduce((sum, s) => sum + s.timeSpent, 0)
+        const totalChars = sessions.reduce((sum, s) => sum + s.charsRead, 0)
+        return {
+            totalTime: `${(totalTime / 3600).toFixed(2)} hours`,
+            totalChars,
+            count: sessions.length,
+        }
+    }
+
+    // Load cover images once per book
+    createEffect(
+        on(
+            () => props.sessions,
+            async () => {
+                for (const s of props.sessions) {
+                    if (!(s.bookId in coversUrl())) {
+                        const lightbook = await LumiDb.readerLightSources.get({ uniqueId: s.bookId })
+                        if (!lightbook?.coverImage?.blob) continue
+                        const url = URL.createObjectURL(lightbook.coverImage.blob)
+                        setCoversUrl((prev) => ({ ...prev, [s.bookId]: url }))
                     }
-                </For>
-            </div>
-        </div>
+                }
+
+                onCleanup(() => {
+                    Object.values(coversUrl()).forEach((c) => URL.revokeObjectURL(c))
+                    setCoversUrl({})
+                })
+            },
+        ),
     )
-}
-
-export function IndividualSessions(props: { grouped?: boolean; session: LocalReadingSession }) {
-    const dateFromTimestamp = (unixtimestamp: number) => {
-        const date = new Date(unixtimestamp * 1000)
-        const month = date.toLocaleString("en-US", { month: "short" })
-        const day = date.getDate().toString().padStart(2, "0")
-        const hours = date.getHours().toString().padStart(2, "0")
-        const minutes = date.getMinutes().toString().padStart(2, "0")
-        return `${month} ${day} ${hours}:${minutes}`
-    }
-
-    const totalChars = () => props.session.charsRead
-    const readingSpeed = () => {
-        const time = props.session.timeSpent
-        if (totalChars() === 0 || time === 0) return 0
-        return Math.ceil((totalChars() * 3600) / time)
-    }
 
     return (
-        <div class="bg-base01 rounded border border-base02 p-4 overflow-hidden mb-2">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
-                <div>
-                    {!props.grouped && <h2 class="mb-2 text-sm truncate">{props.session.bookTitle}</h2>}
-                    Session on {dateFromTimestamp(Math.floor(props.session.createdAt.getTime() / 1000))}
-                    <div class="flex items-center space-x-4 mt-1">
-                        <span class="text-sm text-base04 flex items-center">
-                            <IconClock class="mr-1" />
-                            {formatTime(props.session.timeSpent)}
-                        </span>
-                        <span class="text-sm text-base04 flex items-center">
-                            <IconTick class="mr-1" />
-                            {props.session.charsRead} chars
-                        </span>
-                        <span class="text-sm text-base04 flex items-center">
-                            <IconTrendingUp class="mr-1" />
-                            {readingSpeed()} cph
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    )
-}
-
-export function GroupCard(props: { group: GroupSession }) {
-    const [showNested, setShowNested] = createSignal(false)
-
-    const readingSpeed = () => {
-        const time = props.group.timeSpent
-        if (props.group.charsRead === 0 || time === 0) return 0
-        return Math.ceil((props.group.charsRead * 3600) / time)
-    }
-    return (
-        <>
-            <div
-                class="cursor-pointer bg-base01 hover:bg-base02 rounded border border-base02 p-6 overflow-hidden"
-                onClick={() => setShowNested((p) => !p)}
-            >
-                <div class="flex justify-between">
-                    <div class="max-w-[70%]">
-                        <h3 class="text-xl font-bold truncate">{props.group.bookTitle}</h3>
-                        <div class="flex items-center space-x-4 mt-2">
-                            <div class="flex items-center space-x-4 mt-2">
-                                <span class="text-sm text-base04 flex items-center">
-                                    <IconLanguage class="mr-1" />
-                                    {props.group.bookLanguage}
-                                </span>
-                                <span class="text-sm text-base04 flex items-center">
-                                    <IconClock class="mr-1" />
-                                    {formatTime(props.group.timeSpent)}
-                                </span>
-                                <span class="text-sm text-base04 flex items-center">
-                                    <IconCalendar class="mr-1" />
-                                    {props.group.internals?.length || 1}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-2 md:mt-0">
-                        <div class="flex space-x-2">
-                            <span class="bg-base03 px-2 py-1 rounded text-sm">{props.group.charsRead} chars</span>
-                            <span class="bg-base03 px-2 py-1 rounded text-sm">{readingSpeed()} cph</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <Show when={showNested()}>
-                <div class=" pl-4 md:pl-8 border-l-2 border-base02">
-                    <For each={props.group.internals}>
-                        {(session) => <IndividualSessions grouped={showNested()} session={session} />}
+        <div class="space-y-4">
+            <Show
+                when={props.groupByBook}
+                fallback={
+                    // Flat list (no grouping)
+                    <For each={props.sessions}>
+                        {(session) => (
+                            <SessionCard
+                                session={session}
+                                parseDate={parseDate}
+                                parseTimeSpent={parseTimeSpent}
+                                onEdit={props.onEdit}
+                                onDelete={props.onDelete}
+                                showImage={true}
+                                coverUrl={coversUrl()[session.bookId]}
+                            />
+                        )}
                     </For>
-                </div>
+                }
+            >
+                {/* Grouped List with summary + toggle details */}
+                <For each={Object.entries(groupedSessions())}>
+                    {([bookTitle, sessions]) => {
+                        const summary = summarizeSessions(sessions)
+                        const [expanded, setExpanded] = createSignal(false)
+
+                        return (
+                            <div class="rounded-lg shadow overflow-hidden">
+                                {/* Summary card */}
+                                <button
+                                    class="bg-base01 w-full text-left px-4 py-3 flex justify-between items-center hover:bg-base02 transition"
+                                    onClick={() => setExpanded(!expanded())}
+                                >
+                                    <div class="flex space-x-2 items-center">
+                                        <img
+                                            class="w-12 h-16 rounded object-cover"
+                                            src={coversUrl()[sessions[0].bookId]}
+                                            alt={bookTitle}
+                                        />
+                                        <div>
+                                            <h3 class="text-md">{bookTitle}</h3>
+                                            <p class="text-sm text-base04">{sessions[0].bookLanguage}</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-sm text-right">
+                                        <p class="font-medium">{summary.totalTime}</p>
+                                        <p>{summary.totalChars} chars</p>
+                                        <p>{summary.count} sessions</p>
+                                    </div>
+                                </button>
+
+                                <Show when={expanded()}>
+                                    <div class="mt-2 pl-4 border-l-2 border-base02">
+                                        <For each={sessions}>
+                                            {(session) => (
+                                                <SessionCard
+                                                    session={session}
+                                                    parseDate={parseDate}
+                                                    parseTimeSpent={parseTimeSpent}
+                                                    onEdit={props.onEdit}
+                                                    onDelete={props.onDelete}
+                                                />
+                                            )}
+                                        </For>
+                                    </div>
+                                </Show>
+                            </div>
+                        )
+                    }}
+                </For>
             </Show>
-        </>
+        </div>
+    )
+}
+
+function SessionCard(props: {
+    session: LocalReadingSession
+    parseDate: (s: LocalReadingSession) => string
+    parseTimeSpent: (s: LocalReadingSession) => string
+    onEdit?: (s: LocalReadingSession) => void
+    onDelete?: (s: LocalReadingSession) => void
+    showImage?: boolean
+    coverUrl?: string
+}) {
+    return (
+        <div class="bg-base01 rounded-lg px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex space-x-2">
+                <Show when={props.showImage}>
+                    <img class="w-12 h-16 rounded object-cover" src={props.coverUrl} alt={props.session.bookTitle} />
+                </Show>
+                <div>
+                    <h3 class="text-md">{props.session.bookTitle}</h3>
+                    <p class="text-sm text-base04">Language: {props.session.bookLanguage}</p>
+                </div>
+            </div>
+            <div>
+                <p class="font-medium">{props.parseDate(props.session)}</p>
+                <p class="text-sm">{props.parseTimeSpent(props.session)}</p>
+                <p class="text-sm">{props.session.charsRead} chars</p>
+            </div>
+            <div class="flex gap-2">
+                <button class="cursor-not-allowed text-base0D text-sm" onClick={() => props.onEdit?.(props.session)}>
+                    Edit
+                </button>
+                <button class="cursor-pointer text-base08 text-sm" onClick={() => props.onDelete?.(props.session)}>
+                    Delete
+                </button>
+            </div>
+        </div>
     )
 }
