@@ -1,6 +1,6 @@
 import db, { LocalReadingSession, LumiDb } from "@/db"
 import { createResource, createSignal } from "solid-js"
-import { FilterBar, StatsCards, StatCard, ReadingSessionsList } from "@/components/home/readingSessions"
+import { FilterBar, StatCard, ReadingSessionsList, SyncStatus, StatsCards } from "@/components/home/readingSessions"
 
 export function ReadingSessions() {
     const [groupByBook, setGroupByBook] = createSignal(true)
@@ -28,6 +28,8 @@ export function ReadingSessions() {
     })
 
     // -- handlers
+    const handleSync = async () => {}
+
     const onDelete = async (session: LocalReadingSession) => {
         if (confirm("Are you sure you want to remove this session? It wont be removed from the cloud.")) {
             await LumiDb.readingSessions.delete(session.snowflake)
@@ -49,8 +51,7 @@ export function ReadingSessions() {
                     dateRange={dateRange()}
                     onDateRangeSelect={(from: Date, to: Date) => setDateRange({ from, to })}
                 />
-                {/* SyncStatus */}
-                {/* Stats cards */}
+                <SyncStatus isSyncing={false} error={undefined} handleSync={handleSync} />
                 <StatsCards stats={sessionStats()} />
                 <ReadingSessionsList sessions={localSessions() || []} groupByBook={groupByBook()} onDelete={onDelete} />
             </main>
