@@ -2,6 +2,8 @@ import { ApiClient } from "@/lib/apiClient"
 import { GroupedReadingSession, type ApiReadingSession } from "@/types/api"
 import { camelToSnake, snakeToCamel } from "@/lib/utils"
 import { ok } from "@/lib/result"
+import { LumiDb } from "@/db"
+import { lsReadingSessions } from "@/services/localStorage"
 
 type IndexOptions = {
     offset?: number
@@ -10,6 +12,13 @@ type IndexOptions = {
     start_date?: string
     end_date?: string
     username?: string
+}
+
+type SyncOptions = {
+    autoManage?: boolean
+    lastSnowflake?: number
+    localSnowflakes?: number[]
+    lastSync?: Date
 }
 
 export const readingSessionsApi = {
@@ -52,6 +61,37 @@ export const readingSessionsApi = {
                     updatedAt: new Date().toISOString(),
                 })) as ApiReadingSession[],
             })
+        }
+
+        return res
+    },
+
+    async sync(options: SyncOptions) {
+        // 1. read local sessions snowflakes if argument not present
+        const lastSync = options.lastSync || new Date(lsReadingSessions.lastSyncTime())
+
+        const localSnowflakes =
+            options.localSnowflakes ||
+            ((await LumiDb.readingSessions
+                .toCollection()
+                .filter((s) => s.createdAt > lastSync)
+                .primaryKeys()) as number[])
+
+        let body = {
+            device_snowflakes: localSnowflakes,
+            updated_since: lastSync,
+            last_snowflake: options.lastSnowflake,
+        }
+
+        // 2. fetch data from the backend
+        const res = await ApiClient.request<ApiReadingSession[]>("/reading_sessions/sync", {
+            method: "POST",
+            body: JSON.stringify(body),
+        })
+
+        // 3. Update last sync if auto-managed
+        if (options.autoManage && res.ok) {
+            lsReadingSessions.setLastSyncTime(new Date().toISOString())
         }
 
         return res

@@ -1,6 +1,8 @@
 import db, { LocalReadingSession, LumiDb } from "@/db"
 import { createResource, createSignal } from "solid-js"
-import { FilterBar, StatCard, ReadingSessionsList, SyncStatus, StatsCards } from "@/components/home/readingSessions"
+import { SessionsToolbar, StatCard, ReadingSessionsList, StatsCards } from "@/components/home/readingSessions"
+import { readingSessionsApi } from "@/api/readingSessions"
+import ReadingSessionManager from "@/services/readingSession"
 
 export function ReadingSessions() {
     const [groupByBook, setGroupByBook] = createSignal(true)
@@ -9,8 +11,10 @@ export function ReadingSessions() {
 
     const [sessionStats, setSessionStats] = createSignal([] as StatCard[])
 
-    const [localSessions, { mutate }] = createResource(async () => {
+    // every time session are fetched, update the session stats too
+    const [localSessions, { mutate, refetch }] = createResource(async () => {
         const sessions = await db.readingSessions.index()
+        if (sessions.length === 0) return []
 
         setSessionStats([
             {
@@ -23,12 +27,31 @@ export function ReadingSessions() {
                 value: `${(Math.max(...sessions.map((s) => s.timeSpent)) / 3600).toFixed(2)} hours`,
             },
         ])
-
         return sessions
     })
 
     // -- handlers
-    const handleSync = async () => {}
+    // note: if this function throws, the SessionsToolbar component
+    // will display the error.
+    const handleSync = async () => {
+        // -- download from the server
+        const downloadRes = await readingSessionsApi.sync({ autoManage: true })
+        if (downloadRes.error) throw downloadRes.error
+
+        const newSessions = downloadRes.ok.data.map((s) => ({
+            ...s,
+            updatedAt: new Date(s.updatedAt),
+            createdAt: new Date(s.createdAt),
+            synced: 1,
+        }))
+
+        await LumiDb.readingSessions.bulkAdd(newSessions)
+        await refetch()
+
+        // -- upload local sessions
+        const uploadRes = await ReadingSessionManager.getInstance().syncEvents()
+        if (uploadRes.error) throw uploadRes.error
+    }
 
     const onDelete = async (session: LocalReadingSession) => {
         if (confirm("Are you sure you want to remove this session? It wont be removed from the cloud.")) {
@@ -44,14 +67,14 @@ export function ReadingSessions() {
                 <p>Track your reading progress and insights</p>
             </header>
             <main>
-                <FilterBar
+                <SessionsToolbar
                     groupByBook={groupByBook()}
                     setGroupByBook={setGroupByBook}
                     setSortBy={setSortBy}
                     dateRange={dateRange()}
                     onDateRangeSelect={(from: Date, to: Date) => setDateRange({ from, to })}
+                    onSync={handleSync}
                 />
-                <SyncStatus isSyncing={false} error={undefined} handleSync={handleSync} />
                 <StatsCards stats={sessionStats()} />
                 <ReadingSessionsList sessions={localSessions() || []} groupByBook={groupByBook()} onDelete={onDelete} />
             </main>

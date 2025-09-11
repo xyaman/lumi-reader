@@ -21,8 +21,6 @@ export function ReadingSessionsList(props: ReadingSessionsListProps) {
     }
 
     // Helpers
-    const parseDate = (session: LocalReadingSession) => new Date(session.snowflake).toLocaleString()
-    const parseTimeSpent = (session: LocalReadingSession) => `${(session.timeSpent / 3600).toFixed(2)} hours`
     const summarizeSessions = (sessions: LocalReadingSession[]) => {
         const totalTime = sessions.reduce((sum, s) => sum + s.timeSpent, 0)
         const totalChars = sessions.reduce((sum, s) => sum + s.charsRead, 0)
@@ -34,6 +32,7 @@ export function ReadingSessionsList(props: ReadingSessionsListProps) {
     }
 
     // Load cover images once per book
+    // TODO: this is wrong (onCleanup is not being called)
     createEffect(
         on(
             () => props.sessions,
@@ -41,8 +40,11 @@ export function ReadingSessionsList(props: ReadingSessionsListProps) {
                 for (const s of props.sessions) {
                     if (!(s.bookId in coversUrl())) {
                         const lightbook = await LumiDb.readerLightSources.get({ uniqueId: s.bookId })
-                        if (!lightbook?.coverImage?.blob) continue
-                        const url = URL.createObjectURL(lightbook.coverImage.blob)
+
+                        const url = lightbook?.coverImage?.blob
+                            ? URL.createObjectURL(lightbook.coverImage.blob)
+                            : "https://placehold.co/96x128?text=Book"
+
                         setCoversUrl((prev) => ({ ...prev, [s.bookId]: url }))
                     }
                 }
@@ -65,12 +67,10 @@ export function ReadingSessionsList(props: ReadingSessionsListProps) {
                         {(session) => (
                             <SessionCard
                                 session={session}
-                                parseDate={parseDate}
-                                parseTimeSpent={parseTimeSpent}
                                 onEdit={props.onEdit}
                                 onDelete={props.onDelete}
-                                showImage={true}
                                 coverUrl={coversUrl()[session.bookId]}
+                                showImage
                             />
                         )}
                     </For>
@@ -113,8 +113,6 @@ export function ReadingSessionsList(props: ReadingSessionsListProps) {
                                             {(session) => (
                                                 <SessionCard
                                                     session={session}
-                                                    parseDate={parseDate}
-                                                    parseTimeSpent={parseTimeSpent}
                                                     onEdit={props.onEdit}
                                                     onDelete={props.onDelete}
                                                 />
@@ -133,13 +131,15 @@ export function ReadingSessionsList(props: ReadingSessionsListProps) {
 
 function SessionCard(props: {
     session: LocalReadingSession
-    parseDate: (s: LocalReadingSession) => string
-    parseTimeSpent: (s: LocalReadingSession) => string
     onEdit?: (s: LocalReadingSession) => void
     onDelete?: (s: LocalReadingSession) => void
     showImage?: boolean
     coverUrl?: string
 }) {
+    // -- helpers
+    const parseDate = (session: LocalReadingSession) => new Date(session.snowflake).toLocaleString()
+    const parseTimeSpent = (session: LocalReadingSession) => `${(session.timeSpent / 3600).toFixed(2)} hours`
+
     return (
         <div class="bg-base01 rounded-lg px-4 py-3 flex flex-wrap items-center justify-between gap-4">
             <div class="flex space-x-2">
@@ -152,8 +152,8 @@ function SessionCard(props: {
                 </div>
             </div>
             <div>
-                <p class="font-medium">{props.parseDate(props.session)}</p>
-                <p class="text-sm">{props.parseTimeSpent(props.session)}</p>
+                <p class="font-medium">{parseDate(props.session)}</p>
+                <p class="text-sm">{parseTimeSpent(props.session)}</p>
                 <p class="text-sm">{props.session.charsRead} chars</p>
             </div>
             <div class="flex gap-2">

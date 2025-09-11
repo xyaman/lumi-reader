@@ -14,6 +14,14 @@ export function Home(props: { children?: JSX.Element }) {
     const [sizes, setSizes] = createSignal(lsHome.resizableSizes())
     createEffect(() => lsHome.setResizableSizes(sizes()))
 
+    const onSizesChange = (newSizes: number[]) => {
+        // normalize size (it gets weird when resizing the screen sometimes)
+        const left = Math.min(0.3, newSizes[0])
+        const right = 1 - left
+        if (sizes()[0] === left) return
+        setSizes([left, right])
+    }
+
     // note: the main-container id attribute is used by UserPage.tsx
     return (
         <LibraryProvider>
@@ -22,14 +30,14 @@ export function Home(props: { children?: JSX.Element }) {
                 fallback={
                     // Desktop version
                     <div class="size-full">
-                        <Resizable class="size-full" sizes={sizes()} onSizesChange={setSizes}>
-                            <Resizable.Panel minSize={0.1} class="overflow-hidden">
+                        <Resizable class="size-full" sizes={sizes()} onSizesChange={onSizesChange}>
+                            <Resizable.Panel minSize={0.1} maxSize={0.3} class="overflow-hidden">
                                 <Sidebar />
                             </Resizable.Panel>
                             <Resizable.Handle class="group basis-3 px-0.75">
                                 <div class="size-full rounded-sm transition-colors group-data-active:bg-base02 group-data-dragging:bg-base03" />
                             </Resizable.Handle>
-                            <Resizable.Panel minSize={0.7} class="overflow-y-auto" id="main-container">
+                            <Resizable.Panel minSize={0.7} maxSize={0.9} class="overflow-y-auto" id="main-container">
                                 <div class="p-10">{props.children}</div>
                             </Resizable.Panel>
                         </Resizable>

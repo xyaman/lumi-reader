@@ -343,17 +343,23 @@ export function Users() {
 }
 
 function SessionCard(props: { session: ApiReadingSession }) {
-    const [coverUrl, setCoverUrl] = createSignal("")
-    createEffect(async () => {
+    const [coverUrl, setCoverUrl] = createSignal("https://placehold.co/96x128?text=Cover")
+
+    createEffect(() => {
         const uniqueId = props.session.bookId
-        const lightbook = await LumiDb.readerLightSources.get({ uniqueId })
-        if (lightbook) {
-            const blobUrl = URL.createObjectURL(lightbook.coverImage!.blob)
-            setCoverUrl(blobUrl)
-            onCleanup(() => {
-                URL.revokeObjectURL(blobUrl)
-            })
-        }
+
+        ;(async () => {
+            const lightbook = await LumiDb.readerLightSources.get({ uniqueId })
+            if (lightbook) {
+                const blobUrl = URL.createObjectURL(lightbook.coverImage!.blob)
+                setCoverUrl(blobUrl)
+            }
+        })()
+
+        onCleanup(() => {
+            const blobUrl = !coverUrl().includes("placehold") ? coverUrl() : null
+            if (blobUrl) URL.revokeObjectURL(blobUrl)
+        })
     })
 
     const timeSpent = () => (props.session.timeSpent / 3600).toFixed(2)

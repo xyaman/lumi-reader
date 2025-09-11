@@ -13,7 +13,7 @@ const LS_VERTICAL = "reader:vertical"
 const LS_PAGINATED = "reader:paginated"
 
 // reading sessions
-const LS_LASTSYNC = "last_session_sync_time"
+const LS_LASTSYNC = "reading_sessions:last_sync"
 const LS_AUTOSTART = "reader:sessions:autostart"
 const LS_AUTOSYNC = "reader:sessions:autosync"
 
@@ -29,7 +29,7 @@ function getOrTrue(key: string) {
     return item !== null ? item === "true" : true
 }
 
-function getStringOr(key: string, or: string) {
+function getStringOr(key: string, or: any) {
     const item = localStorage.getItem(key)
     return item || or
 }
@@ -82,7 +82,7 @@ export const lsReadingSessions = {
     autoSync: () => getOrTrue(LS_AUTOSYNC),
     setAutoStart: (value: unknown) => set(LS_AUTOSTART, value),
     setAutoSync: (value: unknown) => set(LS_AUTOSYNC, value),
-    lastSyncTime: () => getStringOr(LS_LASTSYNC, new Date().toISOString()),
+    lastSyncTime: () => getStringOr(LS_LASTSYNC, null),
     setLastSyncTime: (value: string) => set(LS_LASTSYNC, value),
 }
 
