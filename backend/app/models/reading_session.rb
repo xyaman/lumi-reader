@@ -8,40 +8,43 @@ class ReadingSession < ApplicationRecord
   validates :book_language, presence: true
 
   scope :recent, -> { order(snowflake: :desc) }
-
-  # TODO: use subquery
-  def self.by_book(limit = 50, offset = 0)
-    group(:book_id, :book_title, :book_language)
-    .pluck(
+  scope :by_book, -> {
+    select(
       :book_id,
-      :book_title,
-      :book_language,
-      "SUM(chars_read) AS total_chars_read",
-      "SUM(time_spent) AS total_time_spent",
-      "MAX(snowflake) AS last_snowflake"
+      "MAX(book_title) as book_title",
+      "MAX(book_language) as book_language",
+      "SUM(chars_read) as total_chars_read",
+      "SUM(time_spent) as total_time_spent",
+      "MAX(snowflake) as last_snowflake"
     )
-  end
+    .group(:book_id)
+  }
 
   def self.stats_for(user)
-    sessions = where(user: user)
-    total_seconds = sessions.sum(:time_spent)
+    stats = where(user: user).select(
+      "SUM(time_spent) as total_seconds",
+      "COUNT(DISTINCT book_id) as total_books"
+    ).first
+
+    total_seconds = stats.total_seconds || 0
+
     {
-      total_books: sessions.select(:book_id).distinct.count,
-      total_reading_hours: (total_seconds / 3600.0).round(2)
+      total_reading_hours: (total_seconds/3600).round(2),
+      total_total_books: stats.total_books
     }
   end
-
-  # scope :for_language, ->(language) { where(book_language: language) }
-
-  # def self.stats(date = Date.current)
-  #   start_miliseconds = date.beginning_of_day.to_i * 1000
-  #   end_miliseconds = date.end_ofday.to_i * 1000
-  #   events = where(snowflake: start_miliseconds..end_miliseconds)
-  #   {
-  #     total_time: events.sum(:time_spent),
-  #     total_chars: events.sum(:chars_read),
-  #     books_read: events.distinct.count(:book_id),
-  #     sessions: events.where(event_type: "session_end").count
-  #   }
-  # end
 end
+
+# scope :for_language, ->(language) { where(book_language: language) }
+
+# def self.stats(date = Date.current)
+#   start_miliseconds = date.beginning_of_day.to_i * 1000
+#   end_miliseconds = date.end_ofday.to_i * 1000
+#   events = where(snowflake: start_miliseconds..end_miliseconds)
+#   {
+#     total_time: events.sum(:time_spent),
+#     total_chars: events.sum(:chars_read),
+#     books_read: events.distinct.count(:book_id),
+#     sessions: events.where(event_type: "session_end").count
+#   }
+# end

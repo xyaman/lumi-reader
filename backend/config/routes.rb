@@ -46,7 +46,11 @@ Rails.application.routes.draw do
       end
     end
 
-    resources :reading_sessions, only: [ :create, :index ]
+    resources :reading_sessions, only: [ :create, :index ] do
+      collection do
+        post :sync
+      end
+    end
 
     resources :patreon_tiers, only: [ :index, :show ]
 

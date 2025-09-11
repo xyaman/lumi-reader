@@ -2,14 +2,20 @@ class V1::ReadingSessionsController < ApplicationController
   allow_unauthenticated_access only: %i[ index ]
 
   def index
+    # params:
+    # username: string (if it's not present it will try to use Current.user/logged user)
+    # offset: number 
+    # limit: number
+    # group: boolean (true or false)
+    # start_date: snowflake format
+    # end_date: snowflake format
+
     user = request_user
     return render_error errors: "User not found." unless user
 
-    offset = params[:offset].to_i || 0
+    offset = params[:offset].to_i
     limit = [ params[:limit].to_i, 50 ].min
     group = params[:group] == "true"
-
-    sessions = user.reading_sessions
 
     if params[:start_date].present?
       start_ms = snowflake_from(str: params[:start_date], beginning_of_day: true)
@@ -18,52 +24,75 @@ class V1::ReadingSessionsController < ApplicationController
       else
         snowflake_from(str: params[:start_date], end_of_day: true)
       end
-
-      sessions = sessions.where(snowflake: start_ms..end_ms)
     end
+
+    sessions = user.reading_sessions
+    sessions = sessions.where(snowflake: start_ms..end_ms) if params[:start_date].present?
 
     if group
-      sessions = sessions.by_book.map do |book_id, title, lang, chars, time, last_snowflake|
-        {
-          book_id: book_id,
-          book_title: title,
-          book_language: lang,
-          total_chars_read: chars,
-          total_time_spent: time,
-          last_snowflake: last_snowflake
-        }
-      end
+      paginated_grouped_sessions = sessions
+        .by_book
+        .order("last_snowflake DESC") # use the scope alias (:snowflake is not available)
+        .offset(offset)
+        .limit(limit)
+
+      data = paginated_grouped_sessions.map { |s| format_grouped_session(s) }
     else
-      sessions = sessions.order(snowflake: :desc).limit(limit).offset(offset)
+      data = sessions.order(snowflake: :desc).limit(limit).offset(offset)
     end
+
+    render_success data: data
+  end
+
+  def sync
+    device_snowflakes = params[:device_snowflakes] || []
+    device_snowflakes = device_snowflakes.map(&:to_i)
+
+    updated_since = params[:updated_since].present? ? Date.parse(params[:updated_since]) : nil
+    last_snowflake = params[:last_snowflake].to_i
+    limit = [ params[:limit].to_i, 500 ].reject(&:zero?).first || 500
+
+    sessions = Current.user.reading_sessions
+      .where.not(snowflake: device_snowflakes)
+      .where("snowflake > ?", last_snowflake)
+      .order(snowflake: :asc)
+      .limit(limit)
+    sessions = sessions.where("updated_at > ?", updated_since) if updated_since.present?
 
     render_success data: sessions
   end
 
-
   def create
-    sessions_params = params[:sessions]
-    return render_error errors: "Events must be an array" unless sessions_params.is_a?(Array)
+    sessions_params = params.permit(sessions: permitted_session_attributes)
+    return render_error errors: "Events must be an array" unless sessions_params[:sessions].is_a?(Array)
 
     results = []
-    sessions_params.each do |session_data|
-      session = Current.user.reading_sessions.new(
-        snowflake: session_data[:snowflake],
-        book_id: session_data[:book_id],
-        book_title: session_data[:book_title],
-        book_language: session_data[:book_language],
-        chars_read: session_data[:chars_read],
-        time_spent: session_data[:time_spent],
-      )
+    valid_sessions_attributes = []
 
-      if session.save
-        results << { snowflake: session_data[:snowflake], status: "created" }
+    # 1. Validate first
+    sessions_params[:sessions].each do |session_data|
+      session = Current.user.reading_sessions.new(session_data)
+      if session.valid?
+        # Add timestamps for insert_all (it bypasses ActiveRecord callbacks)
+        valid_sessions_attributes << session.attributes.merge(
+          "created_at" => current_time,
+          "updated_at" => current_time
+        )
       else
         results << { snowflake: session_data[:snowflake], status: "error", errors: session.errors.full_messages }
       end
     end
 
-    render_success data: results
+    # 2. Bulk insert
+    if valid_sessions_attributes.any?
+      ReadingSession.insert_all(valid_sessions_attributes)
+      valid_sessions_attributes.each do |attrs|
+        results << { snowflake: attrs["snowflake"], status: "created" }
+      end
+    end
+
+    # sort to maintain order
+    render_success data: results.sort_by { |r| r[:snowflake] } 
   end
 
   private
@@ -83,6 +112,21 @@ class V1::ReadingSessionsController < ApplicationController
     else
       date.to_i * 1000
     end
+  end
+
+  def format_grouped_session(session)
+    {
+      book_id: session.book_id,
+      book_title: session.book_title,
+      book_language: session.book_language,
+      total_chars_read: session.total_chars_read,
+      total_time_spent: session.total_time_spent,
+      last_snowflake: session.last_snowflake
+    }
+  end
+
+  def permitted_session_attributes
+    [ :snowflake, :book_id, :book_title, :book_language, :chars_read, :time_spent ]
   end
 
 end

@@ -4,32 +4,23 @@ one:
   book_id: "123"
   book_title: "The Hobbit"
   book_language: "en"
-  start_time: <%= 1.day.ago %>
-  end_time: <%= 1.day.ago + 2.hours %>
-  initial_chars: 0
-  curr_chars: 1000
-  total_reading_time: 7200
+  time_spent: 3600
+  chars_read: 1000
 
 two:
   snowflake: 2
   user: xyaman
-  book_id: "456"
+  book_id: "123"
   book_title: "The Lord of the Rings"
   book_language: "en"
-  start_time: <%= 2.days.ago %>
-  end_time: <%= 2.days.ago + 3.hours %>
-  initial_chars: 500
-  curr_chars: 2500
-  total_reading_time: 10800
+  time_spent: 3600
+  chars_read: 1000
 
 three:
   snowflake: 3
-  user: user4
-  book_id: "789"
+  user: xyaman
+  book_id: "123"
   book_title: "The Silmarillion"
   book_language: "en"
-  start_time: <%= 3.days.ago %>
-  end_time: <%= 3.days.ago + 1.hour %>
-  initial_chars: 100
-  curr_chars: 600
-  total_reading_time: 3600
+  time_spent: 3600
+  chars_read: 1000
