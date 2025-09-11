@@ -7,13 +7,20 @@ import ReadingSessionManager from "@/services/readingSession"
 export function ReadingSessions() {
     const [groupByBook, setGroupByBook] = createSignal(true)
     const [_sortBy, setSortBy] = createSignal("")
-    const [dateRange, setDateRange] = createSignal({ from: new Date(), to: new Date() })
+
+    // dates
+    const now = new Date()
+    const todayStart = new Date(now)
+    todayStart.setHours(0, 0, 0, 0)
+    const [dateRange, setDateRange] = createSignal({ from: todayStart, to: now })
 
     const [sessionStats, setSessionStats] = createSignal([] as StatCard[])
 
     // every time session are fetched, update the session stats too
-    const [localSessions, { mutate, refetch }] = createResource(async () => {
-        const sessions = await db.readingSessions.index()
+    const [localSessions, { mutate, refetch }] = createResource(dateRange, async (range) => {
+        const { to, from } = range
+        const sessions = await db.readingSessions.index({ from, to })
+        console.log(dateRange())
         if (sessions.length === 0) return []
 
         setSessionStats([
