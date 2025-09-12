@@ -26,7 +26,7 @@ class V1::ReadingSessionsController < ApplicationController
       end
     end
 
-    sessions = user.reading_sessions
+    sessions = user.reading_sessions.active
     sessions = sessions.where(snowflake: start_ms..end_ms) if params[:start_date].present?
 
     if group
@@ -74,6 +74,7 @@ class V1::ReadingSessionsController < ApplicationController
       session = Current.user.reading_sessions.new(session_data)
       if session.valid?
         # Add timestamps for insert_all (it bypasses ActiveRecord callbacks)
+        current_time = Time.current
         valid_sessions_attributes << session.attributes.merge(
           "created_at" => current_time,
           "updated_at" => current_time
@@ -93,6 +94,14 @@ class V1::ReadingSessionsController < ApplicationController
 
     # sort to maintain order
     render_success data: results.sort_by { |r| r[:snowflake] } 
+  end
+
+  def destroy
+    session = Current.user.reading_sessions.find_by(snowflake: params[:snowflake].to_i)
+    return render_error errors: "Session not found.", status: :not_found unless session
+
+    session.update!(status: "removed")
+    render_success data: params[:snowflake].to_i, message: "Reading Session deleted successfully"
   end
 
   private

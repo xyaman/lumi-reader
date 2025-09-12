@@ -1,7 +1,5 @@
 class RecreateReadingSessions < ActiveRecord::Migration[8.0]
   def change
-    drop_table :reading_sessions
-
     create_table :reading_sessions do |t|
       t.bigint :snowflake, null: false    # client-generated snowflake
       t.references :user, null: false, foreign_key: true

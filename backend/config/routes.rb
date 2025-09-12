@@ -46,7 +46,7 @@ Rails.application.routes.draw do
       end
     end
 
-    resources :reading_sessions, only: [ :create, :index ] do
+    resources :reading_sessions, only: [ :create, :index, :destroy ], param: :snowflake do
       collection do
         post :sync
       end
