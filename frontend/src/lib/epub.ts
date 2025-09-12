@@ -149,8 +149,6 @@ export class EpubBook implements ReaderSource {
     }
 
     findSectionIndexById(name: string): number | null | undefined {
-        console.log("name", name)
-        console.log(this.sections)
         for (let i = 0; i < this.sections.length; i++) {
             if (name === this.sections[i].name) {
                 return i

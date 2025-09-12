@@ -89,7 +89,6 @@ export function Users() {
     // Go to login page if there is no param and the user is not logged in
     // Otherwise user not found?
     createEffect(() => {
-        console.log(authState.status)
         if (isOwnProfile() && authState.status === "unauthenticated") {
             return navigate("/login", { replace: true })
         }

@@ -52,7 +52,7 @@ const readingSessions = {
     },
 
     async delete(snowflake: number) {
-        await LumiDb.readingSessions.delete(snowflake)
+        await LumiDb.readingSessions.update(snowflake, { status: "removed", synced: 0 })
     },
 
     async updateSyncedBatch(snowflakes: number[], status: boolean) {

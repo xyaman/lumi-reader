@@ -60,6 +60,7 @@ export interface ApiReadingSession {
     timeSpent: number
     createdAt: string
     updatedAt: string
+    status: "active" | "removed"
 }
 
 export interface GroupedReadingSession {

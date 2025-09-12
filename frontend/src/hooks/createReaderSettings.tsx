@@ -65,7 +65,6 @@ export function createReaderSettings(injectCss: boolean = false) {
 
     if (injectCss) {
         onMount(() => reflectSettings())
-        console.log(settings())
     }
 
     onCleanup(() => {

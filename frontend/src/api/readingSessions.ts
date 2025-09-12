@@ -103,4 +103,10 @@ export const readingSessionsApi = {
             body: JSON.stringify({ sessions: camelToSnake(sessions) }),
         })
     },
+
+    async destroy(snowflake: number) {
+        return ApiClient.request<number>(`/reading_sessions/${snowflake}`, {
+            method: "DELETE",
+        })
+    },
 }

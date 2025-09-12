@@ -19,8 +19,7 @@ export function ReadingSessions() {
     // every time session are fetched, update the session stats too
     const [localSessions, { mutate, refetch }] = createResource(dateRange, async (range) => {
         const { to, from } = range
-        const sessions = await db.readingSessions.index({ from, to })
-        console.log(dateRange())
+        const sessions = (await db.readingSessions.index({ from, to })).filter((s) => s.status !== "removed")
         if (sessions.length === 0) return []
 
         setSessionStats([
@@ -45,14 +44,18 @@ export function ReadingSessions() {
         const downloadRes = await readingSessionsApi.sync({ autoManage: true })
         if (downloadRes.error) throw downloadRes.error
 
-        const newSessions = downloadRes.ok.data.map((s) => ({
-            ...s,
-            updatedAt: new Date(s.updatedAt),
-            createdAt: new Date(s.createdAt),
-            synced: 1,
-        }))
+        const deletedSessions = downloadRes.ok.data.filter((s) => s.status === "removed").map((s) => s.snowflake)
+        const newSessions = downloadRes.ok.data
+            .filter((s) => s.status === "active")
+            .map((s) => ({
+                ...s,
+                updatedAt: new Date(s.updatedAt),
+                createdAt: new Date(s.createdAt),
+                synced: 1,
+            }))
 
         await LumiDb.readingSessions.bulkAdd(newSessions)
+        await LumiDb.readingSessions.bulkDelete(deletedSessions)
         await refetch()
 
         // -- upload local sessions
@@ -61,8 +64,10 @@ export function ReadingSessions() {
     }
 
     const onDelete = async (session: LocalReadingSession) => {
-        if (confirm("Are you sure you want to remove this session? It wont be removed from the cloud.")) {
-            await LumiDb.readingSessions.delete(session.snowflake)
+        if (confirm("Are you sure you want to remove this session? It will also be removed from the cloud.")) {
+            await db.readingSessions.delete(session.snowflake)
+            const res = await ReadingSessionManager.getInstance().syncEvents()
+            if (res.error) console.error(res.error)
             mutate((prev) => prev && prev?.filter((s) => s.snowflake != session.snowflake))
         }
     }

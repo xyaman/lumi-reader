@@ -75,6 +75,7 @@ export default class ReadingSessionManager {
             charsRead: 0,
             timeSpent: 0,
             synced: 0,
+            status: "active" as const,
         }
 
         const snowflake = await db.readingSessions.create(event)
@@ -107,8 +108,6 @@ export default class ReadingSessionManager {
         if (!this.isReading() || !this.currentBook() || !this.sessionSnowflake()) return
         if (this.isPaused()) return
 
-        console.log("updating progress:", charsPosition)
-
         const now = new Date()
         const lastTime = this.lastActiveTime()!
         const charsRead = charsPosition - this.initialCharsPosition()
@@ -119,7 +118,6 @@ export default class ReadingSessionManager {
             charsRead,
             timeSpent,
         })
-        console.log("written")
         this.setLastActiveTime(now)
     }
 
@@ -146,14 +144,27 @@ export default class ReadingSessionManager {
     }
 
     async syncEvents() {
-        const unsyncedSessions = await db.readingSessions.index({ synced: false })
-        console.log("session", unsyncedSessions)
-        if (unsyncedSessions.length === 0) return ok(null)
-
+        // TODO: handle this better
         const user = lsAuth.currentUser()
         if (!user) return ok(null)
 
-        const apiSessions = unsyncedSessions.map((s) => ({
+        const unsyncedSessions = await db.readingSessions.index({ synced: false })
+        if (unsyncedSessions.length === 0) return ok(null)
+
+        const newSessions = unsyncedSessions.filter((s) => s.status === "active")
+        const deletedSessions = unsyncedSessions.filter((s) => s.status === "removed")
+
+        // Delete locally deleted sessions and update sync status
+        // TODO: improve error handling
+        const deletedRes = await Promise.all(deletedSessions.map((s) => readingSessionsApi.destroy(s.snowflake)))
+        const deletedResError = deletedRes.find((s) => s.error !== null)
+        if (deletedResError) return deletedResError
+
+        const success = deletedRes.filter((res) => res.error === null).map((res) => res.ok.data)
+        await db.readingSessions.updateSyncedBatch(success, true)
+
+        // Update new local sessions and update sync status
+        const apiSessions = newSessions.map((s) => ({
             ...s,
             userId: user.id,
             updatedAt: s.updatedAt.toISOString(),

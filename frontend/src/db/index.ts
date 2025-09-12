@@ -55,7 +55,6 @@ export class LumiDbClass extends Dexie {
     // ---------- BOOKS ----------
     async saveBookRecord(source: ReaderSourceRecord, updateAt = true): Promise<void> {
         if (updateAt) source.updatedAt = new Date().toISOString()
-        console.log(source)
 
         const lightRecord: Partial<ReaderSourceLightRecord> = {
             kind: source.kind,

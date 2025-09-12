@@ -35,8 +35,6 @@ export default function SocialList() {
                             u.id === camelData.userId ? { ...u, presence: { ...camelData.presence } } : u,
                         ),
                 )
-
-                console.log(follows())
             },
         },
     )
