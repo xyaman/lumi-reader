@@ -71,6 +71,17 @@ export function ReaderSettings(props: { isEmbedded?: boolean }) {
                     />
                     <span>Show Furigana</span>
                 </div>
+
+                <div class="space-y-2 border-t-1 border-base04 pt-2">
+                    <div class="flex space-x-2">
+                        <Checkbox
+                            checked={settings().disableCss}
+                            onChange={() => setSettings("disableCss", !settings().disableCss)}
+                        />
+                        <span>Disable CSS Injection</span>
+                    </div>
+                    <span class="text-xs text-base04">This might solve errors with some books.</span>
+                </div>
             </div>
 
             {/* Padding Controls */}

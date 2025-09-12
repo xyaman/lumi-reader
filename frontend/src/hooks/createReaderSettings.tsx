@@ -1,5 +1,5 @@
 import { lsReader } from "@/services/localStorage"
-import { createEffect, createSignal, onCleanup, onMount } from "solid-js"
+import { createSignal, onCleanup, onMount } from "solid-js"
 
 const initial = {
     fontSize: Math.max(lsReader.fontSize(), 1),
@@ -9,6 +9,7 @@ const initial = {
     vertical: lsReader.vertical(),
     paginated: lsReader.paginated(),
     showFurigana: lsReader.showFurigana(),
+    disableCss: lsReader.disableCssInjection(),
 }
 const [settings, setSettings] = createSignal(initial)
 
@@ -18,7 +19,9 @@ const [settings, setSettings] = createSignal(initial)
  *
  * @param [autoReflectChanges=true] default true. update the css after any change
  */
-export function createReaderSettings(autoReflectChanges: boolean = false) {
+export function createReaderSettings(injectCss: boolean = false) {
+    const [tempSettings, setTempSettings] = createSignal(settings())
+
     function setReaderSetting<K extends keyof typeof initial>(key: K, value: (typeof initial)[K]) {
         switch (key) {
             case "fontSize":
@@ -42,8 +45,11 @@ export function createReaderSettings(autoReflectChanges: boolean = false) {
             case "showFurigana":
                 lsReader.setShowFurigana(value as boolean)
                 break
+            case "disableCss":
+                lsReader.setDisableCssInjection(value as boolean)
+                break
         }
-        setSettings((prev) => ({ ...prev, [key]: value }))
+        setTempSettings((prev) => ({ ...prev, [key]: value }))
     }
 
     function reflectSettings() {
@@ -54,12 +60,12 @@ export function createReaderSettings(autoReflectChanges: boolean = false) {
             "--reader-horizontal-padding",
             `${100 - settings().horizontalPadding}%`,
         )
+        setSettings(tempSettings())
     }
 
-    if (autoReflectChanges) {
-        createEffect(() => reflectSettings())
-    } else {
+    if (injectCss) {
         onMount(() => reflectSettings())
+        console.log(settings())
     }
 
     onCleanup(() => {

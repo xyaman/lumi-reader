@@ -11,6 +11,7 @@ const LS_HORIZONTAL_PADDING = "reader:horizontalPadding"
 const LS_SHOW_FURIGANA = "reader:showFurigana"
 const LS_VERTICAL = "reader:vertical"
 const LS_PAGINATED = "reader:paginated"
+const LS_INJECTCSS = "reader:injectCss"
 
 // reading sessions
 const LS_LASTSYNC = "reading_sessions:last_sync"
@@ -27,6 +28,11 @@ function getNumberOr(key: string, fallback: number | string) {
 function getOrTrue(key: string) {
     const item = localStorage.getItem(key)
     return item !== null ? item === "true" : true
+}
+
+function getOrFalse(key: string) {
+    const item = localStorage.getItem(key)
+    return item !== null ? item === "true" : false
 }
 
 function getStringOr(key: string, or: any) {
@@ -70,11 +76,14 @@ export const lsReader = {
     showFurigana: () => getOrTrue(LS_SHOW_FURIGANA),
     setShowFurigana: (value: boolean) => set(LS_SHOW_FURIGANA, value),
 
-    vertical: () => getOrTrue(LS_VERTICAL),
+    vertical: () => getOrFalse(LS_VERTICAL),
     setVertical: (value: boolean) => set(LS_VERTICAL, value),
 
     paginated: () => getOrTrue(LS_PAGINATED),
     setPaginated: (value: boolean) => set(LS_PAGINATED, value),
+
+    disableCssInjection: () => getOrFalse(LS_INJECTCSS),
+    setDisableCssInjection: (value: boolean) => set(LS_INJECTCSS, value),
 }
 
 export const lsReadingSessions = {

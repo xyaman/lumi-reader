@@ -24,8 +24,7 @@ export default function ReaderContent() {
 
     let containerRef: HTMLDivElement | undefined
 
-    // TODO: readersettings is not global
-    const [readerSettings] = createReaderSettings()
+    const [readerSettings] = createReaderSettings(true)
     const isPaginated = () => readerSettings().paginated
     const isVertical = () => readerSettings().vertical
     const showFurigana = () => readerSettings().showFurigana
@@ -251,6 +250,24 @@ export default function ReaderContent() {
             document.querySelector(`p[index='${readerState.book.currParagraph}']`)?.scrollIntoView()
         }, 0)
     }
+
+    // injects/removes the css from the site
+    createEffect(
+        on(
+            () => readerSettings().disableCss,
+            (disableCss) => {
+                if (!disableCss) {
+                    const bookStyle = readerState.book.getCssStyle()
+                    bookStyle.id = "book-css"
+                    document.head.appendChild(bookStyle)
+
+                    onCleanup(() => {
+                        document.head.querySelector("#book-css")?.remove()
+                    })
+                }
+            },
+        ),
+    )
 
     // Updates: isPaginated changes
     // Sets up pagination event listeners (touch, keyboard, scroll)

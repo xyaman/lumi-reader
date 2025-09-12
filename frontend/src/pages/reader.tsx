@@ -39,9 +39,6 @@ export function BookReader(): JSX.Element {
     const initializeReader = async (source: ReaderSource) => {
         setCurrBook(source)
 
-        const bookStyle = source.getCssStyle()
-        bookStyle.id = "book-css"
-        document.head.appendChild(bookStyle)
         document.documentElement.lang = source.language
 
         // NOTE: if user is offline or unauthenticated, the
