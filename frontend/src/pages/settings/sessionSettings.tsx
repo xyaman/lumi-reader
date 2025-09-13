@@ -1,3 +1,4 @@
+import Checkbox from "@/ui/checkbox"
 import { lsReadingSessions } from "../../services/localStorage"
 
 export function SessionSettings() {
@@ -9,26 +10,15 @@ export function SessionSettings() {
             <h2 class="text-2xl font-semibold">Session Settings</h2>
             <div class="mt-5 space-y-3">
                 <div class="flex items-center space-x-2">
-                    <input
-                        id="automatic-checkbox"
-                        type="checkbox"
+                    <Checkbox
                         checked={automaticStart()}
-                        onChange={(e) => lsReadingSessions.setAutoStart(e.target.checked)}
+                        onChange={() => lsReadingSessions.setAutoStart(!automaticStart())}
                     />
-                    <label for="automatic-checkbox" class="text-sm font-medium">
-                        Start reading session automatically
-                    </label>
+                    <span> Start reading session automatically</span>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <input
-                        id="sync-checkbox"
-                        type="checkbox"
-                        checked={synchronize()}
-                        onChange={(e) => lsReadingSessions.setAutoSync(e.target.checked)}
-                    />
-                    <label for="sync-checkbox" class="text-sm font-medium">
-                        Synchronize with server automatically
-                    </label>
+                    <Checkbox checked={synchronize()} onChange={() => lsReadingSessions.setAutoSync(!synchronize())} />
+                    <span>Synchronize with server automatically</span>
                 </div>
             </div>
         </section>

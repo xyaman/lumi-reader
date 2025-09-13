@@ -75,7 +75,7 @@ export function SessionsToolbar(props: SessionsToolbarProps) {
 
                     {/* Sort Dropdown */}
                     <select
-                        class="border border-base04 rounded px-3 py-1 text-sm"
+                        class="cursor-pointer border border-base04 rounded px-3 py-1 text-sm"
                         onChange={(e) => props.setSortBy(e.currentTarget.value)}
                     >
                         <option value="">Sort by...</option>
@@ -85,7 +85,7 @@ export function SessionsToolbar(props: SessionsToolbarProps) {
 
                     {/* Sync Button */}
                     <button
-                        class="flex items-center gap-2 px-3 py-1 rounded bg-base02 hover:bg-base03 transition text-sm"
+                        class="flex items-center gap-2 px-3 py-1 rounded bg-base02 hover:bg-base03 transition text-sm cursor-pointer"
                         onClick={handleSync}
                         disabled={isSyncing()}
                     >
@@ -108,7 +108,7 @@ export function SessionsToolbar(props: SessionsToolbarProps) {
 
                     {/* Calendar Trigger */}
                     <button
-                        class="px-3 py-1 bg-base02 rounded-full text-sm"
+                        class="px-3 py-1 bg-base02 hover:bg-base03 rounded-full text-sm cursor-pointer"
                         classList={{ "bg-base03": selectedOpt() === null }}
                         onClick={handleCalendarClick}
                     >
