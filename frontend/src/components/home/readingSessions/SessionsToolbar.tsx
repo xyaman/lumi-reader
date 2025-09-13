@@ -63,7 +63,7 @@ export function SessionsToolbar(props: SessionsToolbarProps) {
     return (
         <div class="bg-base01 rounded-lg p-4 mb-6">
             <div class="space-y-4">
-                <div class="flex space-x-4">
+                <div class="flex flex-wrap gap-4">
                     {/* Group by Book Toggle */}
                     <div class="flex items-center">
                         <Checkbox
