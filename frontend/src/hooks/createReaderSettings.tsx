@@ -53,6 +53,8 @@ export function createReaderSettings(injectCss: boolean = false) {
     }
 
     function reflectSettings() {
+        setSettings(tempSettings())
+
         document.documentElement.style.setProperty("--reader-font-size", `${settings().fontSize}px`)
         document.documentElement.style.setProperty("--reader-line-height", `${settings().lineHeight}`)
         document.documentElement.style.setProperty("--reader-vertical-padding", `${100 - settings().verticalPadding}%`)
@@ -60,7 +62,6 @@ export function createReaderSettings(injectCss: boolean = false) {
             "--reader-horizontal-padding",
             `${100 - settings().horizontalPadding}%`,
         )
-        setSettings(tempSettings())
     }
 
     if (injectCss) {
