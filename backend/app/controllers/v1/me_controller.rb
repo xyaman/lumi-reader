@@ -60,6 +60,6 @@ class V1::MeController < ApplicationController
   private
 
   def user_update_params
-    params.expect(user: [ :bio, :share_online_status, :share_presence ])
+    params.expect(user: [ :bio, :share_online_status, :share_presence, :share_reading_sessions ])
   end
 end

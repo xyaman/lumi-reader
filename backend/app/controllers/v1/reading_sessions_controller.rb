@@ -13,6 +13,11 @@ class V1::ReadingSessionsController < ApplicationController
     user = request_user
     return render_error errors: "User not found." unless user
 
+    is_other_user = user.id != Current.user.id
+    if is_other_user and !user.share_reading_sessions
+      return render_success data: []
+    end
+
     offset = params[:offset].to_i
     limit = [ params[:limit].to_i, 50 ].min
     group = params[:group] == "true"
