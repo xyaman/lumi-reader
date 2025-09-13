@@ -17,6 +17,7 @@
         "jszip": "^3.10.1",
         "pako": "^2.1.0",
         "solid-js": "^1.9.5",
+        "solid-toast": "^0.5.0",
       },
       "devDependencies": {
         "@eslint/js": "^9.26.0",
@@ -1113,6 +1114,8 @@
     "solid-prevent-scroll": ["solid-prevent-scroll@0.1.10", "", { "dependencies": { "@corvu/utils": "~0.4.1" }, "peerDependencies": { "solid-js": "^1.8" } }, "sha512-KplGPX2GHiWJLZ6AXYRql4M127PdYzfwvLJJXMkO+CMb8Np4VxqDAg5S8jLdwlEuBis/ia9DKw2M8dFx5u8Mhw=="],
 
     "solid-refresh": ["solid-refresh@0.6.3", "", { "dependencies": { "@babel/generator": "^7.23.6", "@babel/helper-module-imports": "^7.22.15", "@babel/types": "^7.23.6" }, "peerDependencies": { "solid-js": "^1.3" } }, "sha512-F3aPsX6hVw9ttm5LYlth8Q15x6MlI/J3Dn+o3EQyRTtTxidepSTwAYdozt01/YA+7ObcciagGEyXIopGZzQtbA=="],
+
+    "solid-toast": ["solid-toast@0.5.0", "", { "peerDependencies": { "solid-js": "^1.5.4" } }, "sha512-t770JakjyS2P9b8Qa1zMLOD51KYKWXbTAyJePVUoYex5c5FH5S/HtUBUbZAWFcqRCKmAE8KhyIiCvDZA8bOnxQ=="],
 
     "source-map": ["source-map@0.8.0-beta.0", "", { "dependencies": { "whatwg-url": "^7.0.0" } }, "sha512-2ymg6oRBpebeZi9UUNsgQ89bhx01TcTkmNTGnNO88imTmbSgy4nfujrgVEFKWpMTEGA11EDkTt7mqObTPdigIA=="],
 

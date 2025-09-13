@@ -43,6 +43,7 @@ export interface User {
     tier: Tier
     shareOnlineStatus: boolean
     sharePresence: boolean
+    shareReadingSessions: boolean
     stats: ReadingStats
     presence?: Presence
 

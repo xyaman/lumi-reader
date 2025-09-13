@@ -85,7 +85,7 @@ export function Login() {
                         <Show when={error()}>
                             <p class="text-sm text-base08 transition-opacity duration-300 animate-fade-in">{error()}</p>
                         </Show>
-                        <Button type="submit" classList={{ "w-full": true }}>
+                        <Button type="submit" class="w-full">
                             Login
                         </Button>
                     </form>

@@ -1,6 +1,6 @@
 import { createReaderSettings } from "@/hooks"
 import { Button, Input, LabeledSlider } from "@/ui"
-import Checkbox from "@/ui/checkbox"
+import { Checkbox } from "@/ui"
 import { Show } from "solid-js"
 
 export function ReaderSettings(props: { isEmbedded?: boolean }) {

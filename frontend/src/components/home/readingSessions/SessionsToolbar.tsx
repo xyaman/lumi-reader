@@ -1,6 +1,6 @@
 import { createMemo, createSignal, Show } from "solid-js"
 import { Calendar } from "./Calendar"
-import Checkbox from "@/ui/checkbox"
+import { Checkbox } from "@/ui"
 import { IconArrowPath } from "@/components/icons"
 
 export type SessionsToolbarProps = {

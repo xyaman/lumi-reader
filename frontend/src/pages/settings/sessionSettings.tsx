@@ -1,4 +1,4 @@
-import Checkbox from "@/ui/checkbox"
+import { Checkbox } from "@/ui"
 import { lsReadingSessions } from "../../services/localStorage"
 
 export function SessionSettings() {

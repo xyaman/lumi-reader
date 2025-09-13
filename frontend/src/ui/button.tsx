@@ -28,12 +28,11 @@ export function Button(props: ButtonProps) {
     const sizeStyle = local.size ? size[local.size] : "py-2 px-4"
 
     // reactive
-    const disabledStyle = () => (otherProps.disabled ? "opacity-50 cursor-not-allowed" : "")
-
-    const style = () => [baseStyle, colorsStyle, sizeStyle, disabledStyle()].join(" ").trim()
+    const disabledStyle = () => (otherProps.disabled ? "opacity-50 cursor-not-allowed!" : "")
+    const style = () => [props.class, baseStyle, colorsStyle, sizeStyle, disabledStyle()].join(" ").trim()
 
     return (
-        <button class={style()} {...otherProps}>
+        <button {...otherProps} class={style()}>
             {props.children}
         </button>
     )

@@ -192,7 +192,7 @@ export function Users() {
         }
 
         setIsLoading(true)
-        const res = await userApi.updateBio(newDescription)
+        const res = await userApi.update({ bio: newDescription })
         if (res.ok) {
             mutateUser({ ...userResource()!, bio: newDescription })
         } else {
@@ -215,7 +215,7 @@ export function Users() {
                                 w={40}
                                 h={40}
                                 onAvatarChange={onAvatarChange}
-                                isCurrentUser={isOwnProfile()}
+                                isUserPage={isOwnProfile()}
                             />
                         </div>
 

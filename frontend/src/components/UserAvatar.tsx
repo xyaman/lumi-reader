@@ -6,7 +6,7 @@ type UserAvatarProps = {
     w: number
     h: number
     onAvatarChange?: (f: File) => void
-    isCurrentUser?: boolean
+    isUserPage?: boolean
 }
 
 export default function UserAvatar(props: UserAvatarProps) {
@@ -36,7 +36,7 @@ export default function UserAvatar(props: UserAvatarProps) {
                     <img class="w-full h-full object-cover" src={props.user.avatarUrl} alt="User avatar" />
                 </div>
             </Show>
-            <Show when={props.onAvatarChange && props.isCurrentUser}>
+            <Show when={props.onAvatarChange && props.isUserPage}>
                 <label class="absolute rounded bottom-0 right-0 text-xs px-2 py-1 cursor-pointer bg-base02 hover:bg-base03">
                     Change
                     <input

@@ -103,7 +103,7 @@ export function Register() {
                                     {error()}
                                 </p>
                             </Show>
-                            <Button type="submit" classList={{ "w-full": true }}>
+                            <Button type="submit" class="w-full">
                                 Register
                             </Button>
                         </form>

@@ -55,7 +55,7 @@ export function BookCard(props: BookCardProps) {
             {/* Buttons */}
             {/* Info button */}
             <button
-                class="bg-base02 absolute cursor-pointer top-2 w-8 h-8 border-none opacity-0 group-hover:opacity-100 hover:ring-2 hover:ring-base08 rounded-full flex items-center justify-center transition-opacity right-11"
+                class="bg-base02 absolute cursor-pointer top-2 w-8 h-8 border-none opacity-0 group-hover:opacity-100 hover:ring-2 hover:ring-base0D rounded-full flex items-center justify-center transition-opacity right-11"
                 classList={{ "opacity-100": props.hovered }}
                 onClick={props.onInfoClick}
             >

@@ -1,5 +1,6 @@
 import { LumiDb, ReaderSourceLightRecord } from "@/db"
 import { EpubBook } from "@/lib/epub"
+import { errorToast, infoToast } from "@/ui"
 import { liveQuery } from "dexie"
 import { batch, createContext, createEffect, JSX, onCleanup, onMount, useContext } from "solid-js"
 import { createStore, reconcile } from "solid-js/store"
@@ -109,10 +110,17 @@ export default function LibraryProvider(props: { children: JSX.Element }) {
 
     const createBook = async (files: File[]) => {
         for (const file of files) {
-            if (!file.type.includes("epub") && !file.name.endsWith(".epub")) continue
+            if (!file.name.endsWith(".epub")) {
+                infoToast(`${file.name} has invalid extension. Skipping.`)
+                continue
+            }
             // TODO: find a better way and that doesnt need to call deinit
-            const book = await EpubBook.fromFile(file)
-            book.deinit()
+            try {
+                const book = await EpubBook.fromFile(file)
+                book.deinit()
+            } catch (e) {
+                errorToast(`Error: ${e}`)
+            }
         }
     }
 

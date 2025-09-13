@@ -1,4 +1,5 @@
 import { ApiClient } from "@/lib/apiClient"
+import { camelToSnake } from "@/lib/utils"
 import { type User } from "@/types/api"
 
 export const userApi = {
@@ -42,11 +43,10 @@ export const userApi = {
     },
 
     // Needs auth
-    async updateBio(bio: string) {
-        const user = { bio }
+    async update(payload: Partial<User>) {
         return ApiClient.request("/me", {
             method: "PUT",
-            body: JSON.stringify({ user }),
+            body: JSON.stringify(camelToSnake({ user: payload })),
         })
     },
 

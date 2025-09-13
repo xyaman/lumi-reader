@@ -3,9 +3,11 @@ import { IconCloud, IconUpload } from "@/components/icons"
 import { BooksGrid, SortPopover } from "@/components/home/library"
 import { Button } from "@/ui"
 import { useNavigate } from "@solidjs/router"
+import { useAuthState } from "@/context/auth"
 
 export function Library() {
     const libraryDispatch = useLibraryDispatch()
+    const authState = useAuthState()
     const navigate = useNavigate()
 
     const handleUpload = async (e: Event) => {
@@ -18,11 +20,13 @@ export function Library() {
             <header class="mb-8">
                 <div class="flex flex-col md:flex-row justify-between">
                     <h1 class="text-3xl font-bold mb-2 md:mb-0">Your Library</h1>
-                    <div class="flex space-y-2 md:space-y-0 space-x-2 ml-auto">
+                    <div class="flex space-y-2 md:space-y-0 md:space-x-2 ml-auto">
                         {/* Sync button */}
                         <Button
-                            classList={{ "max-h-[40px] flex items-center": true }}
                             onClick={() => navigate("/syncbooks")}
+                            class="max-h-[40px] flex items-center"
+                            classList={{ "hover:bg-base02!": !authState.user }}
+                            disabled={!authState.user}
                         >
                             <IconCloud />
                             <span class="ml-2">Sync</span>

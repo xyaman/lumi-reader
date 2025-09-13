@@ -3,7 +3,7 @@ export type CheckboxProps = {
     checked?: boolean
     onChange: (e: Event) => void
 }
-export default function Checkbox(props: CheckboxProps) {
+export function Checkbox(props: CheckboxProps) {
     return (
         <label class={`relative items-center cursor-pointer ${props.class}`}>
             <input type="checkbox" class="sr-only peer" checked={props.checked} onChange={props.onChange} />

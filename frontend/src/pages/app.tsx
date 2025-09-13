@@ -8,6 +8,7 @@ import { Login, Register } from "@/pages/auth"
 import { Home, Library, ReadingSessions, SyncBooks, PatreonTiers } from "@/pages/home"
 import { Settings } from "@/pages/settings"
 import { Users, BookReader } from "@/pages"
+import { Toaster } from "solid-toast"
 
 const settingsFilter: MatchFilters = {
     name: ["theme", "reader", "sessions", "account"],
@@ -35,6 +36,7 @@ export function App() {
                 <Route path="/login" component={Login} />
                 {/* <Route path="/users/search" component={UserSearch} /> */}
             </Router>
+            <Toaster />
         </AuthProvider>
     )
 }
