@@ -158,11 +158,6 @@ export function Users() {
     const onAvatarChange = async (f: File) => {
         if (!isOwnProfile()) return
 
-        if (f.size / 1000000 > 2) {
-            alert("Max file size: 2MB")
-            return
-        }
-
         const res = await userApi.updateAvatar(f)
         if (res.error) {
             console.error(res.error)

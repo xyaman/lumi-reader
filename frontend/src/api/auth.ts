@@ -4,6 +4,7 @@ import { type User } from "@/types/api"
 export type AuthUser = User & {
     email: string
     isPatreonLinked: boolean
+    isAdmin: boolean
 }
 
 // TODO: endpoints
