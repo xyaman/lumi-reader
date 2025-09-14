@@ -4,7 +4,7 @@ class V1::ReadingSessionsController < ApplicationController
   def index
     # params:
     # username: string (if it's not present it will try to use Current.user/logged user)
-    # offset: number 
+    # offset: number
     # limit: number
     # group: boolean (true or false)
     # start_date: snowflake format
@@ -98,7 +98,7 @@ class V1::ReadingSessionsController < ApplicationController
     end
 
     # sort to maintain order
-    render_success data: results.sort_by { |r| r[:snowflake] } 
+    render_success data: results.sort_by { |r| r[:snowflake] }, status: :created
   end
 
   def destroy
@@ -142,5 +142,4 @@ class V1::ReadingSessionsController < ApplicationController
   def permitted_session_attributes
     [ :snowflake, :book_id, :book_title, :book_language, :chars_read, :time_spent ]
   end
-
 end

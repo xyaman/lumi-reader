@@ -30,7 +30,7 @@ class V1::UserBooksController < ApplicationController
       if params[:user_book][:updated_at].present?
         user_book.update_column(:updated_at, params[:user_book][:updated_at])
       end
-      render_success data: UserBookBlueprint.render_as_json(user_book)
+      render_success data: UserBookBlueprint.render_as_json(user_book), status: :created
     else
       render_error errors: user_book.errors.full_messages
     end

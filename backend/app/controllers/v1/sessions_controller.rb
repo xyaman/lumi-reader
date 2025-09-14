@@ -12,7 +12,7 @@ class V1::SessionsController < ApplicationController
     end
 
     start_new_session_for user
-    render_success data: UserBlueprint.render_as_json(user, view: :login)
+    render_success data: UserBlueprint.render_as_json(user, view: :login), status: :created
   end
 
   def show
