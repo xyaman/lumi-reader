@@ -91,7 +91,7 @@ class V1::UserBooksController < ApplicationController
   private
   def user_book_params
     permitted = params.require(:user_book).permit(
-      :kind, :unique_id, :title, :creator, :language, :total_chars, 
+      :kind, :unique_id, :title, :creator, :language, :total_chars,
       :curr_chars, :curr_paragraph, :updated_at, :bookmarks
     )
 
@@ -109,9 +109,10 @@ class V1::UserBooksController < ApplicationController
   def check_file_size
     return true if Current.user&.is_admin?
 
+    max_size = Current.user&.patreon_tier.max_book_size
     content_length = request.headers["Content-Length"].to_i
-    if content_length > 20.megabytes
-      render_error errors: "Request size cannot exceed 20MB.", status: :payload_too_large
+    if content_length > max_size.megabytes
+      render_error errors: "Request size cannot exceed #{max_size}MB.", status: :payload_too_large
       return false
     end
 
