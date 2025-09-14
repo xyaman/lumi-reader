@@ -106,6 +106,10 @@ class User < ApplicationRecord
       end
     end
 
+    unless share_online_status
+      cached_presence[:status] = "offline"
+    end
+
     cached_presence
   end
 

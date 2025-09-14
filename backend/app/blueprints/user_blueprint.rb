@@ -29,5 +29,4 @@ class UserBlueprint < Blueprinter::Base
     fields :email
     field :patreon_linked?, name: :is_patreon_linked
   end
-
 end
