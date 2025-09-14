@@ -123,7 +123,7 @@ export class EpubBook implements ReaderSource {
         book.language = metadata.language
         book.uniqueId = metadata.identifier
 
-        const [manifest, totalChars] = await extractManifest(zip, pkgDocumentXml, basePath)
+        const [manifest, totalChars] = await extractManifest(zip, pkgDocumentXml, book.language, basePath)
         book.totalChars = totalChars
         book.nav = manifest.nav
         book.sections = manifest.xhtml
@@ -263,7 +263,12 @@ function extractMetadata(pkgDocumentXml: any) {
     return metadata
 }
 
-async function extractManifest(zip: JSZip, pkgDocumentXml: any, basePath?: string): Promise<[IEpubManifest, number]> {
+async function extractManifest(
+    zip: JSZip,
+    pkgDocumentXml: any,
+    lang: string,
+    basePath: string,
+): Promise<[IEpubManifest, number]> {
     const items = pkgDocumentXml.package?.manifest?.item
     if (!items || !Array.isArray(items)) {
         throw new Error("Package Document Item(s) not found. Not a valid epub file.")
@@ -332,7 +337,7 @@ async function extractManifest(zip: JSZip, pkgDocumentXml: any, basePath?: strin
     let currId = 0
     for (const [i, c] of xhtmlContent.entries()) {
         const realFilePath = getFilePath(basePath, xhtmlFiles[i].href)
-        const [content, id, charsCount] = parseBodyContent(realFilePath, c, currId, totalChars)
+        const [content, id, charsCount] = parseBodyContent(realFilePath, c, currId, totalChars, lang)
         currId = id
         totalChars = charsCount
         manifest.xhtml.push({
@@ -434,11 +439,32 @@ function extractId(element: unknown): string {
     return fallbackId
 }
 
+// Count Japanese characters (Hiragana, Katakana, Kanji)
 function getJapaneseCharacterCount(text: string): number {
     if (!text) return 0
-    const isNotJapaneseRegex = /[^\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}ー々〻]+/gu
-    const clean = text.replace(isNotJapaneseRegex, "")
-    return [...clean].length
+    const japaneseRegex = /[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}ー々〻]/gu
+    const matches = text.match(japaneseRegex)
+    return matches ? matches.length : 0
+}
+
+// Count all characters except symbols/punctuation
+function getTextCharacterCount(text: string): number {
+    if (!text) return 0
+    // \p{L} = letters, \p{N} = numbers, \p{Zs} = space separators
+    const textRegex = /[\p{L}\p{N}\p{Zs}]+/gu
+    const matches = text.match(textRegex)
+    if (!matches) return 0
+    return matches.reduce((sum, m) => sum + [...m].length, 0)
+}
+
+// Dispatcher based on language
+function getCharacterCountByLanguage(text: string, lang: string): number {
+    switch (lang) {
+        case "ja":
+            return getJapaneseCharacterCount(text)
+        default:
+            return getTextCharacterCount(text)
+    }
 }
 
 // https://www.w3.org/TR/epub-33/#sec-nav-def-model
@@ -508,6 +534,7 @@ function parseBodyContent(
     xhtml: string,
     initialId: number,
     initialChars: number,
+    lang: string,
 ): [string, number, number] {
     let id = initialId
     let insideBody = false
@@ -560,7 +587,7 @@ function parseBodyContent(
 
             // Count only if inside <p> and NOT inside <rt>
             if (insideP > 0 && insideRt === 0) {
-                charsCount += getJapaneseCharacterCount(text)
+                charsCount += getCharacterCountByLanguage(text, lang)
             }
         },
     })
