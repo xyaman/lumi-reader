@@ -44,7 +44,7 @@ export default function ReaderContent() {
     const containerClass = () =>
         !isPaginated()
             ? isVertical()
-                ? "h-(--reader-vertical-padding) my-auto"
+                ? "h-(--reader-vertical-padding) my-auto overflow-x-auto overflow-y-hidden scrollbar-none"
                 : "w-(--reader-horizontal-padding) mx-auto"
             : isVertical()
               ? "relative mx-auto w-(--reader-horizontal-padding) h-(--reader-vertical-padding) overflow-hidden snap-y snap-mandatory"
@@ -316,7 +316,7 @@ export default function ReaderContent() {
                 else if (e.key === "ArrowUp" || e.key === "PageUp") flipPage(-1)
             }
 
-            const handleWheel = (e: WheelEvent) => (document.documentElement.scrollLeft -= e.deltaY)
+            const handleWheel = (e: WheelEvent) => (containerRef.scrollLeft -= e.deltaY)
 
             if (isPaginated()) {
                 // update last section
@@ -356,12 +356,19 @@ export default function ReaderContent() {
                 }, 0)
 
                 // if is vertical, map wheel event
-                if (isVertical()) containerRef.addEventListener("wheel", handleWheel)
-                document.addEventListener("scroll", handleScrollContinous)
-                onCleanup(() => {
-                    containerRef.removeEventListener("wheel", handleWheel)
-                    document.removeEventListener("scroll", handleScrollContinous)
-                })
+                if (isVertical()) {
+                    containerRef.addEventListener("wheel", handleWheel)
+                    containerRef.addEventListener("scroll", handleScrollContinous)
+                    onCleanup(() => {
+                        containerRef.removeEventListener("wheel", handleWheel)
+                        containerRef.removeEventListener("scroll", handleScrollContinous)
+                    })
+                } else {
+                    document.addEventListener("scroll", handleScrollContinous)
+                    onCleanup(() => {
+                        document.removeEventListener("scroll", handleScrollContinous)
+                    })
+                }
             }
 
             // wait to next render

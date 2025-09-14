@@ -101,6 +101,15 @@ body {
     background-color: var(--base0D);
 }
 
+/* Hide scrollbar for all browsers */
+.scrollbar-none {
+    -ms-overflow-style: none; /* IE & Edge */
+    scrollbar-width: none; /* Firefox */
+}
+.scrollbar-none::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
 /* Scrollbar: Webkit browsers */
 ::-webkit-scrollbar {
     width: 8px;
