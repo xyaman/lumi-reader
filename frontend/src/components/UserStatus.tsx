@@ -70,4 +70,3 @@ export default function UserStatus(props: UserStatusProps) {
         </div>
     )
 }
-

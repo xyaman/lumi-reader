@@ -77,7 +77,7 @@ export const readingSessionsApi = {
                 .filter((s) => s.createdAt > lastSync)
                 .primaryKeys()) as number[])
 
-        let body = {
+        const body = {
             device_snowflakes: localSnowflakes,
             updated_since: lastSync,
             last_snowflake: options.lastSnowflake,

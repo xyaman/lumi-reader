@@ -1,8 +1,4 @@
-import { Show, JSX, For } from "solid-js"
-import { ThemeProvider } from "@/context/theme"
-import ThemeList from "@/components/Themelist"
-import ReaderSettings from "@/components/ReaderSettings"
-import { useReaderContext } from "@/context/reader"
+import { Show, JSX } from "solid-js"
 
 export type SidebarProps = {
     open: boolean

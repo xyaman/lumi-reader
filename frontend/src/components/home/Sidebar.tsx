@@ -1,6 +1,6 @@
 import { createMemo, createSignal, For, Show } from "solid-js"
 import { A, useLocation } from "@solidjs/router"
-import { IconCalendar, IconFilter, IconHeart, IconHome, IconSettings } from "@/components/icons"
+import { IconCalendar, IconHeart, IconHome, IconSettings } from "@/components/icons"
 import SocialList from "@/components/SocialList"
 import UserStatus from "@/components/UserStatus"
 import { useAuthState } from "@/context/auth"

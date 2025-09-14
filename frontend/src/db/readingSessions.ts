@@ -29,7 +29,7 @@ const readingSessions = {
         // TODO: improve the api to allow more flexibility
         const { synced, from, to, limit = 50 } = options || {}
 
-        let table = LumiDb.readingSessions
+        const table = LumiDb.readingSessions
         let collection
 
         if (synced !== undefined) {

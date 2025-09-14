@@ -85,7 +85,7 @@ export function SocialSearchModal(props: UserSearchModalProps) {
                         when={!searchResults.loading && searchResults() !== undefined}
                         fallback={
                             <div class="text-center py-8">
-                                <div class="animate-spin w-6 h-6 border-2 border-base0D border-t-transparent rounded-full mx-auto"></div>
+                                <div class="animate-spin w-6 h-6 border-2 border-base0D border-t-transparent rounded-full mx-auto" />
                             </div>
                         }
                     >

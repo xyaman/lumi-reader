@@ -1,12 +1,4 @@
-import {
-    createContext,
-    createEffect,
-    createSignal,
-    JSX,
-    onCleanup,
-    Show,
-    useContext,
-} from "solid-js"
+import { createContext, createEffect, createSignal, JSX, onCleanup, Show, useContext } from "solid-js"
 import { Portal } from "solid-js/web"
 
 type SectionProps = {
@@ -69,11 +61,7 @@ function Left(props: SectionProps) {
     return (
         <div class="flex items-center space-x-4">
             <Show when={!navbar?.disableCollapse}>
-                <button
-                    class="button md:hidden p-2"
-                    onClick={navbar?.openMenu}
-                    aria-label="Open menu"
-                >
+                <button class="button md:hidden p-2" onClick={navbar?.openMenu} aria-label="Open menu">
                     <svg width="24" height="24" fill="none" stroke="currentColor">
                         <path stroke-linecap="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
@@ -130,19 +118,13 @@ function Right(props: SectionProps) {
                                     aria-label="Close menu"
                                 >
                                     <svg width="24" height="24" fill="none" stroke="currentColor">
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-width="2"
-                                            d="M6 6l12 12M6 18L18 6"
-                                        />
+                                        <path stroke-linecap="round" stroke-width="2" d="M6 6l12 12M6 18L18 6" />
                                     </svg>
                                 </button>
                             </div>
 
                             {/* Menu items */}
-                            <div class="navbar-theme mt-6 flex flex-col space-y-4">
-                                {props.children}
-                            </div>
+                            <div class="navbar-theme mt-6 flex flex-col space-y-4">{props.children}</div>
                         </div>
                     </div>
                 </Portal>

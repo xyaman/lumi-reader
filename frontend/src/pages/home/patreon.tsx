@@ -38,7 +38,7 @@ export function PatreonTiers() {
                 fallback={
                     <div class="text-center py-12">
                         <Show when={patreonTiers.loading}>
-                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
                             <p>Loading tiers...</p>
                         </Show>
                         <Show when={patreonTiers.error}>

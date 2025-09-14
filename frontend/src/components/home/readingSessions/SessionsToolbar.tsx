@@ -1,4 +1,4 @@
-import { createMemo, createSignal, Show } from "solid-js"
+import { createMemo, createSignal, Show, For } from "solid-js"
 import { Calendar } from "./Calendar"
 import { Checkbox } from "@/ui"
 import { IconArrowPath } from "@/components/icons"
@@ -96,15 +96,17 @@ export function SessionsToolbar(props: SessionsToolbarProps) {
 
                 {/* Preset Buttons */}
                 <div class="flex flex-wrap items-center gap-2">
-                    {options().map((opt) => (
-                        <button
-                            class="bg-base02 hover:bg-base03 cursor-pointer px-3 py-1 rounded-full text-sm font-medium"
-                            classList={{ "bg-base03": opt.active }}
-                            onClick={() => handleOptClick(opt)}
-                        >
-                            {opt.label}
-                        </button>
-                    ))}
+                    <For each={options()}>
+                        {(opt) => (
+                            <button
+                                class="bg-base02 hover:bg-base03 cursor-pointer px-3 py-1 rounded-full text-sm font-medium"
+                                classList={{ "bg-base03": opt.active }}
+                                onClick={() => handleOptClick(opt)}
+                            >
+                                {opt.label}
+                            </button>
+                        )}
+                    </For>
 
                     {/* Calendar Trigger */}
                     <button
