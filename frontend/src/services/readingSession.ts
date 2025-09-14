@@ -156,12 +156,13 @@ export default class ReadingSessionManager {
 
         // Delete locally deleted sessions and update sync status
         // TODO: improve error handling
-        const deletedRes = await Promise.all(deletedSessions.map((s) => readingSessionsApi.destroy(s.snowflake)))
-        const deletedResError = deletedRes.find((s) => s.error !== null)
-        if (deletedResError) return deletedResError
-
-        const success = deletedRes.filter((res) => res.error === null).map((res) => res.ok.data)
-        await db.readingSessions.updateSyncedBatch(success, true)
+        if (deletedSessions.length > 0) {
+            const deletedRes = await Promise.all(deletedSessions.map((s) => readingSessionsApi.destroy(s.snowflake)))
+            const deletedResError = deletedRes.find((s) => s.error !== null)
+            if (deletedResError) return deletedResError
+            const success = deletedRes.filter((res) => res.error === null).map((res) => res.ok.data)
+            await db.readingSessions.updateSyncedBatch(success, true)
+        }
 
         // Update new local sessions and update sync status
         const apiSessions = newSessions.map((s) => ({
