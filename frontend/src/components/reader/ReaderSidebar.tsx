@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal, For, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, For, onCleanup, Show } from "solid-js"
 import Sidebar from "@/components/Sidebar"
 import ThemeList from "@/components/settings/Themelist"
 import { ThemeProvider } from "@/context/theme"
@@ -7,6 +7,7 @@ import { formatTime } from "@/lib/utils"
 import { useReaderDispatch, useReaderState } from "@/context/reader"
 import ReadingSessionManager from "@/services/readingSession"
 import { ReaderSettings } from "@/pages/settings"
+import { Button } from "@/ui"
 
 export function SettingsSidebar() {
     const readerState = useReaderState()
@@ -153,7 +154,31 @@ export function BookmarksSidebarContent(props: { onItemClick: (b: Bookmark) => v
 function ReadingSessionSidebar() {
     const readerState = useReaderState()
     const isPaused = () => ReadingSessionManager.getInstance().isPaused()
-    const totalReadingTime = () => ReadingSessionManager.getInstance().readingTime()
+    const [currentTime, setCurrentTime] = createSignal(Math.floor(Date.now() / 1000))
+
+    let intervalId: number | null = null
+    const startTimer = () => {
+        if (intervalId) return
+        setInterval(() => {
+            setCurrentTime(Math.floor(Date.now() / 1000))
+        }, 1000)
+    }
+
+    const stopTimer = () => {
+        if (!intervalId) return
+        clearInterval(intervalId)
+        intervalId = null
+    }
+
+    createEffect(() => {
+        if (readerState.sideBar === "session") {
+            startTimer()
+        } else {
+            stopTimer()
+        }
+    })
+
+    onCleanup(() => stopTimer())
 
     const toggleSession = async () => {
         if (ReadingSessionManager.getInstance().isReading()) {
@@ -165,14 +190,32 @@ function ReadingSessionSidebar() {
         } else {
             await ReadingSessionManager.getInstance().startReading(readerState.book)
         }
+
+        const lastActiveTime = ReadingSessionManager.getInstance().lastActiveTime()!
+        setCurrentTime(Math.floor(lastActiveTime.getTime() / 1000))
     }
 
     const charactersRead = () => readerState.book.currChars - ReadingSessionManager.getInstance().initialCharsPosition()
 
     const readingSpeed = () => {
-        const time = totalReadingTime()
+        const time = currentTime()
         if (charactersRead() === 0 || time === 0) return "0 chars/h"
         return `${Math.ceil((charactersRead() * 3600) / time)} chars/h`
+    }
+
+    const totalReadingTime = () => {
+        if (ReadingSessionManager.getInstance().currentBook === null) return 0
+
+        if (ReadingSessionManager.getInstance().isPaused()) {
+            return ReadingSessionManager.getInstance().readingTime()
+        } else {
+            // Add time since last update for real-time display
+            const now = currentTime()
+            return (
+                ReadingSessionManager.getInstance().readingTime() +
+                Math.floor(now - ReadingSessionManager.getInstance().lastActiveTime()!.getTime() / 1000)
+            )
+        }
     }
 
     const progress = () => {
@@ -184,9 +227,7 @@ function ReadingSessionSidebar() {
             <p class="text-md mb-2">Session: {isPaused() ? "Paused" : "Active"}</p>
 
             <div class="space-y-4">
-                <button class="button px-4 py-2 font-semibold" onClick={toggleSession}>
-                    {isPaused() ? "Resume" : "Pause"}
-                </button>
+                <Button onClick={toggleSession}>{isPaused() ? "Resume" : "Pause"}</Button>
 
                 <div class="bg-(--base02) p-4 rounded">
                     <h3 class="text-sm font-medium mb-1">Reading Time</h3>
