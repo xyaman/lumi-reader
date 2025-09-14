@@ -119,22 +119,27 @@ export function Sidebar() {
                                         class="relative w-full flex cursor-pointer rounded p-2 hover:bg-base02 group"
                                         onClick={() => libraryDispatch.setActiveShelf(shelf.id)}
                                     >
-                                        <p>{shelf.name}</p>
-                                        <button
-                                            class="absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                                            onClick={(e) => {
-                                                e.stopPropagation()
-                                                editShelfModal(shelf)
-                                            }}
+                                        <div
+                                            class="relative w-full flex cursor-pointer rounded p-2 hover:bg-base02 group"
+                                            onClick={() => libraryDispatch.setActiveShelf(shelf.id)}
                                         >
-                                            Edit
-                                        </button>
-                                    </div>
-                                </li>
-                            )}
-                        </For>
-                    </ul>
-                </div>
+                                            <p>{shelf.name}</p>
+                                            <button
+                                                class="absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    editShelfModal(shelf)
+                                                }}
+                                            >
+                                                Edit
+                                            </button>
+                                        </div>
+                                    </li>
+                                )}
+                            </For>
+                        </ul>
+                    </div>
+                </Show>
 
                 {/* Social */}
                 <Show when={authState.status == "authenticated"}>
