@@ -42,6 +42,17 @@ export function ReaderSettings(props: { isEmbedded?: boolean }) {
                         <span class="absolute right-3 top-2">units</span>
                     </div>
                 </div>
+
+                <div class="space-y-2">
+                    <label class="block">Font Family</label>
+                    <div class="relative">
+                        <Input
+                            type="text"
+                            value={settings().fontFamily ?? "__default__"}
+                            onChange={(e) => setSettings("fontFamily", e.target.value)}
+                        />
+                    </div>
+                </div>
             </div>
 
             <div class={checkboxGridClass}>

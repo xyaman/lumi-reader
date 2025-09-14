@@ -4,6 +4,7 @@ import { createSignal, onCleanup, onMount } from "solid-js"
 const initial = {
     fontSize: Math.max(lsReader.fontSize(), 1),
     lineHeight: Math.max(lsReader.lineHeight(), 1),
+    fontFamily: lsReader.fontFamily(),
     verticalPadding: Math.max(lsReader.verticalPadding(), 0),
     horizontalPadding: Math.max(lsReader.horizontalPadding(), 0),
     vertical: lsReader.vertical(),
@@ -29,6 +30,9 @@ export function createReaderSettings(injectCss: boolean = false) {
                 break
             case "lineHeight":
                 lsReader.setLineHeight(value as number)
+                break
+            case "fontFamily":
+                if (value !== "__default__") lsReader.setFontFamily(value as string)
                 break
             case "verticalPadding":
                 lsReader.setVerticalPadding(value as number)
@@ -57,6 +61,7 @@ export function createReaderSettings(injectCss: boolean = false) {
 
         document.documentElement.style.setProperty("--reader-font-size", `${settings().fontSize}px`)
         document.documentElement.style.setProperty("--reader-line-height", `${settings().lineHeight}`)
+        document.documentElement.style.setProperty("--reader-font-family", `${settings().fontFamily}`)
         document.documentElement.style.setProperty("--reader-vertical-padding", `${100 - settings().verticalPadding}%`)
         document.documentElement.style.setProperty(
             "--reader-horizontal-padding",
@@ -71,6 +76,7 @@ export function createReaderSettings(injectCss: boolean = false) {
     onCleanup(() => {
         document.documentElement.style.removeProperty("--reader-font-size")
         document.documentElement.style.removeProperty("--reader-line-height")
+        document.documentElement.style.removeProperty("--reader-font-family")
         document.documentElement.style.removeProperty("--reader-vertical-padding")
         document.documentElement.style.removeProperty("--reader-horizontal-padding")
     })

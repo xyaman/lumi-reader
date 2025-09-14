@@ -6,6 +6,7 @@ const LS_RESIZABLE_SIZES = "home:resizableSizes"
 // -- reader settings
 const LS_FONT_SIZE = "reader:fontSize"
 const LS_LINE_HEIGHT = "reader:lineHeight"
+const LS_FONT_FAMILY = "reader:fontFamily"
 const LS_VERTICAL_PADDING = "reader:verticalPadding"
 const LS_HORIZONTAL_PADDING = "reader:horizontalPadding"
 const LS_SHOW_FURIGANA = "reader:showFurigana"
@@ -37,7 +38,7 @@ function getOrFalse(key: string) {
 
 function getStringOr(key: string, or: any) {
     const item = localStorage.getItem(key)
-    return item || or
+    return item === null ? or : item
 }
 
 function set(key: string, value: unknown) {
@@ -63,6 +64,9 @@ function get<T>(key: string, json: boolean = true): T | undefined {
 export const lsReader = {
     fontSize: () => getNumberOr(LS_FONT_SIZE, 16),
     setFontSize: (value: number) => set(LS_FONT_SIZE, value),
+
+    fontFamily: () => getStringOr(LS_FONT_FAMILY, null),
+    setFontFamily: (value: string) => set(LS_FONT_FAMILY, value),
 
     lineHeight: () => getNumberOr(LS_LINE_HEIGHT, 1.5),
     setLineHeight: (value: number) => set(LS_LINE_HEIGHT, value),
