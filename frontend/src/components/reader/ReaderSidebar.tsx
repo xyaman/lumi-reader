@@ -24,7 +24,7 @@ export function SettingsSidebar() {
             open={readerState.sideBar == "settings"}
             onClose={() => readerDispatch.setSidebar(null)}
         >
-            <div class="space-y-4">
+            <div class="space-y-4 pr-5 max-h-[90vh] overflow-y-auto">
                 {/* TODO: only reload if changed pagination, vertical etc */}
                 <ReaderSettings isEmbedded={true} />
                 <ThemeProvider>

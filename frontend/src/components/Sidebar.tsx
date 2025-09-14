@@ -1,4 +1,9 @@
-import { Show, JSX } from "solid-js"
+import { Show, JSX, For } from "solid-js"
+import { ThemeProvider } from "@/context/theme"
+import ThemeList from "@/components/Themelist"
+import ReaderSettings from "@/components/ReaderSettings"
+import { useReaderContext } from "@/context/reader"
+
 export type SidebarProps = {
     open: boolean
     side: "left" | "right"
@@ -23,12 +28,12 @@ export default function Sidebar(props: SidebarProps) {
                 <div class="fixed inset-0 bg-black opacity-30 z-30" onClick={props.onClose} />
             </Show>
             <aside
-                class={`sidebar-theme fixed top-0 ${sideClass()} h-full w-72 shadow-lg p-5 z-40 transform transition-transform duration-300`}
+                class={`sidebar-theme fixed top-0 ${sideClass()} h-full w-72 shadow-lg p-3 z-40 transform transition-transform duration-300`}
             >
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-semibold">{props.title}</h2>
                     <Show when={props.onClose}>
-                        <button class="cursor-pointer text-[var(--base05)]" onClick={props.onClose}>
+                        <button class="cursor-pointer text-base05" onClick={props.onClose}>
                             ✕
                         </button>
                     </Show>
