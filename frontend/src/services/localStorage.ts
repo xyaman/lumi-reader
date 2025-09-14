@@ -22,6 +22,9 @@ const LS_AUTOSYNC = "reader:sessions:autosync"
 // auth
 const LS_CURRUSER = "auth:currentuser"
 
+// social
+const LS_SOCIALSORT = "social:sort"
+
 function getNumberOr(key: string, fallback: number | string) {
     return Number(localStorage.getItem(key) || fallback)
 }
@@ -108,4 +111,9 @@ export const lsAuth = {
 export const lsHome = {
     resizableSizes: () => get<number[]>(LS_RESIZABLE_SIZES, true) || [0.2, 0.8],
     setResizableSizes: (sizes: number[]) => set(LS_RESIZABLE_SIZES, sizes),
+}
+
+export const lsSocial = {
+    sort: () => getStringOr(LS_SOCIALSORT, "online-status") as "online-status" | "alphanumeric",
+    setSort: (sort: "online-status" | "alphanumeric") => set(LS_SOCIALSORT, sort),
 }

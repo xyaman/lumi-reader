@@ -11,19 +11,21 @@ import { SocialSearchModal } from "./home/SocialSearchModal"
 import UserStatus from "./UserStatus"
 import { useIsMobile } from "@/hooks"
 import { User } from "@/types/api"
+import { lsSocial } from "@/services/localStorage"
 
 export default function SocialList() {
     const authState = useAuthState()
     const isMobile = useIsMobile()
 
     const [showUserSearch, setShowUserSearch] = createSignal(false)
-    const [userSort, setUsersSort] = createSignal<"online-status" | "alphanumeric">("alphanumeric")
+    const [userSort, setUsersSort] = createSignal<"online-status" | "alphanumeric">(lsSocial.sort())
 
     const sortUsers = (users: User[]) => {
         if (userSort() === "online-status") {
             return [...users].sort((a, b) => {
-                if (a.presence?.status === b.presence?.status) return 0
-                return a.presence?.status === "online" ? -1 : 1
+                if (a.presence?.status === "online" && b.presence?.status === "online") return 0
+                if (a.presence?.status === "online") return 1
+                return a.presence?.activityType ? -1 : 1
             })
         }
 
@@ -74,6 +76,7 @@ export default function SocialList() {
 
     const handleUsersSort = (b: "online-status" | "alphanumeric") => {
         setUsersSort(b)
+        lsSocial.setSort(b)
         setFollowers((prev) => prev && sortUsers(prev))
     }
 
@@ -111,7 +114,7 @@ export default function SocialList() {
                             <div class="flex items-start">
                                 <div class="relative">
                                     {/* Avatar */}
-                                    <UserAvatar user={user} w={15} h={15} />
+                                    <UserAvatar user={user} w={13} h={13} />
                                     <div
                                         class={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ${user.presence?.status === "online" ? "bg-base0B" : "bg-base04"}`}
                                     />
