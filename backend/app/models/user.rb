@@ -25,7 +25,7 @@ class User < ApplicationRecord
   validates :share_presence, inclusion: { in: [ true, false ] }
 
   normalizes :username, with: ->(u) { u.strip.downcase }
-  validates :username, presence: true, uniqueness: { case_sensitive: false }, length: { minimum: 5 }
+  validates :username, presence: true, uniqueness: { case_sensitive: false }, length: { minimum: 5 }, format: { with: /\A(?!.*@)[a-zA-Z0-9._-]+\z/, message: "can only contain letters, numbers, '.', '_', and '-' and must not be an email" }
 
   # Users following this user
   has_many :follower_relationships, foreign_key: :followed_id, class_name: "Follow", dependent: :destroy
