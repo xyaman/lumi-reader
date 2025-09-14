@@ -4,7 +4,7 @@ import { Checkbox } from "@/ui"
 import { Show } from "solid-js"
 
 export function ReaderSettings(props: { isEmbedded?: boolean }) {
-    const [settings, setSettings, reflectChanges] = createReaderSettings()
+    const [settings, setSettings, reflectChanges] = createReaderSettings(false, !props.isEmbedded)
 
     // computed at creation time
     const checkboxGridClass = props.isEmbedded

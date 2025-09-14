@@ -1,5 +1,5 @@
 import { lsReader } from "@/services/localStorage"
-import { createSignal, onCleanup, onMount } from "solid-js"
+import { createEffect, createSignal, on, onCleanup, onMount } from "solid-js"
 
 const initial = {
     fontSize: Math.max(lsReader.fontSize(), 1),
@@ -20,7 +20,7 @@ const [settings, setSettings] = createSignal(initial)
  *
  * @param [autoReflectChanges=true] default true. update the css after any change
  */
-export function createReaderSettings(injectCss: boolean = false) {
+export function createReaderSettings(injectCss: boolean = false, autoReflectChanges: boolean = false) {
     const [tempSettings, setTempSettings] = createSignal(settings())
 
     function setReaderSetting<K extends keyof typeof initial>(key: K, value: (typeof initial)[K]) {
@@ -71,6 +71,10 @@ export function createReaderSettings(injectCss: boolean = false) {
 
     if (injectCss) {
         onMount(() => reflectSettings())
+    }
+
+    if (autoReflectChanges) {
+        createEffect(on(tempSettings, () => reflectSettings()))
     }
 
     onCleanup(() => {
