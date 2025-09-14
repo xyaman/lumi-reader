@@ -1,13 +1,12 @@
 import { createMemo, createSignal, For, Show } from "solid-js"
 import { A, useLocation } from "@solidjs/router"
-import { IconCalendar, IconHeart, IconHome, IconSearch, IconSettings } from "@/components/icons"
+import { IconCalendar, IconFilter, IconHeart, IconHome, IconSettings } from "@/components/icons"
 import SocialList from "@/components/SocialList"
 import UserStatus from "@/components/UserStatus"
 import { useAuthState } from "@/context/auth"
 import { useLibraryDispatch, useLibraryState } from "@/context/library"
 import { ShelfModal } from "./ShelfModal"
 import { Bookshelf } from "@/db"
-import { SocialSearchModal } from "./SocialSearchModal"
 
 export function Sidebar() {
     const location = useLocation()
@@ -23,8 +22,6 @@ export function Sidebar() {
         { href: "/sessions", label: "Sessions", icon: IconCalendar },
         { href: "/settings", label: "Settings", icon: IconSettings },
     ]
-
-    const [showUserSearch, setShowUserSearch] = createSignal(false)
 
     // shelf modal
     const [shelfShowModal, setShowModal] = createSignal(false)
@@ -94,30 +91,27 @@ export function Sidebar() {
                 </nav>
 
                 {/* Shelves */}
-                <div class="p-4 border-b border-base02">
-                    <div class="flex justify-between mb-2">
-                        <h2 class="font-semibold">Your collections</h2>
-                        <button onClick={createShelfModal}>+</button>
-                    </div>
-                    <ul>
-                        <li classList={{ "border-l-3 border-base0D": libraryState.activeShelf === null }}>
-                            <button
-                                class="w-full flex cursor-pointer rounded p-2 hover:bg-base02"
-                                onClick={() => libraryDispatch.setActiveShelf(null)}
-                            >
-                                <p>All Books</p>
-                            </button>
-                        </li>
-                        <For each={libraryState.shelves}>
-                            {(shelf) => (
-                                <li
-                                    classList={{
-                                        "border-l-3 border-base0D": libraryState.activeShelf === shelf.id,
-                                    }}
+                <Show when={activePath() === "/"}>
+                    <div class="p-4 border-b border-base02">
+                        <div class="flex justify-between mb-2">
+                            <h2 class="font-semibold">Your collections</h2>
+                            <button onClick={createShelfModal}>+</button>
+                        </div>
+                        <ul>
+                            <li classList={{ "border-l-3 border-base0D": libraryState.activeShelf === null }}>
+                                <button
+                                    class="w-full flex cursor-pointer rounded p-2 hover:bg-base02"
+                                    onClick={() => libraryDispatch.setActiveShelf(null)}
                                 >
-                                    <div
-                                        class="relative w-full flex cursor-pointer rounded p-2 hover:bg-base02 group"
-                                        onClick={() => libraryDispatch.setActiveShelf(shelf.id)}
+                                    <p>All Books</p>
+                                </button>
+                            </li>
+                            <For each={libraryState.shelves}>
+                                {(shelf) => (
+                                    <li
+                                        classList={{
+                                            "border-l-3 border-base0D": libraryState.activeShelf === shelf.id,
+                                        }}
                                     >
                                         <div
                                             class="relative w-full flex cursor-pointer rounded p-2 hover:bg-base02 group"
@@ -144,19 +138,8 @@ export function Sidebar() {
                 {/* Social */}
                 <Show when={authState.status == "authenticated"}>
                     <div class="p-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <h2 class="font-semibold">Social Activity</h2>
-                            <button
-                                class="p-1 hover:bg-base02 rounded"
-                                onClick={() => setShowUserSearch(true)}
-                                title="Search users"
-                            >
-                                <IconSearch class="w-4 h-4" />
-                            </button>
-                        </div>
                         <SocialList />
                     </div>
-                    <SocialSearchModal show={showUserSearch()} onDismiss={() => setShowUserSearch(false)} />
                 </Show>
             </div>
         </>
