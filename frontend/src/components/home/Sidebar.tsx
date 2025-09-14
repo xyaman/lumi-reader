@@ -2,7 +2,7 @@ import { createMemo, createSignal, For, Show } from "solid-js"
 import { A, useLocation } from "@solidjs/router"
 import { IconCalendar, IconHeart, IconHome, IconSearch, IconSettings } from "@/components/icons"
 import SocialList from "@/components/SocialList"
-import UserAvatar from "@/components/UserAvatar"
+import UserStatus from "@/components/UserStatus"
 import { useAuthState } from "@/context/auth"
 import { useLibraryDispatch, useLibraryState } from "@/context/library"
 import { ShelfModal } from "./ShelfModal"
@@ -62,21 +62,17 @@ export function Sidebar() {
                     }
                 >
                     <div class="p-2 border-b border-base02">
-                        <A href="/me">
-                            <div class="flex items-center space-x-3 p-2 rounded hover:bg-base02">
-                                {/* User Avatar */}
-                                <div class="relative">
-                                    <UserAvatar h={10} w={10} user={authState.user!} />
-                                    <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-base0B" />
-                                </div>
+                        <div class="flex items-center space-x-3 p-2 rounded hover:bg-base02">
+                            {/* User Avatar */}
+                            <UserStatus h={10} w={10} user={authState.user!} />
+                            <A href="/me">
                                 {/* Name  */}
                                 <p class="font-semibold">{authState.user?.username}</p>
-                            </div>
-                        </A>
+                            </A>
+                        </div>
                     </div>
                 </Show>
 
-                {/* Navigation */}
                 {/* Navigation */}
                 <nav class="p-2 border-b border-base02" aria-label="Main navigation">
                     <ul>
