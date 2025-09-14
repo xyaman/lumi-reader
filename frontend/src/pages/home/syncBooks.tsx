@@ -236,7 +236,14 @@ export function SyncBooks() {
                             Your sync limit: <span class="text-base0D">{user()!.tier.bookSyncLimit} books </span>(
                             {user()!.tier.name + " "} Plan)
                         </p>
-                        <p class="text-sm">Upgrade to sync more books simultaneously.</p>
+                        {user()!.tier.name === "Free" && (
+                            <p class="text-sm">
+                                <a href="/patreon" class="underline text-base0D">
+                                    Upgrade
+                                </a>{" "}
+                                to sync more books simultaneously.
+                            </p>
+                        )}
                     </section>
 
                     {/* Cloud Books (Synced + Cloud Only) */}

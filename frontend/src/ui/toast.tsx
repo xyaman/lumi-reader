@@ -12,7 +12,7 @@ export const infoToast = (msg: string) =>
 
 export const errorToast = (msg: string) =>
     toast.error(msg, {
-        duration: 1000,
+        duration: 4000,
         position: "bottom-right",
         style: {
             background: "var(--base02)",
