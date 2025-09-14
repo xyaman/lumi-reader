@@ -82,6 +82,11 @@ export function Login() {
                             autocomplete="current-password"
                             required
                         />
+                        <div class="text-sm text-right">
+                            <A href="/forgot-password" class="text-base0D hover:underline">
+                                Forgot password?
+                            </A>
+                        </div>
                         <Show when={error()}>
                             <p class="text-sm text-base08 transition-opacity duration-300 animate-fade-in">{error()}</p>
                         </Show>

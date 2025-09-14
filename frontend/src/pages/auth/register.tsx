@@ -107,6 +107,11 @@ export function Register() {
                                 Register
                             </Button>
                         </form>
+                        <div class="text-sm text-right mt-2">
+                            <A href="/forgot-password" class="text-base0D hover:underline">
+                                Forgot password?
+                            </A>
+                        </div>
                         <div class="mt-4 text-center text-sm text-base04">
                             Already have an account?{" "}
                             <A href="/login" class="text-base0D hover:underline">

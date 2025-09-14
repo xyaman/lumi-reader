@@ -26,6 +26,21 @@ export const authApi = {
         })
     },
 
+    async sendResetPasswordMail(email: string) {
+        return ApiClient.request<null>("/password_resets", {
+            method: "POST",
+            body: JSON.stringify({ email }),
+        })
+    },
+
+    async resetPassword(credentials: { password: string; password_confirmation: string }, token: string) {
+        const { password, password_confirmation } = credentials
+        return ApiClient.request<null>(`/password_resets/${token}`, {
+            method: "PUT",
+            body: JSON.stringify({ password_reset: { password, password_confirmation } }),
+        })
+    },
+
     async getCurrentUser() {
         return ApiClient.request<AuthUser>("/me", { method: "GET" })
     },

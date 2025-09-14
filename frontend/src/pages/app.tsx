@@ -4,7 +4,7 @@ import AuthProvider from "@/context/auth"
 
 import SocialList from "@/components/SocialList"
 
-import { Login, Register } from "@/pages/auth"
+import { ForgotPassword, Login, Register, ResetPassword } from "@/pages/auth"
 import { Home, Library, ReadingSessions, SyncBooks, PatreonTiers } from "@/pages/home"
 import { Settings } from "@/pages/settings"
 import { Users, BookReader } from "@/pages"
@@ -34,6 +34,8 @@ export function App() {
                 <Route path="/settings/:name?" component={Settings} matchFilters={settingsFilter} />
                 <Route path="/register" component={Register} />
                 <Route path="/login" component={Login} />
+                <Route path="/forgot-password" component={ForgotPassword} />
+                <Route path="/reset-password" component={ResetPassword} />
                 {/* <Route path="/users/search" component={UserSearch} /> */}
             </Router>
             <Toaster />
