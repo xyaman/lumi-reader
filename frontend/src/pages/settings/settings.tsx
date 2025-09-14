@@ -8,9 +8,10 @@ import { ReaderSettings } from "./readerSettings"
 import { SessionSettings } from "./sessionSettings"
 import { ThemeSettings } from "./themeSettings"
 import { AccountSettings } from "./accountSettings"
+import { AboutSettings } from "./aboutSettings"
 import { useIsMobile } from "@/hooks"
 
-type Menu = "theme" | "reader" | "sessions" | "account"
+type Menu = "theme" | "reader" | "sessions" | "account" | "about"
 
 export function Settings() {
     const params = useParams()
@@ -66,6 +67,9 @@ export function Settings() {
                                 </Match>
                                 <Match when={selectedMenu() === "account"}>
                                     <AccountSettings />
+                                </Match>
+                                <Match when={selectedMenu() === "about"}>
+                                    <AboutSettings />
                                 </Match>
                             </Switch>
                         </div>

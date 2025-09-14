@@ -11,7 +11,7 @@ import { Users, BookReader } from "@/pages"
 import { Toaster } from "solid-toast"
 
 const settingsFilter: MatchFilters = {
-    name: ["theme", "reader", "sessions", "account"],
+    name: ["theme", "reader", "sessions", "account", "about"],
 }
 
 export function App() {
