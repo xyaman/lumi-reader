@@ -3,6 +3,7 @@ import { BookItem } from "@/components/home/syncBooks"
 import { IconCloud, IconHardDrive } from "@/components/icons"
 import { useAuthState } from "@/context/auth"
 import { LumiDb, ReaderSourceRecord } from "@/db"
+import { errorToast } from "@/ui"
 import { A, BeforeLeaveEventArgs, useBeforeLeave } from "@solidjs/router"
 import { createMemo, createSignal, For, onMount, Show } from "solid-js"
 import { createStore } from "solid-js/store"
@@ -39,7 +40,7 @@ export function SyncBooks() {
         ])
 
         if (cloudResponse.error) {
-            console.error("Error fetching cloud books", cloudResponse.error.message)
+            errorToast(`Error fetching cloud books ${cloudResponse.error.message}`)
             return { localOnly: localBooks, cloudBooks: [] }
         }
 
@@ -74,13 +75,15 @@ export function SyncBooks() {
         const localBook = await LumiDb.getBookByUniqueId(book.uniqueId)
         if (!localBook) {
             setInProgress(false)
-            return console.error("Invalid book.")
+            errorToast("Error: Invalid book.")
+            return
         }
 
         const res = await syncedBooksApi.sync(localBook)
         if (res.error) {
             setInProgress(false)
-            return console.error("Error while syncing:", res.error)
+            errorToast(`Error while syncing: ${res.error}`)
+            return
         }
 
         // it means the server had a more updated version
@@ -122,7 +125,8 @@ export function SyncBooks() {
         const fullBook = await LumiDb.getBookByUniqueId(bookData.uniqueId)
         if (!fullBook) {
             setInProgress(false)
-            return console.error("Invalid book")
+            errorToast("Error: Invalid book.")
+            return
         }
 
         const data = {
@@ -141,7 +145,8 @@ export function SyncBooks() {
         const res = await syncedBooksApi.upload(bookData, data, onProgress)
         if (res.error) {
             setInProgress(false)
-            return console.error(res.error)
+            errorToast(res.error.message)
+            return
         }
 
         const cloudBook = { ...bookData, syncStatus: "up-to-date" as const }
@@ -161,14 +166,14 @@ export function SyncBooks() {
         }
 
         if (!book.compressedDataUrl) {
-            console.error("Book malformed, must be deleted and upload again.")
+            errorToast("Book malformed, must be deleted and upload again.")
             setInProgress(false)
             return
         }
 
         const res = await syncedBooksApi.download(book.compressedDataUrl, onProgress)
         if (res.error) {
-            console.error("Failed donwloading the book", res.error)
+            errorToast(`Failed donwloading the book ${res.error}`)
             setInProgress(false)
             return
         }
@@ -190,7 +195,7 @@ export function SyncBooks() {
             const syncedBook = { ...book, syncStatus: "up-to-date" as const }
             setAllBooks("cloud", (prev) => prev.map((b) => (b.uniqueId === book.uniqueId ? syncedBook : b)))
         } else {
-            console.error("unsoported format", book.kind)
+            errorToast(`unsoported format ${book.kind}`)
         }
 
         setInProgress(false)
@@ -198,7 +203,10 @@ export function SyncBooks() {
 
     const deleteHandler = async (book: ApiUserBook) => {
         const res = await syncedBooksApi.delete(book.uniqueId)
-        if (res.error) return console.error(res.error)
+        if (res.error) {
+            errorToast(res.error.message)
+            return
+        }
         setAllBooks("cloud", (prev) => prev.filter((b) => b.uniqueId !== book.uniqueId))
         const localBook = { ...book, syncStatus: "local-only" } as ApiUserBook & { syncStatus: "local-only" }
         setAllBooks("localOnly", (prev) => [...prev, localBook])
