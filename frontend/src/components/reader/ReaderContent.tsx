@@ -8,6 +8,22 @@ function getBaseName(path: string) {
     return match ? match[1] : path
 }
 
+function patchImageUrls(html: string, imageMap: Map<string, string>): string {
+    html = html.replace(/<img\s+[^>]*src="([^"]+)"[^>]*>/gi, (match, src) => {
+        const base = getBaseName(src)
+        const url = imageMap.get(base)
+        if (url) return match.replace(`src="${src}"`, `src="${url}"`)
+        return match
+    })
+    html = html.replace(/<image\s+[^>]*xlink:href="([^"]+)"[^>]*>/gi, (match, href) => {
+        const base = getBaseName(href)
+        const url = imageMap.get(base)
+        if (url) return match.replace(`xlink:href="${href}"`, `xlink:href="${url}"`)
+        return match
+    })
+    return html
+}
+
 /**
  * ReaderContent component displays the book content in the reader,
  * handling pagination and layout modes based on user settings.
@@ -30,6 +46,9 @@ export default function ReaderContent() {
     const showFurigana = () => readerSettings().showFurigana
 
     let shouldUpdateChars = false
+    const imageMap = new Map<string, string>(
+        readerState.book.images.filter((img) => img.url).map((img) => [getBaseName(img.filename), img.url!]),
+    )
 
     // == component classes
     const mainClass = () =>
@@ -58,28 +77,6 @@ export default function ReaderContent() {
             : isVertical()
               ? "h-full w-full [column-width:100vw] [column-fill:auto] [column-gap:0px] text-[20px] writing-mode-vertical"
               : "h-full [column-width:100vw] [column-fill:auto] [column-gap:0px]"
-
-    // == media
-    const showImages = () => {
-        if (!containerRef) return
-
-        // Update all <img>, <svg image>, and <image> tags with correct URLs
-        const updateImageSrc = (el: Element, attr: string) => {
-            const val = el.getAttribute(attr)
-            if (!val) return
-
-            const base = getBaseName(val)
-            const image = readerState.book.images.find((v) => getBaseName(v.filename) === base)
-            if (image && image.url) el.setAttribute(attr, image.url)
-        }
-
-        setTimeout(() => {
-            // <img src="">
-            containerRef.querySelectorAll("img[src]").forEach((el) => updateImageSrc(el, "src"))
-            // <image xlink:href="">
-            containerRef.querySelectorAll("image").forEach((el) => updateImageSrc(el, "xlink:href"))
-        })
-    }
 
     // == pagination
     const flipPage = (multiplier: 1 | -1) => {
@@ -235,10 +232,10 @@ export default function ReaderContent() {
 
     createEffect(() => {
         if (isVertical() && isPaginated()) {
-            setTimeout(() => {
+            requestAnimationFrame(() => {
                 const currPosition = readerState.book.currParagraph
                 document.querySelector(`p[index="${currPosition}"]`)?.scrollIntoView()
-            }, 0)
+            })
         }
     })
 
@@ -351,7 +348,6 @@ export default function ReaderContent() {
                 })
             } else {
                 setTimeout(() => {
-                    showImages()
                     setupBookmarks()
                 }, 0)
 
@@ -372,10 +368,10 @@ export default function ReaderContent() {
             }
 
             // wait to next render
-            setTimeout(() => {
+            requestAnimationFrame(() => {
                 const currPosition = readerState.book.currParagraph
                 document.querySelector(`p[index="${currPosition}"]`)?.scrollIntoView()
-            }, 0)
+            })
         }),
     )
 
@@ -386,7 +382,6 @@ export default function ReaderContent() {
     createEffect(
         on(currSectionSignal, () => {
             if (!isPaginated()) return
-            showImages()
             setupBookmarks()
 
             if (!shouldUpdateChars) {
@@ -441,13 +436,16 @@ export default function ReaderContent() {
                     <Show
                         when={!isPaginated()}
                         fallback={
-                            <div innerHTML={readerState.book.sections[readerState.currSection].content ?? "error??"} />
+                            <div
+                                innerHTML={patchImageUrls(
+                                    readerState.book.sections[readerState.currSection].content ?? "error??",
+                                    imageMap,
+                                )}
+                            />
                         }
                     >
                         <For each={readerState.book.sections}>
-                            {(x) => {
-                                return <div innerHTML={x.content} />
-                            }}
+                            {(x) => <div innerHTML={patchImageUrls(x.content, imageMap)} />}
                         </For>
                     </Show>
                 </div>
