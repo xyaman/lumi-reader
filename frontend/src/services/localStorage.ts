@@ -74,10 +74,10 @@ export const lsReader = {
     lineHeight: () => getNumberOr(LS_LINE_HEIGHT, 1.5),
     setLineHeight: (value: number) => set(LS_LINE_HEIGHT, value),
 
-    verticalPadding: () => getNumberOr(LS_VERTICAL_PADDING, 24),
+    verticalPadding: () => getNumberOr(LS_VERTICAL_PADDING, 2),
     setVerticalPadding: (value: number) => set(LS_VERTICAL_PADDING, value),
 
-    horizontalPadding: () => getNumberOr(LS_HORIZONTAL_PADDING, 24),
+    horizontalPadding: () => getNumberOr(LS_HORIZONTAL_PADDING, 2),
     setHorizontalPadding: (value: number) => set(LS_HORIZONTAL_PADDING, value),
 
     showFurigana: () => getOrTrue(LS_SHOW_FURIGANA),

@@ -58,15 +58,8 @@ export function createReaderSettings(injectCss: boolean = false, autoReflectChan
 
     function reflectSettings() {
         setSettings(tempSettings())
-
-        document.documentElement.style.setProperty("--reader-font-size", `${settings().fontSize}px`)
         document.documentElement.style.setProperty("--reader-line-height", `${settings().lineHeight}`)
         document.documentElement.style.setProperty("--reader-font-family", `${settings().fontFamily}`)
-        document.documentElement.style.setProperty("--reader-vertical-padding", `${100 - settings().verticalPadding}%`)
-        document.documentElement.style.setProperty(
-            "--reader-horizontal-padding",
-            `${100 - settings().horizontalPadding}%`,
-        )
     }
 
     if (injectCss) {
@@ -78,11 +71,8 @@ export function createReaderSettings(injectCss: boolean = false, autoReflectChan
     }
 
     onCleanup(() => {
-        document.documentElement.style.removeProperty("--reader-font-size")
         document.documentElement.style.removeProperty("--reader-line-height")
         document.documentElement.style.removeProperty("--reader-font-family")
-        document.documentElement.style.removeProperty("--reader-vertical-padding")
-        document.documentElement.style.removeProperty("--reader-horizontal-padding")
     })
 
     return [settings, setReaderSetting, reflectSettings] as const

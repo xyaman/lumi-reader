@@ -140,10 +140,10 @@ body {
 }
 
 /* TODO: find a less expensive way? */
-#reader-content *:has(> img),
-#reader-content *:has(> svg) {
-    text-align: center !important;
-}
+/* #reader-content *:has(> img), */
+/* #reader-content *:has(> svg) { */
+/*     text-align: center !important; */
+/* } */
 
 #reader-content svg,
 #reader-content img {
