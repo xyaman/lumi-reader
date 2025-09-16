@@ -38,9 +38,9 @@ export function ReaderProvider(props: { book: ReaderSource; children: JSX.Elemen
         navOpen: false,
         sideBar: null,
         currIndex: 0,
-        currChars: 0,
         book: props.book,
         currSection: props.book.findSectionIndex(props.book.currParagraph) ?? 0,
+        currChars: props.book.currChars,
     })
 
     onMount(() => {
@@ -62,9 +62,9 @@ export function ReaderProvider(props: { book: ReaderSource; children: JSX.Elemen
      * @returns The index of the last visible paragraph.
      */
     const updateChars = (isPaginated: boolean, isVertical: boolean) => {
-        let lastIndex = props.book.currParagraph
-        let currChars = props.book.currChars
-        const pTags = document.querySelectorAll("p[index]")
+        let lastIndex = 0
+        let currChars = 0
+        const pTags = document.querySelectorAll("p[index], img[index], image[index]")
         for (let i = 0; i < pTags.length; i++) {
             const rect = pTags[i].getBoundingClientRect()
 
@@ -74,7 +74,7 @@ export function ReaderProvider(props: { book: ReaderSource; children: JSX.Elemen
             // stop if it is visible
             if (
                 (!isPaginated && !isVertical && rect.bottom > 0) ||
-                (!isPaginated && isVertical && rect.x < 0) ||
+                (!isPaginated && isVertical && rect.x < window.innerWidth) ||
                 (isPaginated && !isVertical && rect.x > 0) ||
                 (isPaginated && isVertical && rect.y > 0)
             )

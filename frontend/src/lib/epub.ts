@@ -552,6 +552,12 @@ function parseBodyContent(
 
             if (!insideBody) return
 
+            if (name === "img" || name === "image") {
+                attribs.index = id.toString()
+                attribs.charAcumm = charsCount.toString()
+                id++
+            }
+
             if (name === "p") {
                 insideP++
                 attribs.index = id.toString()
