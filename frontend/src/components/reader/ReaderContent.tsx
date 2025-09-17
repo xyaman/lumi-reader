@@ -29,10 +29,6 @@ function patchImageUrls(html: string, imageMap: Map<string, string>): string {
  * handling pagination and layout modes based on user settings.
  *
  * The Reader uses the following global CSS variables:
- * - --reader-vertical-padding
- * - --reader-horizontal-padding
- * - --reader-font-size
- * - --reader-line-height
  */
 
 export function ReaderContent(props: { imageMap: Map<string, string> }) {
@@ -80,7 +76,7 @@ export function ReaderContent(props: { imageMap: Map<string, string> }) {
         // vertical-paginated
         const generalOpts = {
             "font-size": `${settings().fontSize}px`,
-            "line-height": "1.7",
+            "line-height": `${settings().lineHeight}`,
             padding: `${vp} ${hp}`,
         }
 
@@ -309,6 +305,15 @@ export function ReaderContent(props: { imageMap: Map<string, string> }) {
     const isPaginated = () => settings().paginated
     const isVertical = () => settings().vertical
 
+    // this effect renders bookmarks every time a section changes
+    const currSectionSignal = () => state.currSection
+    createEffect(
+        on(currSectionSignal, () => {
+            if (settings().paginated) setupBookmarks()
+        }),
+    )
+
+    // Settings and initializations related effects
     // This effect (re-)setups the reader every time paginated or vertical changes
     createEffect(
         on([isPaginated, isVertical], (values) => {
@@ -322,6 +327,26 @@ export function ReaderContent(props: { imageMap: Map<string, string> }) {
                 if (scrollTimer !== null) clearTimeout(scrollTimer)
                 scrollTimer = setTimeout(handleScroll, 300)
             }
+
+            // always re-set global variables when the size changes
+            // all <img> and <svg> uses these variables. Check `styles.css`
+            const setupSizeCssVariables = () => {
+                containerRef.style.setProperty(
+                    "--reader-height",
+                    `calc(${contentRef.clientHeight}px - 2 * ${settings().verticalPadding}em)`,
+                )
+                containerRef.style.setProperty(
+                    "--reader-width",
+                    `calc(${contentRef.clientWidth}px - 2 * ${settings().horizontalPadding}em)`,
+                )
+            }
+            setupSizeCssVariables()
+            document.addEventListener("resize", setupSizeCssVariables)
+            onCleanup(() => {
+                containerRef.style.removeProperty("--reader-height")
+                containerRef.style.removeProperty("--reader-width")
+                document.removeEventListener("resize", setupSizeCssVariables)
+            })
 
             if (paginated) {
                 // events listener
@@ -344,14 +369,6 @@ export function ReaderContent(props: { imageMap: Map<string, string> }) {
                 const currPosition = state.book.currParagraph
                 document.querySelector(`[index="${currPosition}"]`)?.scrollIntoView({ inline: "center" })
             })
-        }),
-    )
-
-    // this effect renders bookmarks every time a section changes
-    const currSectionSignal = () => state.currSection
-    createEffect(
-        on(currSectionSignal, () => {
-            if (settings().paginated) setupBookmarks()
         }),
     )
 

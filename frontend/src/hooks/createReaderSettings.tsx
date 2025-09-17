@@ -58,7 +58,6 @@ export function createReaderSettings(injectCss: boolean = false, autoReflectChan
 
     function reflectSettings() {
         setSettings(tempSettings())
-        document.documentElement.style.setProperty("--reader-line-height", `${settings().lineHeight}`)
         document.documentElement.style.setProperty("--reader-font-family", `${settings().fontFamily}`)
     }
 
@@ -71,7 +70,6 @@ export function createReaderSettings(injectCss: boolean = false, autoReflectChan
     }
 
     onCleanup(() => {
-        document.documentElement.style.removeProperty("--reader-line-height")
         document.documentElement.style.removeProperty("--reader-font-family")
     })
 

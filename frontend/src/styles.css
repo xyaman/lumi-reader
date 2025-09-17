@@ -147,7 +147,7 @@ body {
 
 #reader-content svg,
 #reader-content img {
-    max-width: 100% !important;
-    max-height: 80dvh !important;
-    display: block !important;
+    max-width: var(--reader-width, 100vw) !important;
+    max-height: var(--reader-height, 100vh) !important;
+    display: inline-block !important;
 }
