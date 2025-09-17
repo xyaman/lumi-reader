@@ -341,7 +341,7 @@ async function extractManifest(
         currId = id
         totalChars = charsCount
         manifest.xhtml.push({
-            lastIndex: id,
+            lastIndex: id - 1,
             id: xhtmlFiles[i].id,
             content,
             name: getBaseName(realFilePath),

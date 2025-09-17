@@ -1,4 +1,4 @@
-import { createEffect, For, on, onCleanup, Show } from "solid-js"
+import { createEffect, createMemo, For, on, onCleanup, onMount, Show } from "solid-js"
 import { IconBookmarkFull } from "@/components/icons"
 import { useReaderDispatch, useReaderState } from "@/context/reader"
 import { createReaderSettings } from "@/hooks"
@@ -34,92 +34,99 @@ function patchImageUrls(html: string, imageMap: Map<string, string>): string {
  * - --reader-font-size
  * - --reader-line-height
  */
-export default function ReaderContent() {
-    const readerState = useReaderState()
+
+export function ReaderContent(props: { imageMap: Map<string, string> }) {
+    const state = useReaderState()
     const readerDispatch = useReaderDispatch()
 
-    let containerRef: HTMLDivElement | undefined
+    // -- hooks
+    const [settings] = createReaderSettings(false, true)
 
-    const [readerSettings] = createReaderSettings(true)
-    const isPaginated = () => readerSettings().paginated
-    const isVertical = () => readerSettings().vertical
-    const showFurigana = () => readerSettings().showFurigana
-
-    let shouldUpdateChars = false
-    const imageMap = new Map<string, string>(
-        readerState.book.images.filter((img) => img.url).map((img) => [getBaseName(img.filename), img.url!]),
-    )
-
-    // == component classes
-    const mainClass = () =>
-        isPaginated()
-            ? isVertical()
-                ? "h-[100dvh] overflow-y-hidden flex items-center"
-                : "h-[95dvh] flex center"
-            : isVertical()
-              ? "h-[95dvh] flex items-center"
-              : ""
-
-    const containerClass = () =>
-        !isPaginated()
-            ? isVertical()
-                ? "h-(--reader-vertical-padding) my-auto overflow-x-auto overflow-y-hidden scrollbar-none"
-                : "w-(--reader-horizontal-padding) mx-auto"
-            : isVertical()
-              ? "relative mx-auto w-(--reader-horizontal-padding) h-(--reader-vertical-padding) overflow-hidden snap-y snap-mandatory"
-              : "relative mx-auto my-auto w-(--reader-horizontal-padding) h-(--reader-vertical-padding) overflow-x-hidden snap-x snap-mandatory"
-
-    const contentClass = () =>
-        !isPaginated()
-            ? isVertical()
-                ? "writing-mode-vertical"
-                : "h-full"
-            : isVertical()
-              ? "h-full w-full [column-width:100vw] [column-fill:auto] [column-gap:0px] text-[20px] writing-mode-vertical"
-              : "h-full [column-width:100vw] [column-fill:auto] [column-gap:0px]"
-
-    // == pagination
-    const flipPage = (multiplier: 1 | -1) => {
-        if (!containerRef) return
-
-        // are we at the end?
-        let isStart: boolean
-        let isEnd: boolean
-
-        if (isVertical()) {
-            isStart = containerRef.scrollTop === 0
-            isEnd = Math.ceil(containerRef.scrollTop + containerRef.clientHeight) >= containerRef.scrollHeight
+    // -- html + styles related
+    let containerRef: HTMLDivElement
+    let contentRef: HTMLDivElement
+    const containerDivStyle = createMemo(() => {
+        const generalOpts = {} as const
+        if (settings().paginated && settings().vertical) {
+            return {
+                ...generalOpts,
+                "overflow-y": "hidden",
+                margin: "auto",
+                width: "100dvw",
+                height: "100%",
+            } as const
+        } else if (!settings().paginated && settings().vertical) {
+            // continuous vertical
+            return {
+                ...generalOpts,
+                "overflow-y": "hidden",
+                width: "100%",
+                height: "100dvh",
+            } as const
         } else {
-            isStart = containerRef.scrollLeft === 0
-            isEnd = Math.ceil(containerRef.scrollLeft + containerRef.clientWidth) >= containerRef.scrollWidth
+            // continuous horizontal
+            return {
+                ...generalOpts,
+                "overflow-x": "hidden",
+                width: "100dvw",
+                height: "100%",
+            } as const
+        }
+    })
+    const contentDivStyle = createMemo(() => {
+        const vp = `${settings().verticalPadding}em`
+        const hp = `${settings().horizontalPadding}em`
+
+        // vertical-paginated
+        const generalOpts = {
+            "font-size": `${settings().fontSize}px`,
+            "line-height": "1.7",
+            padding: `${vp} ${hp}`,
         }
 
-        if (isStart && multiplier === -1) {
-            if (readerState.currSection === 0) return
-            const nextId = readerDispatch.goToPrevSection()
-            // Scroll to end of previous section (and go to the last paragraph)
-            document.querySelector(`p[index="${nextId}"]`)?.scrollIntoView()
-            return
-        } else if (isEnd && multiplier === 1) {
-            if (readerState.currSection === readerState.book.sections.length - 1) return
-            readerDispatch.goToNextSection()
-
-            // Scroll to beginning of next section
-            if (isVertical()) {
-                containerRef.scrollTo({ top: 0, behavior: "instant" })
-            } else {
-                containerRef.scrollTo({ left: 0, behavior: "instant" })
-            }
-            return
+        if (settings().paginated && settings().vertical) {
+            // paginated vertical
+            return {
+                ...generalOpts,
+                "writing-mode": "vertical-rl",
+                "overflow-x": "hidden",
+                "overflow-y": "hidden",
+                width: "100vw",
+                height: `calc(100vh - 2em * 2)`, // 2em is an arbitrary number
+                "column-gap": `calc((${vp}) * 2)`, // the gap should be twice the vertical padding to create an even margin
+                "column-width": `calc(100vw - (${vp}) * 2)`,
+                "column-fill": "auto",
+            } as const
+        } else if (settings().paginated && !settings().vertical) {
+            // paginated horizontal
+            return {
+                ...generalOpts,
+                "overflow-y": "hidden",
+                "overflow-x": "hidden",
+                height: "100dvh",
+                width: "calc(100vw - 2em * 2)", // 2em is an arbitrary number
+                "column-gap": `calc((${hp}) * 2)`, // the gap should be twice the horizontal padding to create an even margin
+                "column-width": `calc(100vw - (${hp}) * 2)`,
+                "column-fill": "auto",
+            } as const
+        } else if (!settings().paginated && settings().vertical) {
+            // continuous vertical
+            return {
+                ...generalOpts,
+                "writing-mode": "vertical-rl",
+                "overflow-y": "hidden",
+                height: `calc(100vh - 2em * 2)`, // 2em is an arbitrary number
+            } as const
+        } else {
+            // continuous horizontal
+            return {
+                ...generalOpts,
+                // "overflow-y": "hidden",
+                height: "100%",
+                width: `calc(100wh - 2em * 2)`, // 2em is an arbitrary number
+            } as const
         }
-
-        const offset = isVertical() ? containerRef.clientHeight : containerRef.clientWidth
-        const current = isVertical() ? containerRef.scrollTop : containerRef.scrollLeft
-        const max = isVertical() ? containerRef.scrollHeight : containerRef.scrollWidth
-        const next = Math.max(0, Math.min(Math.ceil(current + offset * multiplier), max))
-        const scrollToOpts = isVertical() ? { top: next } : { left: next }
-        containerRef.scrollTo({ ...scrollToOpts, behavior: "instant" })
-    }
+    })
 
     /**
      * Adds/Remove a new bookmark, if the bookmark is already present it will be removed
@@ -129,14 +136,14 @@ export default function ReaderContent() {
      */
     const toggleBookmark = (id: number | string, content: string) => {
         const idNum = Number(id)
-        const idx = readerState.book.bookmarks.findIndex((b) => b.paragraphId === idNum)
+        const idx = state.book.bookmarks.findIndex((b) => b.paragraphId === idNum)
         if (idx !== -1) {
-            readerState.book.bookmarks.splice(idx, 1)
+            state.book.bookmarks.splice(idx, 1)
             return true
         } else {
-            readerState.book.bookmarks.push({
+            state.book.bookmarks.push({
                 paragraphId: idNum,
-                sectionName: readerState.book.sections[readerState.currSection].name,
+                sectionName: state.book.sections[state.currSection].name,
                 content,
             })
             return false
@@ -146,7 +153,7 @@ export default function ReaderContent() {
     // == bookmarks
     const setupBookmarks = () => {
         const ptags = document.querySelectorAll("p[index]")
-        const bookmarksIds = readerState.book.bookmarks.map((b) => b.paragraphId)
+        const bookmarksIds = state.book.bookmarks.map((b) => b.paragraphId)
         const bgcolor = "bg-[var(--base01)]"
 
         // if already has bookmark icon, remove it and return
@@ -190,7 +197,7 @@ export default function ReaderContent() {
             bookmarkSpan.onmouseover = () => {
                 p.classList.add("bg-[var(--base02)]")
                 label.style.opacity = "1"
-                const bookmarksIds = readerState.book.bookmarks.map((b) => b.paragraphId)
+                const bookmarksIds = state.book.bookmarks.map((b) => b.paragraphId)
                 const index = Number(p.getAttribute("index"))
                 label.textContent = bookmarksIds.includes(index) ? "Remove bookmark" : "Add bookmark"
             }
@@ -210,7 +217,7 @@ export default function ReaderContent() {
                 const index = p.getAttribute("index")!
                 const removed = toggleBookmark(index, p.textContent!)
                 removed ? p.classList.remove(bgcolor) : p.classList.add(bgcolor)
-                readerState.book.save()
+                state.book.save()
 
                 // when clicked, onmouseleave is not called
                 p.classList.remove("bg-[var(--base02)]")
@@ -230,31 +237,131 @@ export default function ReaderContent() {
         }
     }
 
-    createEffect(() => {
-        if (isVertical() && isPaginated()) {
-            requestAnimationFrame(() => {
-                const currPosition = readerState.book.currParagraph
-                document.querySelector(`p[index="${currPosition}"]`)?.scrollIntoView()
-            })
-        }
-    })
+    // -- action handlers
+    const flipPage = (multiplier: 1 | -1) => {
+        if (!contentRef) return
 
-    const handleResize = () => {
-        setTimeout(() => {
-            if (!containerRef) return
-            containerRef.style.height = "0px"
-            containerRef.style.removeProperty("height")
-            document.querySelector(`p[index='${readerState.book.currParagraph}']`)?.scrollIntoView()
-        }, 0)
+        let isStart: boolean
+        let isEnd: boolean
+
+        if (settings().vertical) {
+            isStart = contentRef.scrollTop === 0
+            isEnd = Math.ceil(contentRef.scrollTop + contentRef.clientHeight) >= contentRef.scrollHeight
+        } else {
+            isStart = contentRef.scrollLeft === 0
+            isEnd = Math.ceil(contentRef.scrollLeft + contentRef.clientWidth) >= contentRef.scrollWidth
+        }
+
+        if (isStart && multiplier === -1) {
+            if (state.currSection === 0) return
+            readerDispatch.setSection(state.currSection - 1)
+
+            // Scroll to end of previous section
+            contentRef.scrollTo({ top: contentRef.scrollHeight, behavior: "instant" })
+            readerDispatch.updateChars(isPaginated(), isVertical())
+            return
+        } else if (isEnd && multiplier === 1) {
+            if (state.currSection === state.book.sections.length - 1) return
+            readerDispatch.setSection(state.currSection + 1)
+
+            // Scroll to beginning of next section
+            contentRef.scrollTo({ top: 0, behavior: "instant" })
+            readerDispatch.updateChars(isPaginated(), isVertical())
+            return
+        }
+
+        const offset = settings().vertical ? contentRef.clientHeight : contentRef.clientWidth
+        const current = settings().vertical ? contentRef.scrollTop : contentRef.scrollLeft
+        const max = settings().vertical ? contentRef.scrollHeight : contentRef.scrollWidth
+        const next = Math.max(0, Math.min(Math.ceil(current + offset * multiplier), max))
+
+        const scrollToOpts = settings().vertical ? { top: next } : { left: next }
+        contentRef.scrollTo({ ...scrollToOpts, behavior: "instant" })
+        readerDispatch.updateChars(isPaginated(), isVertical())
     }
 
-    // injects/removes the css from the site
+    const handleKeyDown = (e: KeyboardEvent) => {
+        if (settings().vertical) {
+            if (e.key === "ArrowLeft") flipPage(1)
+            else if (e.key === "ArrowRight") flipPage(-1)
+        } else {
+            if (e.key === "ArrowRight") flipPage(1)
+            else if (e.key === "ArrowLeft") flipPage(-1)
+        }
+
+        if (e.key === "ArrowDown" || e.key === "PageDown") flipPage(1)
+        else if (e.key === "ArrowUp" || e.key === "PageUp") flipPage(-1)
+    }
+
+    const handleWheelVerticalContinuous = (e: WheelEvent) => (containerRef.scrollLeft -= e.deltaY)
+    const handleWheelPaginated = (e: WheelEvent) => {
+        flipPage(e.deltaY > 0 ? 1 : -1)
+    }
+
+    // effects
+    onMount(() => {
+        document.addEventListener("keydown", handleKeyDown)
+    })
+    onCleanup(() => {
+        document.removeEventListener("keydown", handleKeyDown)
+    })
+
+    const isPaginated = () => settings().paginated
+    const isVertical = () => settings().vertical
+
+    // This effect (re-)setups the reader every time paginated or vertical changes
+    createEffect(
+        on([isPaginated, isVertical], (values) => {
+            const paginated = values[0]
+            const vertical = values[1]
+
+            // always scroll to the current position
+            const handleScroll = () => readerDispatch.updateChars(isPaginated(), isVertical())
+            let scrollTimer: number | null = null
+            const handleScrollContinous = () => {
+                if (scrollTimer !== null) clearTimeout(scrollTimer)
+                scrollTimer = setTimeout(handleScroll, 300)
+            }
+
+            if (paginated) {
+                // events listener
+                containerRef.addEventListener("wheel", handleWheelPaginated)
+                onCleanup(() => containerRef.removeEventListener("wheel", handleWheelPaginated))
+            } else {
+                // events listener
+                containerRef.addEventListener("scroll", handleScrollContinous)
+                if (vertical) containerRef.addEventListener("wheel", handleWheelVerticalContinuous)
+
+                requestAnimationFrame(() => setupBookmarks())
+
+                onCleanup(() => {
+                    containerRef.removeEventListener("scroll", handleScrollContinous)
+                    if (vertical) containerRef.removeEventListener("wheel", handleWheelVerticalContinuous)
+                })
+            }
+
+            requestAnimationFrame(() => {
+                const currPosition = state.book.currParagraph
+                document.querySelector(`[index="${currPosition}"]`)?.scrollIntoView({ inline: "center" })
+            })
+        }),
+    )
+
+    // this effect renders bookmarks every time a section changes
+    const currSectionSignal = () => state.currSection
+    createEffect(
+        on(currSectionSignal, () => {
+            if (settings().paginated) setupBookmarks()
+        }),
+    )
+
+    // this effects adds/remove the book css
     createEffect(
         on(
-            () => readerSettings().disableCss,
+            () => settings().disableCss,
             (disableCss) => {
                 if (!disableCss) {
-                    const bookStyle = readerState.book.getCssStyle()
+                    const bookStyle = state.book.getCssStyle()
                     bookStyle.id = "book-css"
                     document.head.appendChild(bookStyle)
 
@@ -266,189 +373,28 @@ export default function ReaderContent() {
         ),
     )
 
-    // Updates: isPaginated changes
-    // Sets up pagination event listeners (touch, keyboard, scroll)
-    // - When paginated: adds touch, keydown, and scroll listeners to container/document
-    // - When not paginated: adds scroll listener to document only
-    // Cleans up listeners when pagination is disabled or component unmounts.
-    createEffect(
-        on(isPaginated, () => {
-            if (!containerRef) return
-
-            const handleScroll = () => readerDispatch.updateChars(isPaginated(), isVertical())
-
-            let scrollTimer: number | null = null
-            const handleScrollContinous = () => {
-                if (scrollTimer !== null) clearTimeout(scrollTimer)
-                scrollTimer = setTimeout(handleScroll, 300)
-            }
-
-            // Touch devices: left-right swipe
-            // vertical: left -> next page / right -> previous page
-            // horizontal: right -> next page / left -> previous page
-            let startX = 0
-            const handleTouchStart = (e: TouchEvent) => (startX = e.touches[0].clientX)
-            const handleTouchEnd = (e: TouchEvent) => {
-                const delta = e.changedTouches[0].clientX - startX
-                if (Math.abs(delta) > 50) {
-                    if (isVertical()) {
-                        flipPage(delta < 0 ? -1 : 1)
-                    } else {
-                        flipPage(delta < 0 ? 1 : -1)
-                    }
-                }
-            }
-
-            // Keyboard handler: flip page with arrow keys
-            const handleKeyDown = (e: KeyboardEvent) => {
-                if (isVertical()) {
-                    if (e.key === "ArrowLeft") flipPage(1)
-                    else if (e.key === "ArrowRight") flipPage(-1)
-                } else {
-                    if (e.key === "ArrowRight") flipPage(1)
-                    else if (e.key === "ArrowLeft") flipPage(-1)
-                }
-
-                if (e.key === "ArrowDown" || e.key === "PageDown") flipPage(1)
-                else if (e.key === "ArrowUp" || e.key === "PageUp") flipPage(-1)
-            }
-
-            const handleWheel = (e: WheelEvent) => (containerRef.scrollLeft -= e.deltaY)
-
-            if (isPaginated()) {
-                // update last section
-                const newSection = readerState.book.findSectionIndex(readerState.book.currParagraph)
-                if (readerState.currSection != newSection && newSection) {
-                    readerDispatch.setSection(newSection)
-                }
-
-                containerRef.addEventListener("touchstart", handleTouchStart)
-                containerRef.addEventListener("touchend", handleTouchEnd)
-                document.addEventListener("keydown", handleKeyDown)
-
-                containerRef.addEventListener("scroll", handleScroll)
-                window.addEventListener("resize", handleResize)
-
-                // iOS bouncing
-                document.documentElement.style.overscrollBehavior = "none"
-                document.body.style.overscrollBehavior = "none"
-
-                onCleanup(() => {
-                    containerRef.removeEventListener("touchstart", handleTouchStart)
-                    containerRef.removeEventListener("touchend", handleTouchEnd)
-                    document.removeEventListener("keydown", handleKeyDown)
-
-                    // scroll to containerRef
-                    containerRef.removeEventListener("scroll", handleScroll)
-                    window.removeEventListener("resize", handleResize)
-
-                    // iOS bouncing
-                    document.documentElement.style.removeProperty("overscrollBehavior")
-                    document.body.style.removeProperty("overscrollBehavior")
-                })
-            } else {
-                setTimeout(() => {
-                    setupBookmarks()
-                }, 0)
-
-                // if is vertical, map wheel event
-                if (isVertical()) {
-                    containerRef.addEventListener("wheel", handleWheel)
-                    containerRef.addEventListener("scroll", handleScrollContinous)
-                    onCleanup(() => {
-                        containerRef.removeEventListener("wheel", handleWheel)
-                        containerRef.removeEventListener("scroll", handleScrollContinous)
-                    })
-                } else {
-                    document.addEventListener("scroll", handleScrollContinous)
-                    onCleanup(() => {
-                        document.removeEventListener("scroll", handleScrollContinous)
-                    })
-                }
-            }
-
-            // wait to next render
-            requestAnimationFrame(() => {
-                const currPosition = readerState.book.currParagraph
-                document.querySelector(`p[index="${currPosition}"]`)?.scrollIntoView()
-            })
-        }),
-    )
-
-    // Update: currSection changes
-    // This should be triggered when using paginated mode
-    // or when changing the current xhtml
-    const currSectionSignal = () => readerState.currSection
-    createEffect(
-        on(currSectionSignal, () => {
-            if (!isPaginated()) return
-            setupBookmarks()
-
-            if (!shouldUpdateChars) {
-                shouldUpdateChars = true
-                return
-            }
-            readerDispatch.updateChars(isPaginated(), isVertical())
-        }),
-    )
-
-    // Update: padding changed
-    createEffect(() => {
-        readerSettings().verticalPadding
-        readerSettings().horizontalPadding
-        handleResize()
-    })
-
-    // Update: showFurigana changes
-    createEffect(() => {
-        currSectionSignal()
-        showFurigana()
-
-        setTimeout(() => {
-            if (!showFurigana()) {
-                document.querySelectorAll("rt").forEach((rt) => (rt.style.visibility = "hidden"))
-            } else {
-                document.querySelectorAll("rt").forEach((rt) => rt.style.removeProperty("display"))
-            }
-        })
-    })
-
     return (
-        <div class={mainClass()}>
-            <div
-                id="reader-container"
-                ref={containerRef}
-                class={containerClass()}
-                onClick={() => {
-                    readerDispatch.closeNavbar()
-                    readerDispatch.setSidebar(null)
-                }}
-            >
-                <div
-                    id="reader-content"
-                    class={contentClass()}
-                    style={{
-                        "font-size": "var(--reader-font-size)",
-                        "line-height": "var(--reader-line-height)",
-                        "font-family": "var(--reader-font-family)",
-                    }}
+        <div
+            ref={(ref) => (containerRef = ref)}
+            style={containerDivStyle()}
+            onClick={() => {
+                readerDispatch.closeNavbar()
+                readerDispatch.setSidebar(null)
+            }}
+        >
+            <div id="reader-content" ref={(ref) => (contentRef = ref)} style={contentDivStyle()}>
+                <Show
+                    when={!settings().paginated}
+                    fallback={
+                        <div
+                            innerHTML={patchImageUrls(state.book.sections[state.currSection].content, props.imageMap)}
+                        />
+                    }
                 >
-                    <Show
-                        when={!isPaginated()}
-                        fallback={
-                            <div
-                                innerHTML={patchImageUrls(
-                                    readerState.book.sections[readerState.currSection].content ?? "error??",
-                                    imageMap,
-                                )}
-                            />
-                        }
-                    >
-                        <For each={readerState.book.sections}>
-                            {(x) => <div innerHTML={patchImageUrls(x.content, imageMap)} />}
-                        </For>
-                    </Show>
-                </div>
+                    <For each={state.book.sections}>
+                        {(section) => <div innerHTML={patchImageUrls(section.content, props.imageMap)} />}
+                    </For>
+                </Show>
             </div>
         </div>
     )

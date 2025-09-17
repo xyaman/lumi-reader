@@ -108,9 +108,9 @@ export function ReaderProvider(props: { book: ReaderSource; children: JSX.Elemen
         }
 
         // TODO: find a better way and dont use timeout to wait for the render
-        setTimeout(() => {
-            document.getElementById(name)?.scrollIntoView({ block: "center" })
-        }, 0)
+        requestAnimationFrame(() => {
+            document.getElementById(name)?.scrollIntoView()
+        })
     }
 
     /**
@@ -119,14 +119,13 @@ export function ReaderProvider(props: { book: ReaderSource; children: JSX.Elemen
      */
     const bookmarkGoTo = (bookmark: Bookmark) => {
         const sectionId = store.book.findSectionIndexById(bookmark.sectionName)
-        if (store.currSection !== sectionId && sectionId) {
-            setStore("currSection", sectionId)
+        if (sectionId && store.currSection !== sectionId) {
+            setStore("currSection", sectionId + 1)
         }
 
-        // TODO: find a better way and dont use timeout to wait for the render
-        setTimeout(() => {
-            document.querySelector(`p[index="${bookmark.paragraphId}"]`)?.scrollIntoView({ block: "center" })
-        }, 0)
+        requestAnimationFrame(() => {
+            document.querySelector(`p[index="${bookmark.paragraphId}"]`)?.scrollIntoView({ inline: "center" })
+        })
     }
 
     const openNavbar = () => {
