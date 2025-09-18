@@ -313,7 +313,16 @@ export default function ReaderContent() {
                 else if (e.key === "ArrowUp" || e.key === "PageUp") flipPage(-1)
             }
 
-            const handleWheel = (e: WheelEvent) => (containerRef.scrollLeft -= e.deltaY)
+            const handleWheel = (e: WheelEvent) => {
+                if (isPaginated()) {
+                    e.preventDefault()
+                    // Scroll up = previous page, scroll down = next page
+                    const multiplier = e.deltaY > 0 ? 1 : -1
+                    flipPage(multiplier)
+                } else if (isVertical()) {
+                    containerRef.scrollLeft -= e.deltaY
+                }
+            }
 
             if (isPaginated()) {
                 // update last section
@@ -325,6 +334,7 @@ export default function ReaderContent() {
                 containerRef.addEventListener("touchstart", handleTouchStart)
                 containerRef.addEventListener("touchend", handleTouchEnd)
                 document.addEventListener("keydown", handleKeyDown)
+                containerRef.addEventListener("wheel", handleWheel)
 
                 containerRef.addEventListener("scroll", handleScroll)
                 window.addEventListener("resize", handleResize)
@@ -337,6 +347,7 @@ export default function ReaderContent() {
                     containerRef.removeEventListener("touchstart", handleTouchStart)
                     containerRef.removeEventListener("touchend", handleTouchEnd)
                     document.removeEventListener("keydown", handleKeyDown)
+                    containerRef.removeEventListener("wheel", handleWheel)
 
                     // scroll to containerRef
                     containerRef.removeEventListener("scroll", handleScroll)
