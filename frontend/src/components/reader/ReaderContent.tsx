@@ -70,8 +70,8 @@ export function ReaderContent(props: { imageMap: Map<string, string> }) {
         }
     })
     const contentDivStyle = createMemo(() => {
-        const vp = `${settings().verticalPadding}em`
-        const hp = `${settings().horizontalPadding}em`
+        const vp = `${window.innerHeight * (settings().verticalPadding / 100)}px`
+        const hp = `${window.innerWidth * (settings().horizontalPadding / 100)}px`
 
         // vertical-paginated
         const generalOpts = {
@@ -87,10 +87,10 @@ export function ReaderContent(props: { imageMap: Map<string, string> }) {
                 "writing-mode": "vertical-rl",
                 "overflow-x": "hidden",
                 "overflow-y": "hidden",
-                width: "100vw",
-                height: `calc(100vh - 2em * 2)`, // 2em is an arbitrary number
-                "column-gap": `calc((${vp}) * 2)`, // the gap should be twice the vertical padding to create an even margin
-                "column-width": `calc(100vw - (${vp}) * 2)`,
+                width: "var(--reader-width, 100vw)",
+                height: "calc(var(--reader-height, 100vh) - 2em * 2)", // 2em is an arbitrary number
+                "column-gap": `calc(${vp} * 2)`, // the gap should be twice the vertical padding to create an even margin
+                "column-width": `calc(var(--reader-width, 100vw) - ${vp} * 2)`,
                 "column-fill": "auto",
             } as const
         } else if (settings().paginated && !settings().vertical) {
@@ -99,10 +99,10 @@ export function ReaderContent(props: { imageMap: Map<string, string> }) {
                 ...generalOpts,
                 "overflow-y": "hidden",
                 "overflow-x": "hidden",
-                height: "100dvh",
-                width: "calc(100vw - 2em * 2)", // 2em is an arbitrary number
-                "column-gap": `calc((${hp}) * 2)`, // the gap should be twice the horizontal padding to create an even margin
-                "column-width": `calc(100vw - (${hp}) * 2)`,
+                height: "var(--reader-height, 100vh)",
+                width: "calc(var(--reader-width, 100vw) - 2em * 2)",
+                "column-gap": `calc(${hp} * 2)`, // the gap should be twice the horizontal padding to create an even margin
+                "column-width": `calc(var(--reader-width, 100vw) - ${hp} * 2)`,
                 "column-fill": "auto",
             } as const
         } else if (!settings().paginated && settings().vertical) {
@@ -111,7 +111,7 @@ export function ReaderContent(props: { imageMap: Map<string, string> }) {
                 ...generalOpts,
                 "writing-mode": "vertical-rl",
                 "overflow-y": "hidden",
-                height: `calc(100vh - 2em * 2)`, // 2em is an arbitrary number
+                height: `calc(--reader-height - 2em * 2)`, // 2em is an arbitrary number
             } as const
         } else {
             // continuous horizontal
@@ -119,7 +119,7 @@ export function ReaderContent(props: { imageMap: Map<string, string> }) {
                 ...generalOpts,
                 // "overflow-y": "hidden",
                 height: "100%",
-                width: `calc(100wh - 2em * 2)`, // 2em is an arbitrary number
+                width: `calc(--reader-width - 2em * 2)`, // 2em is an arbitrary number
             } as const
         }
     })
@@ -253,7 +253,11 @@ export function ReaderContent(props: { imageMap: Map<string, string> }) {
             readerDispatch.setSection(state.currSection - 1)
 
             // Scroll to end of previous section
-            contentRef.scrollTo({ top: contentRef.scrollHeight, behavior: "instant" })
+            if (settings().vertical) {
+                contentRef.scrollTo({ top: contentRef.scrollHeight, behavior: "instant" })
+            } else {
+                contentRef.scrollTo({ left: contentRef.scrollWidth, behavior: "instant" })
+            }
             readerDispatch.updateChars(isPaginated(), isVertical())
             return
         } else if (isEnd && multiplier === 1) {
@@ -320,7 +324,8 @@ export function ReaderContent(props: { imageMap: Map<string, string> }) {
             const paginated = values[0]
             const vertical = values[1]
 
-            // always scroll to the current position
+            // continous mode onlye
+            // paginated mode uses flipPage directly
             const handleScroll = () => readerDispatch.updateChars(isPaginated(), isVertical())
             let scrollTimer: number | null = null
             const handleScrollContinous = () => {
@@ -330,22 +335,37 @@ export function ReaderContent(props: { imageMap: Map<string, string> }) {
 
             // always re-set global variables when the size changes
             // all <img> and <svg> uses these variables. Check `styles.css`
-            const setupSizeCssVariables = () => {
+            // also resets the scroll so columns are always aligned
+            const handleResize = () => {
+                containerRef.style.setProperty("--reader-height", `${window.innerHeight}px`)
+                containerRef.style.setProperty("--reader-width", `${window.innerWidth}px`)
+
                 containerRef.style.setProperty(
-                    "--reader-height",
-                    `calc(${contentRef.clientHeight}px - 2 * ${settings().verticalPadding}em)`,
+                    "--reader-image-height",
+                    `calc(${window.innerHeight - 2 * window.innerHeight * (settings().verticalPadding / 100)}px - 2em)`,
                 )
                 containerRef.style.setProperty(
-                    "--reader-width",
-                    `calc(${contentRef.clientWidth}px - 2 * ${settings().horizontalPadding}em)`,
+                    "--reader-image-width",
+                    `calc(${window.innerWidth - 2 * window.innerWidth * (settings().horizontalPadding / 100)}px - 2em)`,
                 )
+
+                // adjust scroll after resize
+                if (paginated && !vertical) {
+                    const col = Math.round(contentRef.scrollLeft / contentRef.clientWidth)
+                    contentRef.scrollLeft = col * contentRef.clientWidth
+                } else if (paginated && vertical) {
+                    const col = Math.round(contentRef.scrollTop / contentRef.clientHeight)
+                    contentRef.scrollTop = col * contentRef.clientHeight
+                }
             }
-            setupSizeCssVariables()
-            document.addEventListener("resize", setupSizeCssVariables)
+            handleResize()
+            window.addEventListener("resize", handleResize)
             onCleanup(() => {
                 containerRef.style.removeProperty("--reader-height")
                 containerRef.style.removeProperty("--reader-width")
-                document.removeEventListener("resize", setupSizeCssVariables)
+                containerRef.style.removeProperty("--reader-image-height")
+                containerRef.style.removeProperty("--reader-image-width")
+                window.removeEventListener("resize", handleResize)
             })
 
             if (paginated) {
