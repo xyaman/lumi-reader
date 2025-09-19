@@ -1,7 +1,7 @@
-import { createEffect, createMemo, For, on, onCleanup, onMount, Show } from "solid-js"
-import { IconBookmarkFull } from "@/components/icons"
+import { createEffect, createMemo, createSignal, For, on, onCleanup, onMount, Show } from "solid-js"
 import { useReaderDispatch, useReaderState } from "@/context/reader"
 import { createReaderSettings } from "@/hooks"
+import { ContextMenu } from "./ContextMenu"
 
 function getBaseName(path: string) {
     const match = path.match(/(?:.*\/)?([^\/]+\.(?:png|jpe?g|svg|xhtml|html))$/i)
@@ -37,6 +37,7 @@ export function ReaderContent(props: { imageMap: Map<string, string> }) {
 
     // -- hooks
     const [settings] = createReaderSettings(false, true)
+    const [menuState, setMenuState] = createSignal({ visible: false, x: 0, y: 0, target: null as HTMLElement | null })
 
     // -- html + styles related
     let containerRef: HTMLDivElement
@@ -124,112 +125,37 @@ export function ReaderContent(props: { imageMap: Map<string, string> }) {
         }
     })
 
-    /**
-     * Adds/Remove a new bookmark, if the bookmark is already present it will be removed
-     * @param id -
-     * @param content -
-     * @returns boolean true if value was present/removed, false otherwise
-     */
-    const toggleBookmark = (id: number | string, content: string) => {
-        const idNum = Number(id)
-        const idx = state.book.bookmarks.findIndex((b) => b.paragraphId === idNum)
-        if (idx !== -1) {
-            state.book.bookmarks.splice(idx, 1)
-            return true
-        } else {
-            state.book.bookmarks.push({
-                paragraphId: idNum,
-                sectionName: state.book.sections[state.currSection].name,
-                content,
+    const handleContextMenu = (e: MouseEvent) => {
+        if (menuState().visible && e.target === menuState().target) {
+            setMenuState((prev) => prev && { ...prev, visible: false })
+            return
+        }
+
+        const targetParagraph = (e.target as HTMLElement).closest<HTMLElement>("p[index]")
+        if (targetParagraph) {
+            e.preventDefault()
+            setMenuState({
+                visible: true,
+                x: e.clientX,
+                y: e.clientY,
+                target: targetParagraph,
             })
-            return false
         }
     }
 
-    // == bookmarks
-    const setupBookmarks = () => {
-        const ptags = document.querySelectorAll("p[index]")
-        const bookmarksIds = state.book.bookmarks.map((b) => b.paragraphId)
-        const bgcolor = "bg-[var(--base01)]"
-
-        // if already has bookmark icon, remove it and return
-        // otherwise show bookmark icon.
-        // if bookmark icon is pressed, toggle bookmark status and save
-        const highlight = (p: Element) => {
-            // if current <p> is selected, unselect (hide icon)
-            if (p.children.length) {
-                const hasIcon = Array.from(p.children).filter((p) => p.id === "bookmark-icon")
-                if (hasIcon.length === 1) {
-                    document.getElementById("bookmark-icon")?.remove()
-                    return
-                }
-            }
-
-            // hide icon if there was another <p> selected
-            document.getElementById("bookmark-icon")?.remove()
-
-            const bookmarkSpan = document.createElement("span")
-            bookmarkSpan.id = "bookmark-icon"
-
-            bookmarkSpan.className =
-                "absolute z-10 right-1 w-[40px] h-[40px] cursor-pointer rounded-lg p-1 bg-[var(--base01)] bg-opacity-80 border border-[var(--base03)] shadow-lg transition-transform duration-150 hover:scale-110 hover:bg-[var(--base02)]"
-
-            if (isVertical()) {
-                bookmarkSpan.className += "bottom-0"
-            } else {
-                bookmarkSpan.className += "top-0"
-            }
-
-            const label = document.createElement("span")
-            label.textContent = "Add to bookmark"
-            // label.textContent = p.getAttribute("bookmarked") ? "Remove bookmark" : "Add to bookmark"
-            label.className =
-                "absolute right-full mr-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded bg-[var(--base02)] text-xs text-[var(--base06)] opacity-0 pointer-events-none transition-opacity duration-150 group-hover:opacity-100"
-
-            // Make the icon a hover group
-            bookmarkSpan.className += " group"
-
-            // Show label on hover
-            bookmarkSpan.onmouseover = () => {
-                p.classList.add("bg-[var(--base02)]")
-                label.style.opacity = "1"
-                const bookmarksIds = state.book.bookmarks.map((b) => b.paragraphId)
-                const index = Number(p.getAttribute("index"))
-                label.textContent = bookmarksIds.includes(index) ? "Remove bookmark" : "Add bookmark"
-            }
-            bookmarkSpan.onmouseleave = () => {
-                p.classList.remove("bg-[var(--base02)]")
-                label.style.opacity = "0"
-            }
-
-            bookmarkSpan.appendChild(IconBookmarkFull() as HTMLElement)
-            bookmarkSpan.appendChild(label)
-
-            bookmarkSpan.onclick = () => {
-                // solid-js makes a re-render and the bookmark is re-generated
-                // to avoid this, we schedule the remove to after the render
-                setTimeout(() => document.getElementById("bookmark-icon")?.remove(), 0)
-
-                const index = p.getAttribute("index")!
-                const removed = toggleBookmark(index, p.textContent!)
-                removed ? p.classList.remove(bgcolor) : p.classList.add(bgcolor)
-                state.book.save()
-
-                // when clicked, onmouseleave is not called
-                p.classList.remove("bg-[var(--base02)]")
-            }
-
-            p.appendChild(bookmarkSpan)
-        }
+    // == Highlight existing bookmarks on render/section change
+    const highlightBookmarkedParagraphs = () => {
+        const bookmarksIds = new Set(state.book.bookmarks.map((b) => b.paragraphId))
+        const ptags = contentRef.querySelectorAll("p[index]")
+        const bgcolor = "bg-base01"
 
         for (const p of ptags) {
-            if (p.textContent === "") continue
-            p.addEventListener("click", () => highlight(p))
-            p.classList.add("relative")
-
-            // setup initial state
             const index = Number(p.getAttribute("index"))
-            if (bookmarksIds.includes(index)) p.classList.add(bgcolor)
+            if (bookmarksIds.has(index)) {
+                p.classList.add(bgcolor)
+            } else {
+                p.classList.remove(bgcolor)
+            }
         }
     }
 
@@ -301,9 +227,12 @@ export function ReaderContent(props: { imageMap: Map<string, string> }) {
     // effects
     onMount(() => {
         document.addEventListener("keydown", handleKeyDown)
+        containerRef.addEventListener("contextmenu", handleContextMenu)
     })
+
     onCleanup(() => {
         document.removeEventListener("keydown", handleKeyDown)
+        containerRef.removeEventListener("contextmenu", handleContextMenu)
     })
 
     const isPaginated = () => settings().paginated
@@ -311,11 +240,7 @@ export function ReaderContent(props: { imageMap: Map<string, string> }) {
 
     // this effect renders bookmarks every time a section changes
     const currSectionSignal = () => state.currSection
-    createEffect(
-        on(currSectionSignal, () => {
-            if (settings().paginated) setupBookmarks()
-        }),
-    )
+    createEffect(on(currSectionSignal, () => requestAnimationFrame(highlightBookmarkedParagraphs)))
 
     // Settings and initializations related effects
     // This effect (re-)setups the reader every time paginated or vertical changes
@@ -377,7 +302,7 @@ export function ReaderContent(props: { imageMap: Map<string, string> }) {
                 containerRef.addEventListener("scroll", handleScrollContinous)
                 if (vertical) containerRef.addEventListener("wheel", handleWheelVerticalContinuous)
 
-                requestAnimationFrame(() => setupBookmarks())
+                requestAnimationFrame(highlightBookmarkedParagraphs)
 
                 onCleanup(() => {
                     containerRef.removeEventListener("scroll", handleScrollContinous)
@@ -411,28 +336,36 @@ export function ReaderContent(props: { imageMap: Map<string, string> }) {
     )
 
     return (
-        <div
-            ref={(ref) => (containerRef = ref)}
-            style={containerDivStyle()}
-            onClick={() => {
-                readerDispatch.closeNavbar()
-                readerDispatch.setSidebar(null)
-            }}
-        >
-            <div id="reader-content" ref={(ref) => (contentRef = ref)} style={contentDivStyle()}>
-                <Show
-                    when={!settings().paginated}
-                    fallback={
-                        <div
-                            innerHTML={patchImageUrls(state.book.sections[state.currSection].content, props.imageMap)}
-                        />
-                    }
-                >
-                    <For each={state.book.sections}>
-                        {(section) => <div innerHTML={patchImageUrls(section.content, props.imageMap)} />}
-                    </For>
-                </Show>
+        <>
+            <div
+                ref={(ref) => (containerRef = ref)}
+                style={containerDivStyle()}
+                onClick={() => {
+                    readerDispatch.closeNavbar()
+                    readerDispatch.setSidebar(null)
+                }}
+            >
+                <div id="reader-content" ref={(ref) => (contentRef = ref)} style={contentDivStyle()}>
+                    <Show
+                        when={!settings().paginated}
+                        fallback={
+                            <div
+                                innerHTML={patchImageUrls(
+                                    state.book.sections[state.currSection].content,
+                                    props.imageMap,
+                                )}
+                            />
+                        }
+                    >
+                        <For each={state.book.sections}>
+                            {(section) => <div innerHTML={patchImageUrls(section.content, props.imageMap)} />}
+                        </For>
+                    </Show>
+                </div>
             </div>
-        </div>
+
+            {/* Render the context menu */}
+            <ContextMenu menuState={menuState()} onClose={() => setMenuState({ ...menuState(), visible: false })} />
+        </>
     )
 }
