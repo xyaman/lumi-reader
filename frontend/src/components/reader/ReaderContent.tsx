@@ -206,6 +206,22 @@ export function ReaderContent(props: { imageMap: Map<string, string> }) {
         readerDispatch.updateChars(isPaginated(), isVertical())
     }
 
+    // Touch devices: left-right swipe
+    // vertical: left -> next page / right -> previous page
+    // horizontal: right -> next page / left -> previous page
+    let startX = 0
+    const handleTouchStart = (e: TouchEvent) => (startX = e.touches[0].clientX)
+    const handleTouchEnd = (e: TouchEvent) => {
+        const delta = e.changedTouches[0].clientX - startX
+        if (Math.abs(delta) > 50) {
+            if (isVertical()) {
+                flipPage(delta < 0 ? -1 : 1)
+            } else {
+                flipPage(delta < 0 ? 1 : -1)
+            }
+        }
+    }
+
     const handleKeyDown = (e: KeyboardEvent) => {
         if (settings().vertical) {
             if (e.key === "ArrowLeft") flipPage(1)
@@ -295,8 +311,14 @@ export function ReaderContent(props: { imageMap: Map<string, string> }) {
 
             if (paginated) {
                 // events listener
+                containerRef.addEventListener("touchstart", handleTouchStart)
+                containerRef.addEventListener("touchend", handleTouchEnd)
                 containerRef.addEventListener("wheel", handleWheelPaginated)
-                onCleanup(() => containerRef.removeEventListener("wheel", handleWheelPaginated))
+                onCleanup(() => {
+                    containerRef.removeEventListener("touchstart", handleTouchStart)
+                    containerRef.removeEventListener("touchend", handleTouchEnd)
+                    containerRef.removeEventListener("wheel", handleWheelPaginated)
+                })
             } else {
                 // events listener
                 containerRef.addEventListener("scroll", handleScrollContinous)
