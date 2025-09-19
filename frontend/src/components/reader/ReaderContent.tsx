@@ -76,6 +76,7 @@ export function ReaderContent(props: { imageMap: Map<string, string> }) {
 
         // vertical-paginated
         const generalOpts = {
+            margin: "auto",
             "font-size": `${settings().fontSize}px`,
             "line-height": `${settings().lineHeight}`,
             padding: `${vp} ${hp}`,
