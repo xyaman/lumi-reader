@@ -1,5 +1,5 @@
 import { lsReader } from "@/services/localStorage"
-import { createEffect, createSignal, on, onCleanup, onMount } from "solid-js"
+import { createEffect, createSignal, on, onMount } from "solid-js"
 
 const initial = {
     fontSize: Math.max(lsReader.fontSize(), 1),
@@ -32,7 +32,8 @@ export function createReaderSettings(injectCss: boolean = false, autoReflectChan
                 lsReader.setLineHeight(value as number)
                 break
             case "fontFamily":
-                if (value !== "__default__") lsReader.setFontFamily(value as string)
+                const newvalue = value !== "__default__" ? value : null
+                lsReader.setFontFamily(newvalue as string)
                 break
             case "verticalPadding":
                 lsReader.setVerticalPadding(value as number)
@@ -58,7 +59,6 @@ export function createReaderSettings(injectCss: boolean = false, autoReflectChan
 
     function reflectSettings() {
         setSettings(tempSettings())
-        document.documentElement.style.setProperty("--reader-font-family", `${settings().fontFamily}`)
     }
 
     if (injectCss) {
@@ -68,10 +68,6 @@ export function createReaderSettings(injectCss: boolean = false, autoReflectChan
     if (autoReflectChanges) {
         createEffect(on(tempSettings, () => reflectSettings()))
     }
-
-    onCleanup(() => {
-        document.documentElement.style.removeProperty("--reader-font-family")
-    })
 
     return [settings, setReaderSetting, reflectSettings] as const
 }
