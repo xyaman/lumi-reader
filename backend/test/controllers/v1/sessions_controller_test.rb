@@ -7,7 +7,7 @@ class V1::SessionsControllerTest < ActionDispatch::IntegrationTest
 
   test "should create session on successful login" do
     post v1_session_url, params: { credentials: { email: @user.email, password: "jkjkjkjk" } }, as: :json
-    assert_response :ok
+    assert_response :created
   end
 
   test "should not create session with invalid password" do

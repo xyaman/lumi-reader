@@ -21,6 +21,8 @@ Rails.application.routes.draw do
     resource :session, only: [ :create, :show, :destroy ]
 
     get "auth/patreon/callback", to: "auth#patreon"
+
+    # todo: change get -> put? delete?
     get "auth/patreon/unlink", to: "auth#unlink_patreon"
     get "auth/patreon/refresh", to: "auth#refresh_patreon"
     get "auth/patreon/generate", to: "auth#generate_patreon_url"

@@ -6,6 +6,7 @@ xyaman:
   share_online_status: true
   share_presence: true
   patreon_tier: free
+  patreon_id: "1234"
 
 user2:
   email: user2@lumireader.app
