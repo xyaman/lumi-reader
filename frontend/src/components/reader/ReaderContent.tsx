@@ -193,7 +193,12 @@ export function ReaderContent(props: { imageMap: Map<string, string> }) {
             readerDispatch.setSection(state.currSection + 1)
 
             // Scroll to beginning of next section
-            contentRef.scrollTo({ top: 0, behavior: "instant" })
+            if (settings().vertical) {
+                contentRef.scrollTo({ top: 0, behavior: "instant" })
+            } else {
+                contentRef.scrollTo({ left: 0, behavior: "instant" })
+            }
+
             readerDispatch.updateChars(isPaginated(), isVertical())
             return
         }
