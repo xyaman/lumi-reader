@@ -364,6 +364,17 @@ export function ReaderContent(props: { imageMap: Map<string, string> }) {
         ),
     )
 
+    // this effect show/hide furigana
+    createEffect(
+        on(
+            () => settings().showFurigana,
+            (showFurigana) => {
+                if (!showFurigana) document.body.classList.add("hide-furigana")
+                else document.body.classList.remove("hide-furigana")
+            },
+        ),
+    )
+
     return (
         <>
             <div
