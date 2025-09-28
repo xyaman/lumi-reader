@@ -139,6 +139,10 @@ body {
     writing-mode: vertical-rl;
 }
 
+.hide-furigana rt {
+    visibility: hidden;
+}
+
 /* TODO: find a less expensive way? */
 /* #reader-content *:has(> img), */
 /* #reader-content *:has(> svg) { */
