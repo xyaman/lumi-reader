@@ -1,4 +1,4 @@
-import { createReaderSettings } from "@/hooks"
+import { builtInFonts, createReaderSettings } from "@/hooks"
 import { Button, Input, LabeledSlider } from "@/ui"
 import { Checkbox } from "@/ui"
 import { Show } from "solid-js"
@@ -46,11 +46,15 @@ export function ReaderSettings(props: { isEmbedded?: boolean }) {
                 <div class="space-y-2">
                     <label class="block">Font Family</label>
                     <div class="relative">
-                        <Input
-                            type="text"
+                        <select
+                            class="w-full border rounded p-2 border-base03 bg-base00"
                             value={settings().fontFamily ?? "__default__"}
-                            onChange={(e) => setSettings("fontFamily", e.target.value)}
-                        />
+                            onChange={(e) => setSettings("fontFamily", e.currentTarget.value)}
+                        >
+                            {builtInFonts.map((f) => (
+                                <option value={f.value}>{f.label}</option>
+                            ))}
+                        </select>
                     </div>
                 </div>
             </div>

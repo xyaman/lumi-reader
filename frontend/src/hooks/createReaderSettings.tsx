@@ -1,6 +1,14 @@
 import { lsReader } from "@/services/localStorage"
 import { createEffect, createSignal, on, onMount } from "solid-js"
 
+export const builtInFonts = [
+    { label: "Default (System Font)", value: "__default__" },
+    { label: "Noto Sans JP", value: "Noto Sans JP" },
+    { label: "Noto Serif JP", value: "Noto Serif JP" },
+    { label: "KleeOne", value: "KleeOne" },
+    { label: "Shippori Mincho", value: "Shippori Mincho" },
+]
+
 const initial = {
     fontSize: Math.max(lsReader.fontSize(), 1),
     lineHeight: Math.max(lsReader.lineHeight(), 1),
@@ -58,7 +66,14 @@ export function createReaderSettings(injectCss: boolean = false, autoReflectChan
     }
 
     function reflectSettings() {
-        setSettings(tempSettings())
+        const current = tempSettings()
+        setSettings(current)
+
+        if (current.fontFamily && current.fontFamily !== "__default__") {
+            document.body.style.setProperty("--app-font", `"${current.fontFamily}"`)
+        } else {
+            document.body.style.removeProperty("--app-font")
+        }
     }
 
     if (injectCss) {

@@ -43,7 +43,9 @@ export function ReaderContent(props: { imageMap: Map<string, string> }) {
     let containerRef: HTMLDivElement
     let contentRef: HTMLDivElement
     const containerDivStyle = createMemo(() => {
-        const generalOpts = {} as const
+        const generalOpts = {
+            "font-family": "var(--app-font, inherit)",
+        } as const
         if (settings().paginated && settings().vertical) {
             return {
                 ...generalOpts,

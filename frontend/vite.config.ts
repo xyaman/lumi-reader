@@ -33,7 +33,8 @@ export default defineConfig({
                 ],
             },
             workbox: {
-                globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
+                globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+                maximumFileSizeToCacheInBytes: 6 * 1024 * 1024, // 6 MB
             },
         }),
     ],
@@ -44,6 +45,9 @@ export default defineConfig({
     },
     worker: {
         format: "es",
+    },
+    build: {
+        assetsInlineLimit: 0,
     },
     test: {
         environment: "jsdom",

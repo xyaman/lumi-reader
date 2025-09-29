@@ -1,5 +1,36 @@
 @import "tailwindcss";
 
+@font-face {
+    font-family: "Noto Sans JP";
+    src: url("/src/assets/fonts/NotoSansJP-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-display: swap;
+}
+@font-face {
+    font-family: "Noto Sans JP";
+    src: url("/src/assets/fonts/NotoSansJP-Bold.woff2") format("woff2");
+    font-weight: 700;
+    font-display: swap;
+}
+@font-face {
+    font-family: "Noto Serif JP";
+    src: url("/src/assets/fonts/NotoSerifJP-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-display: swap;
+}
+@font-face {
+    font-family: "KleeOne";
+    src: url("/src/assets/fonts/KleeOne-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-display: swap;
+}
+@font-face {
+    font-family: "Shippori Mincho";
+    src: url("/src/assets/fonts/ShipporiMincho-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-display: swap;
+}
+
 @theme {
     --animate-fade-in: fade-in 0.3s ease-out both;
     @keyframes fade-in {
