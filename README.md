@@ -30,7 +30,7 @@ This project is built with a modern tech stack and is split into two main parts.
 
 ## Contributing
 
-We welcome contributions! If you have an idea for a new feature or have found an issue, please **create a discussion first** before submitting a pull request.
+We welcome contributions! If you have an idea for a new feature or have found an issue, please **create a discussion first** before submitting a pull request or opening an issue.
 This allows us to talk about the proposed changes and ensure they align with the project's goals.
 
 ## License
