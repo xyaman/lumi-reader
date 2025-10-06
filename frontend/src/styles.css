@@ -185,4 +185,6 @@ body {
     max-width: var(--reader-image-width, 100vw) !important;
     max-height: var(--reader-image-height, 100vh) !important;
     display: inline-block !important;
+    width: auto;
+    height: auto;
 }
