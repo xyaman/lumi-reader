@@ -1,4 +1,4 @@
-class RecreateReadingSessions < ActiveRecord::Migration[8.0]
+class CreateReadingSessions < ActiveRecord::Migration[8.0]
   def change
     create_table :reading_sessions do |t|
       t.bigint :snowflake, null: false    # client-generated snowflake
