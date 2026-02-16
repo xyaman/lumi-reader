@@ -1,5 +1,6 @@
 require "net/http"
 require "json"
+require "openssl"
 
 
 # https://docs.patreon.com/#oauth
@@ -39,6 +40,14 @@ class PatreonService
     raise PatreonApiError, "Patreon API error: #{res.code} #{res.body}" unless res.is_a?(Net::HTTPSuccess)
     data = JSON.parse(res.body)
     data
+  end
+
+  def self.valid_webhook_signature?(payload, signature)
+    return false if signature.blank?
+    return false if CLIENT_SECRET.blank?
+
+    expected = OpenSSL::HMAC.hexdigest("sha256", CLIENT_SECRET, payload)
+    ActiveSupport::SecurityUtils.secure_compare(expected, signature)
   end
 
   def initialize(user)

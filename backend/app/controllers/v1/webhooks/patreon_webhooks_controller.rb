@@ -3,6 +3,13 @@ class V1::Webhooks::PatreonWebhooksController < ApplicationController
 
   def create
     payload = request.body.read
+    signature = request.headers["X-Patreon-Signature"]
+
+    unless PatreonService.valid_webhook_signature?(payload, signature)
+      Rails.logger.warn("Invalid Patreon webhook signature")
+      return render json: { error: "Invalid signature" }, status: :unauthorized
+    end
+
     data = JSON.parse(payload) rescue nil
 
     if data.nil?
@@ -34,22 +41,17 @@ class V1::Webhooks::PatreonWebhooksController < ApplicationController
     patreon_id = member.dig("relationships", "user", "data", "id")
     tier_id = member.dig("relationships", "currently_entitled_tiers", "data", 0, "id")
 
-    puts "Tier ID: #{tier_id}"
-    tier = PatreonTier.find_by(patreon_tier_id: tier_id)
-    puts "Tier: #{tier}"
-
-    puts "User Patreon ID: #{patreon_id}"
-
     user = User.find_by(patreon_id: patreon_id)
     return unless user
 
-    if tier_id
-      tier = PatreonTier.find_by(patreon_tier_id: tier_id)
-      # TODO: what happens if tier is nil? how to handle
-      user.update!(patreon_tier: tier)
-    else
-      user.update!(patreon_tier: PatreonTier.find_by(name: "Free"))
+    tier = PatreonTier.find_by(patreon_tier_id: tier_id) if tier_id
+
+    if tier.nil?
+      Rails.logger.warn("Unknown Patreon tier: #{tier_id}, defaulting to Free")
+      tier = PatreonTier.find_by(name: "Free")
     end
+
+    user.update!(patreon_tier: tier)
   end
 
   def handle_membership_delete(data)
