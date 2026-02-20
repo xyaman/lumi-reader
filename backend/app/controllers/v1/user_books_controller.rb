@@ -17,6 +17,11 @@ class V1::UserBooksController < ApplicationController
       return render_error errors: "Compressed data is required."
     end
 
+    compressed_file = params[:user_book][:compressed_data]
+    unless compressed_file.content_type == "application/octet-stream"
+      return render_error errors: "File type not allowed. Please upload a compressed book file."
+    end
+
     user_book = Current.user.user_books.new(user_book_params)
 
     begin
@@ -25,8 +30,15 @@ class V1::UserBooksController < ApplicationController
       return render_error errors: "Failed to attach compressed data: #{e.message}", status: :unprocessable_entity
     end
 
+    max_size = Current.user.patreon_tier.max_book_size.megabytes
+    if user_book.compressed_data.blob.byte_size > max_size
+      user_book.compressed_data.purge
+      return render_error errors: "File size exceeds #{Current.user.patreon_tier.max_book_size}MB limit.", status: :payload_too_large
+    end
+
     if user_book.save
       # the frontend sends this value too, use it if its present
+      # so we have correct updated_at (may differ from the DB)
       if params[:user_book][:updated_at].present?
         user_book.update_column(:updated_at, params[:user_book][:updated_at])
       end
