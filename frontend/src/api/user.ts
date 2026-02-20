@@ -7,14 +7,20 @@ export const userApi = {
         return ApiClient.request<User>(`/users/${username}`)
     },
 
-    async getFollowing(username: string, includePresence = false) {
-        const params = includePresence ? "?presence=1" : ""
-        return ApiClient.request<User[]>(`/users/${username}/following${params}`)
+    async getFollowing(username: string, page = 1) {
+        return ApiClient.request<{ users: User[]; pagy: { page: number; pages: number; count: number } }>(
+            `/users/${username}/following?page=${page}`,
+        )
     },
 
-    async getFollowers(username: string, includePresence = false) {
-        const params = includePresence ? "?presence=1" : ""
-        return ApiClient.request<User[]>(`/users/${username}/followers${params}`)
+    async getFollowers(username: string, page = 1) {
+        return ApiClient.request<{ users: User[]; pagy: { page: number; pages: number; count: number } }>(
+            `/users/${username}/followers?page=${page}`,
+        )
+    },
+
+    async getFollowingPresence(username: string) {
+        return ApiClient.request<User[]>(`/users/${username}/following_presence`)
     },
 
     async searchUsers(query: string) {

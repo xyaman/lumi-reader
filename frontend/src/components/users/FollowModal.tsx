@@ -7,36 +7,46 @@ import { User } from "@/types/api"
 import { userApi } from "@/api/user"
 import Modal from "../Modal"
 
-type UserModalProps = {
+type FollowModalProps = {
     open: boolean
     onDismiss: () => void
     username: string
     type: "followers" | "following"
 }
 
-export function FollowModal(props: UserModalProps) {
+export function FollowModal(props: FollowModalProps) {
     const navigate = useNavigate()
 
     const [state, setState] = createStore({
         page: 1,
+        totalPages: 1,
         users: [] as User[],
         hasMore: true,
         loading: false,
+        error: null as string | null,
     })
 
-    // Fetch users for the current page
-    const fetchUsers = async () => {
+    const fetchUsers = async (page: number) => {
         setState("loading", true)
         let res
         if (props.type === "followers") {
-            res = await userApi.getFollowers(props.username, false)
+            res = await userApi.getFollowers(props.username, page)
         } else {
-            res = await userApi.getFollowing(props.username, false)
+            res = await userApi.getFollowing(props.username, page)
         }
         setState("loading", false)
-        if (res.error) return
-        if (res.ok.data.length === 0) setState("hasMore", false)
-        setState("users", (prev) => [...prev, ...res.ok.data])
+        if (res.error) {
+            setState("error", `Failed to load ${props.type} list...`)
+            return
+        }
+
+        setState("error", null)
+        const newUsers = res.ok.data.users
+        const pagy = res.ok.data.pagy
+
+        setState("totalPages", pagy.pages)
+        setState("hasMore", page < pagy.pages)
+        setState("users", (prev) => (page === 1 ? newUsers : [...prev, ...newUsers]))
     }
 
     // Reset value every time is opened
@@ -44,11 +54,13 @@ export function FollowModal(props: UserModalProps) {
         if (props.open) {
             setState({
                 page: 1,
+                totalPages: 1,
                 users: [],
                 hasMore: true,
                 loading: false,
+                error: null,
             })
-            fetchUsers()
+            fetchUsers(1)
         }
     })
 
@@ -56,8 +68,9 @@ export function FollowModal(props: UserModalProps) {
     const handleScroll = (e: Event) => {
         const el = e.target as HTMLDivElement
         if (el.scrollTop + el.clientHeight >= el.scrollHeight - 120 && state.hasMore && !state.loading) {
-            setState("page", state.page + 1)
-            fetchUsers()
+            const nextPage = state.page + 1
+            setState("page", nextPage)
+            fetchUsers(nextPage)
         }
     }
 
@@ -68,20 +81,33 @@ export function FollowModal(props: UserModalProps) {
             </button>
             <p class="text-xl mb-4">{props.type === "followers" ? "Followers" : "Following"}</p>
             <div class="max-h-96 overflow-y-auto" onScroll={handleScroll}>
-                <UserList
-                    users={state.users}
-                    onUserClick={(username) => {
-                        navigate(`/users/${username}`)
-                        props.onDismiss()
-                    }}
-                />
-                <Show when={state.loading}>
-                    <div class="flex items-center justify-center py-6">
-                        <Spinner size={32} base16Color="--base05" />
+                <Show when={state.error}>
+                    <div class="text-center py-6 text-base05">
+                        <p>{state.error}</p>
+                        <button
+                            class="cursor-pointer bg-base02 hover:bg-base03 px-4 rounded-md mt-2"
+                            onClick={() => fetchUsers(1)}
+                        >
+                            Tap to retry
+                        </button>
                     </div>
                 </Show>
-                <Show when={!state.hasMore && state.users.length === 0 && !state.loading}>
-                    <div class="text-center py-6 text-base04">No users found.</div>
+                <Show when={!state.error}>
+                    <UserList
+                        users={state.users}
+                        onUserClick={(username) => {
+                            navigate(`/users/${username}`)
+                            props.onDismiss()
+                        }}
+                    />
+                    <Show when={state.loading}>
+                        <div class="flex items-center justify-center py-6">
+                            <Spinner size={32} base16Color="--base05" />
+                        </div>
+                    </Show>
+                    <Show when={!state.hasMore && state.users.length === 0 && !state.loading}>
+                        <div class="text-center py-6 text-base04">No users found.</div>
+                    </Show>
                 </Show>
             </div>
         </Modal>

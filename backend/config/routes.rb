@@ -35,6 +35,7 @@ Rails.application.routes.draw do
       member do
         get :followers
         get :following
+        get :following_presence
         put :follow
         put :unfollow
         get :recent_reading_sessions

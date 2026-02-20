@@ -36,9 +36,9 @@ export default function SocialList() {
 
     const [follows, { mutate: setFollowers }] = createResource(async () => {
         if (!authState.user) return []
-        const res = await userApi.getFollowing(authState.user!.username, true)
+        const res = await userApi.getFollowingPresence(authState.user!.username)
         if (res.error) throw res.error
-        return sortUsers(res.ok.data)
+        return res.ok.data
     })
 
     // TODO: Handle errors

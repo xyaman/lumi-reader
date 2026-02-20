@@ -1,5 +1,5 @@
 class V1::UsersController < ApplicationController
-  allow_unauthenticated_access only: %i[ index show following followers recent_reading_sessions ]
+  allow_unauthenticated_access only: %i[ index show following followers following_presence recent_reading_sessions ]
 
   def index
     return render_error errors: "`query` parameter is not present" unless params[:query]
@@ -21,13 +21,49 @@ class V1::UsersController < ApplicationController
   def following
     user = User.find_by(username: params[:username])
     return render_error errors: "User not found.", status: :not_found unless user
-    render_success data: UserBlueprint.render_as_json(user.following, view: :presence)
+
+    page = params[:page].to_i
+    page = 1 if page < 1
+
+    pagy, paginated_following = pagy(user.following, items: 20, page: page)
+    render_success data: {
+      users: UserBlueprint.render_as_json(paginated_following, view: :presence),
+      pagy: {
+        page: pagy.page,
+        pages: pagy.pages,
+        count: pagy.count
+      }
+    }
   end
 
   def followers
     user = User.find_by(username: params[:username])
     return render_error errors: "User not found.", status: :not_found unless user
-    render_success data: UserBlueprint.render_as_json(user.followers, view: :presence)
+
+    # @Todo(xyaman): check nil.to_i => 0? || 1 => 0?
+    page = params[:page].to_i
+    page = 1 if page < 1
+
+    pagy, paginated_followers = pagy(user.followers, items: 20, page: page)
+    render_success data: {
+      users: UserBlueprint.render_as_json(paginated_followers, view: :presence),
+      pagy: {
+        page: pagy.page,
+        pages: pagy.pages,
+        count: pagy.count
+      }
+    }
+  end
+
+  def following_presence
+    user = User.find_by(username: params[:username])
+    return render_error errors: "User not found.", status: :not_found unless user
+
+    # @Speed(xyaman): ok for now, but this needs to be improved
+    following = user.following.to_a
+    following.sort_by! { |u| u.presence[:status] == "online" ? 0 : 1 }
+
+    render_success data: UserBlueprint.render_as_json(following, view: :presence)
   end
 
   def follow

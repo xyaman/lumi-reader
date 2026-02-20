@@ -3,6 +3,7 @@ require "test_helper"
 class V1::UsersControllerTest < ActionDispatch::IntegrationTest
   setup do
     @user_xyaman = users(:xyaman)
+    @user2 = users(:user2)
     @user4 = users(:user4)
     @user5 = users(:user5)
   end
@@ -94,7 +95,7 @@ class V1::UsersControllerTest < ActionDispatch::IntegrationTest
     get following_v1_user_url(username: user.username)
     assert_response :success
     json = JSON.parse(@response.body)
-    assert_equal 2, json["data"].size
+    assert_equal 2, json["data"]["users"].size
   end
 
   test "should show user followers" do
@@ -102,7 +103,7 @@ class V1::UsersControllerTest < ActionDispatch::IntegrationTest
     get followers_v1_user_url(username: user.username)
     assert_response :success
     json = JSON.parse(@response.body)
-    assert_equal 1, json["data"].size
+    assert_equal 1, json["data"]["users"].size
   end
 
   test "should return an empty array when user is not following anyone" do
@@ -111,7 +112,7 @@ class V1::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     json_response = JSON.parse(@response.body)
-    assert_equal [], json_response["data"]
+    assert_equal [], json_response["data"]["users"]
   end
 
   test "should return not found for followers of a non-existent user" do
@@ -120,5 +121,18 @@ class V1::UsersControllerTest < ActionDispatch::IntegrationTest
 
     json_response = JSON.parse(@response.body)
     assert_equal Array.wrap("User not found."), json_response["errors"]
+  end
+
+  test "should show user following presence sorted by online status" do
+    user = users(:xyaman)
+    # Set user2 as online
+    @user2.set_online!
+
+    get following_presence_v1_user_url(username: user.username)
+    assert_response :success
+    json = JSON.parse(@response.body)
+    assert_equal 2, json["data"].size
+    # First user should be online
+    assert_equal "online", json["data"][0]["presence"]["status"]
   end
 end
