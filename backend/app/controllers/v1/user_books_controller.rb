@@ -13,6 +13,11 @@ class V1::UserBooksController < ApplicationController
   def create
     return render_error errors: "Book limit reached." unless Current.user.can_create_book?
 
+    existing_book = Current.user.user_books.find_by(unique_id: params[:user_book][:unique_id])
+    if existing_book
+      return render_error errors: "This book is already in your library.", status: :unprocessable_entity
+    end
+
     unless params[:user_book] && params[:user_book][:compressed_data].present?
       return render_error errors: "Compressed data is required."
     end
