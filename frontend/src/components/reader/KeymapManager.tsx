@@ -49,15 +49,15 @@ export function KeymapManager() {
                 onClick={() => setModalOpen(false)}
             >
                 <div
-                    class="rounded p-6 min-w-[300px] shadow-lg bg-(--base01) text-(--base05)"
+                    class="rounded p-6 min-w-[300px] shadow-lg bg-base01 text-base05"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <h4 class="mb-4 font-bold text-lg text-(--base0D)">Keyboard Shortcuts</h4>
+                    <h4 class="mb-4 font-bold text-lg text-base0D">Keyboard Shortcuts</h4>
                     <ul>
                         <For each={keymaps}>
                             {(km) => (
                                 <li class="mb-2 flex items-center">
-                                    <span class="font-mono px-2 py-1 rounded bg-(--base02) text-(--base0B)">
+                                    <span class="font-mono px-2 py-1 rounded bg-base02 text-base0B">
                                         {km.key}
                                     </span>
                                     <span class="ml-2">{km.description}</span>

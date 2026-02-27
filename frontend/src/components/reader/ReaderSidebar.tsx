@@ -111,25 +111,25 @@ export function BookmarksSidebarContent(props: { onItemClick: (b: Bookmark) => v
     return (
         <div class="max-h-[90vh] overflow-y-auto">
             <div class="mb-2 flex items-center gap-2 row">
-                <label for="bookmark-sort" class="text-xs text-(--base05)]">
+                <label for="bookmark-sort" class="text-xs text-base05">
                     Sort by:
                 </label>
                 <select
                     id="bookmark-sort"
-                    class="text-xs px-2 py-1 rounded outline-none transition-colors bg-(--base01) text-(--base05) border border-(--base03) focus:border-(--base0D)"
+                    class="text-xs px-2 py-1 rounded outline-none transition-colors bg-base01 text-base05 border border-base03 focus:border-base0D"
                     value={sortOption()}
                     onInput={(e) => setSortOption(e.currentTarget.value)}
                 >
-                    <option value="added-newest" class="bg-(--base01) text-(--base05)">
+                    <option value="added-newest" class="bg-base01 text-base05">
                         Added (Newest)
                     </option>
-                    <option value="added-oldest" class="bg-(--base01) text-(--base05)">
+                    <option value="added-oldest" class="bg-base01 text-base05">
                         Added (Oldest)
                     </option>
-                    <option value="paragraph-asc" class="bg-(--base01) text-(--base05)">
+                    <option value="paragraph-asc" class="bg-base01 text-base05">
                         Paragraph (Ascending)
                     </option>
-                    <option value="paragraph-desc" class="bg-(--base01) text-(--base05)">
+                    <option value="paragraph-desc" class="bg-base01 text-base05">
                         Paragraph (Descending)
                     </option>
                 </select>

@@ -14,14 +14,14 @@ export function Calendar(props: CalendarProps) {
                     <CorvuCalendar.Nav
                         action="prev-month"
                         aria-label="Go to previous month"
-                        class="absolute left-3 size-7 rounded-sm bg-(--base02) p-0.75 hover:bg-(--base03)"
+                        class="absolute left-3 size-7 rounded-sm bg-base02 p-0.75 hover:bg-base03"
                     >
                         {"<"}
                     </CorvuCalendar.Nav>
                     <CorvuCalendar.Nav
                         action="next-month"
                         aria-label="Go to next month"
-                        class="absolute right-3 size-7 rounded-sm bg-(--base02) p-0.75 hover:bg-(--base03)"
+                        class="absolute right-3 size-7 rounded-sm bg-base02 p-0.75 hover:bg-base03"
                     >
                         {">"}
                     </CorvuCalendar.Nav>
@@ -30,7 +30,7 @@ export function Calendar(props: CalendarProps) {
                             {(month, index) => (
                                 <div class={index === 1 ? "" : "hidden md:block"}>
                                     <div class="flex h-7 items-center justify-center">
-                                        <CorvuCalendar.Label index={index} class="text-sm text-(--base05)">
+                                        <CorvuCalendar.Label index={index} class="text-sm text-base05">
                                             {formatMonth(month().month)} {month().month.getFullYear()}
                                         </CorvuCalendar.Label>
                                     </div>
@@ -41,7 +41,7 @@ export function Calendar(props: CalendarProps) {
                                                     {(weekday) => (
                                                         <CorvuCalendar.HeadCell
                                                             abbr={formatWeekdayLong(weekday())}
-                                                            class="w-8 flex-1 pb-1 text-xs font-normal opacity-65 text-(--base06)"
+                                                            class="w-8 flex-1 pb-1 text-xs font-normal opacity-65 text-base06"
                                                         >
                                                             {formatWeekdayShort(weekday())}
                                                         </CorvuCalendar.HeadCell>
@@ -55,11 +55,11 @@ export function Calendar(props: CalendarProps) {
                                                     <tr>
                                                         <Index each={week()}>
                                                             {(day) => (
-                                                                <CorvuCalendar.Cell class="p-0 has-data-range-end:rounded-r-md has-data-range-start:rounded-l-md has-data-in-range:bg-(--base02) has-[[disabled]]:opacity-40 has-data-in-range:first:rounded-l-md has-data-in-range:last:rounded-r-md">
+                                                                <CorvuCalendar.Cell class="p-0 has-data-range-end:rounded-r-md has-data-range-start:rounded-l-md has-data-in-range:bg-base02 has-[[disabled]]:opacity-40 has-data-in-range:first:rounded-l-md has-data-in-range:last:rounded-r-md">
                                                                     <CorvuCalendar.CellTrigger
                                                                         day={day()}
                                                                         month={month().month}
-                                                                        class="inline-flex size-8 items-center justify-center rounded-md text-sm text-(--base05) focus-visible:bg-(--base02) disabled:pointer-events-none data-today:bg-(--base03)/50 data-range-start:bg-(--base04) data-range-end:bg-(--base04) lg:hover:not-data-range-start:not-data-range-end:bg-(--base04)/80"
+                                                                        class="inline-flex size-8 items-center justify-center rounded-md text-sm text-base05 focus-visible:bg-base02 disabled:pointer-events-none data-today:bg-base03/50 data-range-start:bg-base04 data-range-end:bg-base04 lg:hover:not-data-range-start:not-data-range-end:bg-base04/80"
                                                                     >
                                                                         {day().getDate()}
                                                                     </CorvuCalendar.CellTrigger>
