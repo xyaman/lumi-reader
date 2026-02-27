@@ -5,7 +5,7 @@ import { ThemeProvider } from "@/context/theme"
 import { Bookmark } from "@/lib/readerSource"
 import { formatTime } from "@/lib/utils"
 import { useReaderDispatch, useReaderState } from "@/context/reader"
-import ReadingSessionManager from "@/services/readingSession"
+import { useReadingSessionState, useReadingSessionDispatch } from "@/context/readingSession"
 import { ReaderSettings } from "@/pages/settings"
 import { Button } from "@/ui"
 
@@ -153,69 +153,43 @@ export function BookmarksSidebarContent(props: { onItemClick: (b: Bookmark) => v
 
 function ReadingSessionSidebar() {
     const readerState = useReaderState()
-    const isPaused = () => ReadingSessionManager.getInstance().isPaused()
-    const [currentTime, setCurrentTime] = createSignal(Math.floor(Date.now() / 1000))
+    const sessionState = useReadingSessionState()
+    const sessionDispatch = useReadingSessionDispatch()
 
-    let intervalId: number | null = null
-    const startTimer = () => {
-        if (intervalId) return
-        setInterval(() => {
-            setCurrentTime(Math.floor(Date.now() / 1000))
-        }, 1000)
-    }
-
-    const stopTimer = () => {
-        if (!intervalId) return
-        clearInterval(intervalId)
-        intervalId = null
-    }
+    const [tick, setTick] = createSignal(0)
 
     createEffect(() => {
-        if (readerState.sideBar === "session") {
-            startTimer()
-        } else {
-            stopTimer()
+        if (sessionState.isActive && !sessionState.isPaused) {
+            const interval = setInterval(() => setTick((t) => t + 1), 1000)
+            onCleanup(() => clearInterval(interval))
         }
     })
 
-    onCleanup(() => stopTimer())
-
     const toggleSession = async () => {
-        if (ReadingSessionManager.getInstance().isReading()) {
-            if (isPaused()) {
-                await ReadingSessionManager.getInstance().resume()
+        if (sessionState.isActive) {
+            if (sessionState.isPaused) {
+                await sessionDispatch.resumeSession()
             } else {
-                await ReadingSessionManager.getInstance().pause()
+                await sessionDispatch.pauseSession()
             }
         } else {
-            await ReadingSessionManager.getInstance().startReading(readerState.book)
+            await sessionDispatch.startSession(readerState.book)
         }
-
-        const lastActiveTime = ReadingSessionManager.getInstance().lastActiveTime()!
-        setCurrentTime(Math.floor(lastActiveTime.getTime() / 1000))
     }
 
-    const charactersRead = () => readerState.book.currChars - ReadingSessionManager.getInstance().initialCharsPosition()
+    const charactersRead = () => sessionState.charsRead
 
     const readingSpeed = () => {
-        const time = currentTime()
-        if (charactersRead() === 0 || time === 0) return "0 chars/h"
-        return `${Math.ceil((charactersRead() * 3600) / time)} chars/h`
+        const elapsed = sessionState.readingTime
+        const chars = charactersRead()
+        if (chars === 0 || elapsed === 0) return "0 chars/h"
+        return `${Math.ceil((chars * 3600) / elapsed)} chars/h`
     }
 
     const totalReadingTime = () => {
-        if (ReadingSessionManager.getInstance().currentBook === null) return 0
-
-        if (ReadingSessionManager.getInstance().isPaused()) {
-            return ReadingSessionManager.getInstance().readingTime()
-        } else {
-            // Add time since last update for real-time display
-            const now = currentTime()
-            return (
-                ReadingSessionManager.getInstance().readingTime() +
-                Math.floor(now - ReadingSessionManager.getInstance().lastActiveTime()!.getTime() / 1000)
-            )
-        }
+        tick()
+        if (!sessionState.currentBook) return 0
+        return sessionState.readingTime
     }
 
     const progress = () => {
@@ -224,10 +198,12 @@ function ReadingSessionSidebar() {
 
     return (
         <div class="max-h-[90vh] overflow-y-auto">
-            <p class="text-md mb-2">Session: {isPaused() ? "Paused" : "Active"}</p>
+            <p class="text-md mb-2">Session: {sessionState.isPaused ? "Paused" : sessionState.isActive ? "Active" : "Inactive"}</p>
 
             <div class="space-y-4">
-                <Button onClick={toggleSession}>{isPaused() ? "Resume" : "Pause"}</Button>
+                <Button onClick={toggleSession}>
+                    {sessionState.isActive ? (sessionState.isPaused ? "Resume" : "Pause") : "Start"}
+                </Button>
 
                 <div class="bg-(--base02) p-4 rounded">
                     <h3 class="text-sm font-medium mb-1">Reading Time</h3>

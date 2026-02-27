@@ -1,8 +1,6 @@
-import { createContext, JSX, onCleanup, onMount, useContext } from "solid-js"
+import { createContext, JSX, useContext } from "solid-js"
 import { createStore } from "solid-js/store"
 import { Bookmark, ReaderSource } from "@/lib/readerSource"
-import ReadingSessionManager from "@/services/readingSession"
-import { lsReadingSessions } from "@/services/localStorage"
 
 type ReaderState = {
     shouldReload: boolean
@@ -43,17 +41,6 @@ export function ReaderProvider(props: { book: ReaderSource; children: JSX.Elemen
         currChars: props.book.currChars,
     })
 
-    onMount(() => {
-        if (lsReadingSessions.autoStart()) {
-            ReadingSessionManager.getInstance().startReading(props.book)
-        }
-
-        onCleanup(() => {
-            ReadingSessionManager.getInstance().updateProgress(props.book.currChars)
-            ReadingSessionManager.getInstance().endReading()
-        })
-    })
-
     /**
      * Updates the current paragraph and character count based on visible content.
      * Also persists the progress to local storage.
@@ -89,8 +76,6 @@ export function ReaderProvider(props: { book: ReaderSource; children: JSX.Elemen
         // update store state
         setStore("currIndex", lastIndex)
         setStore("currChars", currChars)
-
-        ReadingSessionManager.getInstance().updateProgress(currChars)
         return lastIndex
     }
 

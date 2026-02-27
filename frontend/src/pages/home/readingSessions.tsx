@@ -2,7 +2,42 @@ import db, { LocalReadingSession, LumiDb } from "@/db"
 import { createResource, createSignal } from "solid-js"
 import { SessionsToolbar, StatCard, ReadingSessionsList, StatsCards } from "@/components/home/readingSessions"
 import { readingSessionsApi } from "@/api/readingSessions"
-import ReadingSessionManager from "@/services/readingSession"
+import { ok } from "@/lib/result"
+import { lsAuth } from "@/services/localStorage"
+
+async function syncEvents() {
+    const user = lsAuth.currentUser()
+    if (!user) return ok(null)
+
+    const unsyncedSessions = await db.readingSessions.index({ synced: false })
+    if (unsyncedSessions.length === 0) return ok(null)
+
+    const newSessions = unsyncedSessions.filter((s) => s.status === "active")
+    const deletedSessions = unsyncedSessions.filter((s) => s.status === "removed")
+
+    if (deletedSessions.length > 0) {
+        const deletedRes = await Promise.all(deletedSessions.map((s) => readingSessionsApi.destroy(s.snowflake)))
+        const deletedResError = deletedRes.find((s) => s.error !== null)
+        if (deletedResError) return deletedResError
+        const success = deletedRes.filter((res) => res.error === null).map((res) => res.ok.data)
+        await db.readingSessions.updateSyncedBatch(success, true)
+    }
+
+    const apiSessions = newSessions.map((s) => ({
+        ...s,
+        userId: user.id,
+        updatedAt: s.updatedAt.toISOString(),
+        createdAt: s.createdAt.toISOString(),
+    }))
+
+    const response = await readingSessionsApi.create(apiSessions)
+    if (response.error) return response
+
+    const result = response.ok.data
+    const syncedSessions = result.filter((s) => s.status === "created").map((s) => s.snowflake)
+    await db.readingSessions.updateSyncedBatch(syncedSessions, true)
+    return ok(null)
+}
 
 export function ReadingSessions() {
     const [groupByBook, setGroupByBook] = createSignal(true)
@@ -59,14 +94,14 @@ export function ReadingSessions() {
         await refetch()
 
         // -- upload local sessions
-        const uploadRes = await ReadingSessionManager.getInstance().syncEvents()
+        const uploadRes = await syncEvents()
         if (uploadRes.error) throw uploadRes.error
     }
 
     const onDelete = async (session: LocalReadingSession) => {
         if (confirm("Are you sure you want to remove this session? It will also be removed from the cloud.")) {
             await db.readingSessions.delete(session.snowflake)
-            const res = await ReadingSessionManager.getInstance().syncEvents()
+            const res = await syncEvents()
             if (res.error) console.error(res.error)
             mutate((prev) => prev && prev?.filter((s) => s.snowflake != session.snowflake))
         }

@@ -3,6 +3,7 @@ import { ReaderContent } from "@/components/reader/ReaderContent"
 import ReaderNavbar from "@/components/reader/ReaderNavbar"
 import { ReaderLeftSidebar, SettingsSidebar } from "@/components/reader/ReaderSidebar"
 import { ReaderProvider } from "@/context/reader"
+import { ReadingSessionProvider } from "@/context/readingSession"
 import { LumiDb } from "@/db"
 import { EpubBook } from "@/lib/epub"
 import { ReaderSource } from "@/lib/readerSource"
@@ -42,13 +43,15 @@ export function BookReader() {
 
     return (
         <Show when={book()} fallback={<p>Loading...</p>}>
-            <ReaderProvider book={book()!}>
-                <ReaderNavbar />
-                <ReaderLeftSidebar />
-                <SettingsSidebar />
-                <CharacterCounter />
-                <ReaderContent imageMap={imageMap} />
-            </ReaderProvider>
+            <ReadingSessionProvider book={book()!}>
+                <ReaderProvider book={book()!}>
+                    <ReaderNavbar />
+                    <ReaderLeftSidebar />
+                    <SettingsSidebar />
+                    <CharacterCounter />
+                    <ReaderContent imageMap={imageMap} />
+                </ReaderProvider>
+            </ReadingSessionProvider>
         </Show>
     )
 }
