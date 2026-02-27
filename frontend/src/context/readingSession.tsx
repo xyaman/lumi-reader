@@ -23,6 +23,7 @@ type ReadingSessionState = {
     charsRead: number
     currentBook: IBookSource | null
     sessionSnowflake: number | null
+    initialCharsPosition: number
 }
 
 type ReadingSessionDispatch = {
@@ -31,6 +32,7 @@ type ReadingSessionDispatch = {
     resumeSession: () => Promise<void>
     endSession: () => Promise<void>
     updateProgress: (charsPosition: number) => Promise<void>
+    setInitialCharsPosition: (position: number) => void
 }
 
 const ReadingSessionStateContext = createContext<ReadingSessionState>()
@@ -44,9 +46,9 @@ export function ReadingSessionProvider(props: { children: JSX.Element; book?: IB
         charsRead: 0,
         currentBook: null,
         sessionSnowflake: null,
+        initialCharsPosition: 0,
     })
 
-    const [initialCharsPosition, setInitialCharsPosition] = createSignal(0)
     const [lastActiveTime, setLastActiveTime] = createSignal<Date | null>(null)
 
     let debounceTimer: number | null = null
@@ -86,8 +88,8 @@ export function ReadingSessionProvider(props: { children: JSX.Element; book?: IB
         setStore("isPaused", false)
         setStore("readingTime", 0)
         setStore("charsRead", 0)
+        setStore("initialCharsPosition", book.currChars)
         setLastActiveTime(now)
-        setInitialCharsPosition(book.currChars)
 
         const event = {
             userId: undefined,
@@ -162,7 +164,7 @@ export function ReadingSessionProvider(props: { children: JSX.Element; book?: IB
 
         const elapsed = calculateElapsedTime()
         const totalTime = store.readingTime + elapsed
-        const chars = charsPosition - initialCharsPosition()
+        const chars = charsPosition - store.initialCharsPosition
 
         setStore("readingTime", totalTime)
         setStore("charsRead", chars)
@@ -233,6 +235,13 @@ export function ReadingSessionProvider(props: { children: JSX.Element; book?: IB
         get charsRead() { return store.charsRead },
         get currentBook() { return store.currentBook },
         get sessionSnowflake() { return store.sessionSnowflake },
+        get initialCharsPosition() { return store.initialCharsPosition },
+    }
+
+    const setInitialCharsPosition = (position: number) => {
+        const chars = store.currentBook ? store.currentBook.currChars - position : 0
+        setStore("initialCharsPosition", position)
+        setStore("charsRead", chars > 0 ? chars : 0)
     }
 
     const dispatchValue: ReadingSessionDispatch = {
@@ -241,6 +250,7 @@ export function ReadingSessionProvider(props: { children: JSX.Element; book?: IB
         resumeSession,
         endSession,
         updateProgress,
+        setInitialCharsPosition,
     }
 
     return (

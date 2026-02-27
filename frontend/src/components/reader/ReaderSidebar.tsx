@@ -157,6 +157,8 @@ function ReadingSessionSidebar() {
     const sessionDispatch = useReadingSessionDispatch()
 
     const [tick, setTick] = createSignal(0)
+    const [isEditingStartChar, setIsEditingStartChar] = createSignal(false)
+    const [editStartCharValue, setEditStartCharValue] = createSignal(0)
 
     createEffect(() => {
         if (sessionState.isActive && !sessionState.isPaused) {
@@ -196,34 +198,81 @@ function ReadingSessionSidebar() {
         return Math.floor((readerState.currChars * 100) / readerState.book.totalChars)
     }
 
+    const saveStartChar = () => {
+        sessionDispatch.setInitialCharsPosition(editStartCharValue())
+        setIsEditingStartChar(false)
+    }
+
+    const cancelEditStartChar = () => {
+        setIsEditingStartChar(false)
+    }
+
+    const startEditStartChar = () => {
+        setEditStartCharValue(sessionState.initialCharsPosition)
+        setIsEditingStartChar(true)
+    }
+
     return (
         <div class="max-h-[90vh] overflow-y-auto">
-            <p class="text-md mb-2">Session: {sessionState.isPaused ? "Paused" : sessionState.isActive ? "Active" : "Inactive"}</p>
+            <p class="text-md mb-2">
+                Session: {sessionState.isPaused ? "Paused" : sessionState.isActive ? "Active" : "Inactive"}
+            </p>
 
             <div class="space-y-4">
                 <Button onClick={toggleSession}>
                     {sessionState.isActive ? (sessionState.isPaused ? "Resume" : "Pause") : "Start"}
                 </Button>
 
-                <div class="bg-(--base02) p-4 rounded">
-                    <h3 class="text-sm font-medium mb-1">Reading Time</h3>
-                    <p class="text-xl font-semibold">{formatTime(totalReadingTime())}</p>
-                </div>
-                <div class="bg-(--base02) p-4 rounded">
-                    <h3 class="text-sm font-medium mb-1">Characters Read</h3>
-                    <p class="text-xl font-semibold">{charactersRead()}</p>
-                </div>
-                <div class="bg-(--base02) p-4 rounded">
-                    <h3 class="text-sm font-medium mb-1">Reading Speed</h3>
-                    <p class="text-xl font-semibold">{readingSpeed()}</p>
-                </div>
-                <div class="bg-(--base02) p-4 rounded">
-                    <h3 class="text-sm font-medium mb-1">Progress</h3>
-                    <div class="w-full bg-(--base03) rounded-full h-2.5 mt-2">
-                        <div class="bg-(--base0B) h-2.5 rounded-full" style={{ width: `${progress()}%` }} />
+                <Show when={sessionState.isActive}>
+                    <div class="bg-base02 p-4 rounded">
+                        <h3 class="text-sm font-medium mb-1">Reading Time</h3>
+                        <p class="text-xl font-semibold">{formatTime(totalReadingTime())}</p>
                     </div>
-                    <p class="text-sm mt-2">{progress()} % completed</p>
-                </div>
+                    <div class="bg-base02 p-4 rounded">
+                        <h3 class="text-sm font-medium mb-1">Characters Read</h3>
+                        <p class="text-xl font-semibold">{charactersRead()}</p>
+                    </div>
+                    <div class="bg-base02 p-4 rounded">
+                        <h3 class="text-sm font-medium mb-1">Starting Position (chars)</h3>
+                        <Show
+                            when={!isEditingStartChar()}
+                            fallback={
+                                <div class="flex gap-2 mt-2">
+                                    <input
+                                        type="number"
+                                        class="bg-base03 px-2 py-1 rounded w-full"
+                                        value={editStartCharValue()}
+                                        onInput={(e) => setEditStartCharValue(parseInt(e.currentTarget.value) || 0)}
+                                    />
+                                    <Button size="sm" variant="secondary" onClick={saveStartChar}>
+                                        Save
+                                    </Button>
+                                    <Button size="sm" variant="primary" onClick={cancelEditStartChar}>
+                                        Cancel
+                                    </Button>
+                                </div>
+                            }
+                        >
+                            <div class="flex items-center justify-between">
+                                <p class="text-xl font-semibold">{sessionState.initialCharsPosition}</p>
+                                <Button size="sm" variant="secondary" onClick={startEditStartChar}>
+                                    Edit
+                                </Button>
+                            </div>
+                        </Show>
+                    </div>
+                    <div class="bg-base02 p-4 rounded">
+                        <h3 class="text-sm font-medium mb-1">Reading Speed</h3>
+                        <p class="text-xl font-semibold">{readingSpeed()}</p>
+                    </div>
+                    <div class="bg-base02 p-4 rounded">
+                        <h3 class="text-sm font-medium mb-1">Progress</h3>
+                        <div class="w-full bg-base03 rounded-full h-2.5 mt-2">
+                            <div class="bg-base0B h-2.5 rounded-full" style={{ width: `${progress()}%` }} />
+                        </div>
+                        <p class="text-sm mt-2">{progress()} % completed</p>
+                    </div>
+                </Show>
             </div>
         </div>
     )
