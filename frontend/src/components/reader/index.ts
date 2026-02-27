@@ -1,3 +1,3 @@
 export * from "./KeymapManager.tsx"
 export * from "./CharacterCounter.tsx"
-export * from "./ContextMenu.tsx"
+export * from "./SelectionToolbar.tsx"

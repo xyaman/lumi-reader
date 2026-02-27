@@ -1,7 +1,7 @@
-import { createEffect, createMemo, createSignal, For, on, onCleanup, onMount, Show } from "solid-js"
+import { createEffect, createMemo, For, on, onCleanup, onMount, Show } from "solid-js"
 import { useReaderDispatch, useReaderState } from "@/context/reader"
 import { createReaderSettings } from "@/hooks"
-import { ContextMenu } from "./ContextMenu"
+import { SelectionToolbar } from "./SelectionToolbar"
 
 function getBaseName(path: string) {
     const match = path.match(/(?:.*\/)?([^\/]+\.(?:png|jpe?g|svg|xhtml|html))$/i)
@@ -37,7 +37,6 @@ export function ReaderContent(props: { imageMap: Map<string, string> }) {
 
     // -- hooks
     const [settings] = createReaderSettings(false, true)
-    const [menuState, setMenuState] = createSignal({ visible: false, x: 0, y: 0, target: null as HTMLElement | null })
 
     // -- html + styles related
     let containerRef: HTMLDivElement
@@ -129,25 +128,6 @@ export function ReaderContent(props: { imageMap: Map<string, string> }) {
         }
     })
 
-    const handleContextMenu = (e: MouseEvent) => {
-        if (menuState().visible && e.target === menuState().target) {
-            setMenuState((prev) => prev && { ...prev, visible: false })
-            return
-        }
-
-        const targetParagraph = (e.target as HTMLElement).closest<HTMLElement>("p[index]")
-        if (targetParagraph) {
-            e.preventDefault()
-            setMenuState({
-                visible: true,
-                x: e.clientX,
-                y: e.clientY,
-                target: targetParagraph,
-            })
-        }
-    }
-
-    // == Highlight existing bookmarks on render/section change
     const highlightBookmarkedParagraphs = () => {
         const bookmarksIds = new Set(state.book.bookmarks.map((b) => b.paragraphId))
         const ptags = contentRef.querySelectorAll("p[index]")
@@ -252,12 +232,10 @@ export function ReaderContent(props: { imageMap: Map<string, string> }) {
     // effects
     onMount(() => {
         document.addEventListener("keydown", handleKeyDown)
-        containerRef.addEventListener("contextmenu", handleContextMenu)
     })
 
     onCleanup(() => {
         document.removeEventListener("keydown", handleKeyDown)
-        containerRef.removeEventListener("contextmenu", handleContextMenu)
     })
 
     const isPaginated = () => settings().paginated
@@ -406,8 +384,8 @@ export function ReaderContent(props: { imageMap: Map<string, string> }) {
                 </div>
             </div>
 
-            {/* Render the context menu */}
-            <ContextMenu menuState={menuState()} onClose={() => setMenuState({ ...menuState(), visible: false })} />
+            {/* Render the selection toolbar */}
+            <SelectionToolbar />
         </>
     )
 }
