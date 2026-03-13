@@ -304,7 +304,7 @@ async function extractManifest(
             }
             xhtmlHref.push(href)
             xhtmlIds.push(item["@_id"])
-        } else if (type === "image/jpeg" || type === "image/png" || type === "image/svg+xml") {
+        } else if (type === "image/jpeg" || type === "image/png" || type === "image/svg+xml" || type === "image/webp" || type === "image/gif" || type === "image/avif") {
             if ((item["@_id"] as string).includes("cover") || (item["@_properties"] as string)?.includes("cover")) {
                 imgsHref.splice(0, 0, href)
                 continue
@@ -361,10 +361,12 @@ async function extractManifest(
 }
 
 function extractSpine(pkgDocumentXml: any): IEpubSpine {
-    const items = pkgDocumentXml.package?.spine?.itemref
-    if (!items || !Array.isArray(items)) {
+    const raw = pkgDocumentXml.package?.spine?.itemref
+    if (!raw) {
         throw new Error("Package Document Item(s) not found. Not a valid epub file.")
     }
+    // fast-xml-parser returns a plain object (not array) when there is only one item
+    const items: any[] = Array.isArray(raw) ? raw : [raw]
 
     const itemref = []
     for (let i = 0; i < items.length; i++) {
@@ -607,7 +609,14 @@ function parseBodyContent(
 }
 
 function getFilePath(basePath: string = "", fn: string): string {
-    return basePath ? `${basePath}/${fn}` : fn
+    const raw = basePath ? `${basePath}/${fn}` : fn
+    // Normalize away any ../ segments that EPUBs with cross-directory relative paths produce
+    const parts: string[] = []
+    for (const part of raw.split("/")) {
+        if (part === "..") parts.pop()
+        else if (part !== ".") parts.push(part)
+    }
+    return parts.join("/")
 }
 
 function getBaseName(path: string) {
