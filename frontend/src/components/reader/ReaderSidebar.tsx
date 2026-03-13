@@ -81,6 +81,9 @@ export function TocSidebarContent(props: { goTo: (file: string) => void }) {
                     }}
                 >
                     {item.text}
+                    {item.totalChars !== undefined && (
+                        <span class="ml-2 text-xs opacity-50">{item.totalChars.toLocaleString()} chars</span>
+                    )}
                 </p>
             )}
         </For>

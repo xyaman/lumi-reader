@@ -22,7 +22,7 @@ interface IEpubManifest {
     /**
      * Xhtml (xml) contents (does not include navigation)
      */
-    xhtml: { lastIndex: number; id: string; content: string; name: string }[]
+    xhtml: { lastIndex: number; id: string; content: string; name: string; startChars: number }[]
 
     /**
      * Imgs of the book.
@@ -337,6 +337,7 @@ async function extractManifest(
     let currId = 0
     for (const [i, c] of xhtmlContent.entries()) {
         const realFilePath = getFilePath(basePath, xhtmlFiles[i].href)
+        const startChars = totalChars
         const [content, id, charsCount] = parseBodyContent(realFilePath, c, currId, totalChars, lang)
         currId = id
         totalChars = charsCount
@@ -345,7 +346,17 @@ async function extractManifest(
             id: xhtmlFiles[i].id,
             content,
             name: getBaseName(realFilePath),
+            startChars,
         })
+    }
+
+    // Compute totalChars per nav item using spine-order section boundaries
+    const sectionStartMap = new Map(manifest.xhtml.map((s) => [s.name, s.startChars]))
+    const navStarts = manifest.nav.map((n) => (n.file ? sectionStartMap.get(n.file) : undefined))
+    for (let i = 0; i < manifest.nav.length; i++) {
+        if (navStarts[i] === undefined) continue
+        const end = navStarts.find((v, j) => j > i && v !== undefined) ?? totalChars
+        manifest.nav[i].totalChars = end - navStarts[i]!
     }
 
     // Css

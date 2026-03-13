@@ -53,6 +53,8 @@ export type Section = {
     name: string
     lastIndex: number
     content: string
+    /** Cumulative book char count before this section started. Added 2026/03/13. */
+    startChars: number | undefined
 }
 
 /**
@@ -93,6 +95,11 @@ export type NavigationItem = {
      * Optional file reference for the navigation item.
      */
     file?: string
+
+    /**
+     * Chars from this TOC entry to the next. Added 2026/03/13.
+     */
+    totalChars?: number
 }
 
 export type SourceImage = {
