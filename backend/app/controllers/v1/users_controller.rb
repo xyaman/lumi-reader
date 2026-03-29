@@ -25,12 +25,12 @@ class V1::UsersController < ApplicationController
     page = params[:page].to_i
     page = 1 if page < 1
 
-    pagy, paginated_following = pagy(user.following, items: 20, page: page)
+    pagy, paginated_following = pagy(user.following, limit: 20, page: page)
     render_success data: {
       users: UserBlueprint.render_as_json(paginated_following, view: :presence),
       pagy: {
         page: pagy.page,
-        pages: pagy.pages,
+        pages: pagy.last,
         count: pagy.count
       }
     }
@@ -44,12 +44,12 @@ class V1::UsersController < ApplicationController
     page = params[:page].to_i
     page = 1 if page < 1
 
-    pagy, paginated_followers = pagy(user.followers, items: 20, page: page)
+    pagy, paginated_followers = pagy(user.followers, limit: 20, page: page)
     render_success data: {
       users: UserBlueprint.render_as_json(paginated_followers, view: :presence),
       pagy: {
         page: pagy.page,
-        pages: pagy.pages,
+        pages: pagy.last,
         count: pagy.count
       }
     }
@@ -91,12 +91,12 @@ class V1::UsersController < ApplicationController
     return render_error message: "User not found.", status: :not_found unless user
 
     reading_sessions = user.reading_sessions.order(updated_at: :desc)
-    pagy, paginated_sessions = pagy(reading_sessions, items: 20, page: params[:page].to_i || 1)
+    pagy, paginated_sessions = pagy(reading_sessions, limit: 20, page: params[:page].to_i || 1)
     render_success data: {
       sessions: ReadingSessionBlueprint.render_as_json(paginated_sessions),
       pagy: {
         page: pagy.page,
-        pages: pagy.pages,
+        pages: pagy.last,
         count: pagy.count
       }
     }

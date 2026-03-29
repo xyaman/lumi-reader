@@ -1,7 +1,7 @@
 class ApplicationController < ActionController::API
   include ActionController::Cookies
   include ActionController::RequestForgeryProtection
-  include Pagy::Backend
+  include Pagy::Method
 
   include Authentication
 

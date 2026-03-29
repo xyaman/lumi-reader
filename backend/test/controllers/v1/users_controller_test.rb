@@ -106,6 +106,20 @@ class V1::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_equal 1, json["data"]["users"].size
   end
 
+  test "should return correct pagy metadata in following response" do
+    user = users(:xyaman)
+    get following_v1_user_url(username: user.username)
+    assert_response :success
+
+    json = JSON.parse(@response.body)
+    pagy = json["data"]["pagy"]
+
+    assert_not_nil pagy
+    assert_equal 1, pagy["page"]
+    assert_equal 1, pagy["pages"]
+    assert_equal 2, pagy["count"]
+  end
+
   test "should return an empty array when user is not following anyone" do
     user = users(:user3)
     get following_v1_user_url(username: user.username)

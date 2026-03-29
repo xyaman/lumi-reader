@@ -10,26 +10,26 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_14_123711) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_29_104351) do
   create_table "active_storage_attachments", force: :cascade do |t|
-    t.string "name", null: false
-    t.string "record_type", null: false
-    t.bigint "record_id", null: false
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.bigint "record_id", null: false
+    t.string "record_type", null: false
     t.index ["blob_id"], name: "index_active_storage_attachments_on_blob_id"
     t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
   end
 
   create_table "active_storage_blobs", force: :cascade do |t|
-    t.string "key", null: false
-    t.string "filename", null: false
-    t.string "content_type"
-    t.text "metadata"
-    t.string "service_name", null: false
     t.bigint "byte_size", null: false
     t.string "checksum"
+    t.string "content_type"
     t.datetime "created_at", null: false
+    t.string "filename", null: false
+    t.string "key", null: false
+    t.text "metadata"
+    t.string "service_name", null: false
     t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
   end
 
@@ -40,9 +40,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_14_123711) do
   end
 
   create_table "follows", force: :cascade do |t|
-    t.integer "follower_id", null: false
-    t.integer "followed_id", null: false
     t.datetime "created_at", null: false
+    t.integer "followed_id", null: false
+    t.integer "follower_id", null: false
     t.datetime "updated_at", null: false
     t.index ["followed_id"], name: "index_follows_on_followed_id"
     t.index ["follower_id", "followed_id"], name: "index_follows_on_follower_id_and_followed_id", unique: true
@@ -50,30 +50,30 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_14_123711) do
   end
 
   create_table "patreon_tiers", force: :cascade do |t|
-    t.string "patreon_tier_id", null: false
-    t.string "name", null: false
-    t.text "description"
     t.integer "amount_cents", null: false
-    t.boolean "published"
-    t.string "image_url"
     t.integer "book_sync_limit", default: 0, null: false
     t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.text "description"
+    t.string "image_url"
     t.integer "max_book_size", default: 20
+    t.string "name", null: false
+    t.string "patreon_tier_id", null: false
+    t.boolean "published"
+    t.datetime "updated_at", null: false
     t.index ["patreon_tier_id"], name: "index_patreon_tiers_on_patreon_tier_id", unique: true
   end
 
   create_table "reading_sessions", force: :cascade do |t|
-    t.bigint "snowflake", null: false
-    t.integer "user_id", null: false
     t.string "book_id", null: false
-    t.string "book_title", null: false
     t.string "book_language", null: false
+    t.string "book_title", null: false
     t.integer "chars_read", default: 0, null: false
-    t.integer "time_spent", default: 0, null: false
     t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.bigint "snowflake", null: false
     t.string "status", default: "active", null: false
+    t.integer "time_spent", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
     t.index ["status"], name: "index_reading_sessions_on_status"
     t.index ["user_id", "book_id"], name: "index_reading_sessions_on_user_id_and_book_id"
     t.index ["user_id", "snowflake"], name: "index_reading_sessions_on_user_id_and_snowflake", unique: true
@@ -81,53 +81,53 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_14_123711) do
   end
 
   create_table "sessions", force: :cascade do |t|
-    t.integer "user_id", null: false
-    t.string "ip_address"
-    t.string "user_agent"
     t.datetime "created_at", null: false
+    t.string "ip_address"
     t.datetime "updated_at", null: false
+    t.string "user_agent"
+    t.integer "user_id", null: false
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
   create_table "user_books", force: :cascade do |t|
-    t.integer "user_id", null: false
-    t.string "kind", null: false
-    t.string "unique_id", null: false
-    t.string "title", null: false
+    t.json "bookmarks"
+    t.datetime "created_at", null: false
     t.string "creator", null: false
-    t.string "language", null: false
-    t.integer "total_chars", null: false
     t.integer "curr_chars", default: 0, null: false
     t.integer "curr_paragraph", default: 0, null: false
-    t.datetime "created_at", null: false
+    t.string "kind", null: false
+    t.string "language", null: false
+    t.string "title", null: false
+    t.integer "total_chars", null: false
+    t.string "unique_id", null: false
     t.datetime "updated_at", null: false
-    t.json "bookmarks"
+    t.integer "user_id", null: false
     t.index ["user_id", "unique_id"], name: "index_user_books_on_user_id_and_unique_id", unique: true
     t.index ["user_id"], name: "index_user_books_on_user_id"
   end
 
   create_table "users", force: :cascade do |t|
+    t.string "bio"
+    t.datetime "created_at", null: false
     t.string "email", null: false
-    t.string "password_digest", null: false
-    t.datetime "email_confirmed_at"
     t.datetime "email_confirmation_sent_at"
+    t.datetime "email_confirmed_at"
+    t.integer "followers_count", default: 0, null: false
+    t.integer "following_count", default: 0, null: false
+    t.boolean "is_admin", default: false, null: false
+    t.string "password_digest", null: false
     t.datetime "password_reset_at"
     t.datetime "password_reset_mail_sent_at"
-    t.string "username", null: false
-    t.string "bio"
+    t.string "patreon_access_token"
+    t.datetime "patreon_expires_at"
+    t.string "patreon_id"
+    t.string "patreon_refresh_token"
+    t.integer "patreon_tier_id"
     t.boolean "share_online_status", default: true, null: false
     t.boolean "share_presence", default: true, null: false
-    t.boolean "is_admin", default: false, null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.integer "following_count", default: 0, null: false
-    t.integer "followers_count", default: 0, null: false
-    t.string "patreon_id"
-    t.string "patreon_access_token"
-    t.string "patreon_refresh_token"
-    t.datetime "patreon_expires_at"
-    t.integer "patreon_tier_id"
     t.boolean "share_reading_sessions", default: true, null: false
+    t.datetime "updated_at", null: false
+    t.string "username", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["patreon_id"], name: "index_users_on_patreon_id", unique: true
     t.index ["patreon_tier_id"], name: "index_users_on_patreon_tier_id"
