@@ -5,7 +5,7 @@ import { readingSessionsApi, syncSessions } from "@/api/readingSessions"
 
 export function ReadingSessions() {
     const [groupByBook, setGroupByBook] = createSignal(true)
-    const [_sortBy, setSortBy] = createSignal("")
+    const [sortBy, setSortBy] = createSignal("")
 
     // dates
     const now = new Date()
@@ -71,6 +71,13 @@ export function ReadingSessions() {
         }
     }
 
+    const sortedSessions = () => {
+        const sessions = localSessions() || []
+        if (sortBy() === "date") return [...sessions].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        if (sortBy() === "time") return [...sessions].sort((a, b) => b.timeSpent - a.timeSpent)
+        return sessions
+    }
+
     return (
         <>
             <header class="mb-8">
@@ -87,7 +94,7 @@ export function ReadingSessions() {
                     onSync={handleSync}
                 />
                 <StatsCards stats={sessionStats()} />
-                <ReadingSessionsList sessions={localSessions() || []} groupByBook={groupByBook()} onDelete={onDelete} />
+                <ReadingSessionsList sessions={sortedSessions()} groupByBook={groupByBook()} onDelete={onDelete} />
             </main>
         </>
     )
