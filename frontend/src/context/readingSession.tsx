@@ -1,11 +1,9 @@
 import { createContext, useContext, JSX, onCleanup, onMount } from "solid-js"
 import { createSignal } from "solid-js"
 import { createStore } from "solid-js/store"
-import { ok } from "@/lib/result"
 import db from "@/db"
 import { lsReadingSessions } from "@/services/localStorage"
-import { readingSessionsApi } from "@/api/readingSessions"
-import { lsAuth } from "@/services/localStorage"
+import { syncSessions } from "@/api/readingSessions"
 import { infoToast } from "@/ui"
 
 interface IBookSource {
@@ -153,8 +151,8 @@ export function ReadingSessionProvider(props: { children: JSX.Element; book?: IB
         setStore("charsRead", 0)
         setLastActiveTime(null)
 
-        if (navigator.onLine) {
-            await syncEvents()
+        if (navigator.onLine && lsReadingSessions.autoSync()) {
+            await syncSessions()
         }
     }
 
@@ -171,40 +169,6 @@ export function ReadingSessionProvider(props: { children: JSX.Element; book?: IB
         setLastActiveTime(new Date())
 
         debouncedUpdateProgress(chars, totalTime)
-    }
-
-    const syncEvents = async () => {
-        const user = lsAuth.currentUser()
-        if (!user) return ok(null)
-
-        const unsyncedSessions = await db.readingSessions.index({ synced: false })
-        if (unsyncedSessions.length === 0) return ok(null)
-
-        const newSessions = unsyncedSessions.filter((s) => s.status === "active")
-        const deletedSessions = unsyncedSessions.filter((s) => s.status === "removed")
-
-        if (deletedSessions.length > 0) {
-            const deletedRes = await Promise.all(deletedSessions.map((s) => readingSessionsApi.destroy(s.snowflake)))
-            const deletedResError = deletedRes.find((s) => s.error !== null)
-            if (deletedResError) return deletedResError
-            const success = deletedRes.filter((res) => res.error === null).map((res) => res.ok.data)
-            await db.readingSessions.updateSyncedBatch(success, true)
-        }
-
-        const apiSessions = newSessions.map((s) => ({
-            ...s,
-            userId: user.id,
-            updatedAt: s.updatedAt.toISOString(),
-            createdAt: s.createdAt.toISOString(),
-        }))
-
-        const response = await readingSessionsApi.create(apiSessions)
-        if (response.error) return response
-
-        const result = response.ok.data
-        const syncedSessions = result.filter((s) => s.status === "created").map((s) => s.snowflake)
-        await db.readingSessions.updateSyncedBatch(syncedSessions, true)
-        return ok(null)
     }
 
     const getElapsedSeconds = () => {
