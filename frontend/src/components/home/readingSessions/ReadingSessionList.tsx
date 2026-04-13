@@ -32,27 +32,25 @@ export function ReadingSessionsList(props: ReadingSessionsListProps) {
     }
 
     // Load cover images once per book
-    // TODO: this is wrong (onCleanup is not being called)
     createEffect(
         on(
             () => props.sessions,
-            async () => {
-                for (const s of props.sessions) {
-                    if (!(s.bookId in coversUrl())) {
-                        const lightbook = await LumiDb.readerLightSources.get({ uniqueId: s.bookId })
+            () => {
+                // onCleanup must be registered synchronously before any await
+                onCleanup(() => {
+                    Object.values(coversUrl()).forEach((url) => URL.revokeObjectURL(url))
+                    setCoversUrl({})
+                })
 
+                for (const s of props.sessions) {
+                    if (s.bookId in coversUrl()) continue
+                    LumiDb.readerLightSources.get({ uniqueId: s.bookId }).then((lightbook) => {
                         const url = lightbook?.coverImage?.blob
                             ? URL.createObjectURL(lightbook.coverImage.blob)
                             : "https://placehold.co/96x128?text=Book"
-
                         setCoversUrl((prev) => ({ ...prev, [s.bookId]: url }))
-                    }
+                    })
                 }
-
-                onCleanup(() => {
-                    Object.values(coversUrl()).forEach((c) => URL.revokeObjectURL(c))
-                    setCoversUrl({})
-                })
             },
         ),
     )
