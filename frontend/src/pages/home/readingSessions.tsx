@@ -26,7 +26,7 @@ export function ReadingSessions() {
                 label: "Total Reading Time",
                 value: `${(sessions.map((s) => s.timeSpent).reduce((b, a) => a + b) / 3600).toFixed(2)} hours`,
             },
-            { label: "Total Books", value: 0 },
+            { label: "Total Books", value: new Set(sessions.map((s) => s.bookId)).size },
             {
                 label: "Longest session",
                 value: `${(Math.max(...sessions.map((s) => s.timeSpent)) / 3600).toFixed(2)} hours`,
