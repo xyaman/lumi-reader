@@ -20,19 +20,24 @@ export function SessionsToolbar(props: SessionsToolbarProps) {
     const [isSyncing, setIsSyncing] = createSignal(false)
     const [syncError, setSyncError] = createSignal<string | null>(null)
 
-    const options = createMemo(() => [
-        { label: "Today", range: [new Date(), new Date()], active: selectedOpt() === "Today" },
-        {
-            label: "Last 7 Days",
-            range: [new Date(new Date().setDate(new Date().getDate() - 6)), new Date()],
-            active: selectedOpt() === "Last 7 Days",
-        },
-        {
-            label: "This Month",
-            range: [new Date(new Date().getFullYear(), new Date().getMonth(), 1), new Date()],
-            active: selectedOpt() === "This Month",
-        },
-    ])
+    const startOfDay = (d: Date) => { const c = new Date(d); c.setHours(0, 0, 0, 0); return c }
+
+    const options = createMemo(() => {
+        const now = new Date()
+        return [
+            { label: "Today", range: [startOfDay(now), now], active: selectedOpt() === "Today" },
+            {
+                label: "Last 7 Days",
+                range: [startOfDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6)), now],
+                active: selectedOpt() === "Last 7 Days",
+            },
+            {
+                label: "This Month",
+                range: [new Date(now.getFullYear(), now.getMonth(), 1), now],
+                active: selectedOpt() === "This Month",
+            },
+        ]
+    })
 
     const handleOptClick = (opt: { label: string; range: Date[] }) => {
         props.onDateRangeSelect(opt.range[0], opt.range[1])
