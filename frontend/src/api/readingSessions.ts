@@ -3,7 +3,8 @@ import { GroupedReadingSession, type ApiReadingSession } from "@/types/api"
 import { camelToSnake, snakeToCamel } from "@/lib/utils"
 import { ok } from "@/lib/result"
 import { LumiDb } from "@/db"
-import { lsReadingSessions } from "@/services/localStorage"
+import db from "@/db"
+import { lsAuth, lsReadingSessions } from "@/services/localStorage"
 
 type IndexOptions = {
     offset?: number
@@ -109,4 +110,38 @@ export const readingSessionsApi = {
             method: "DELETE",
         })
     },
+}
+
+export async function syncSessions() {
+    const user = lsAuth.currentUser()
+    if (!user) return ok(null)
+
+    const unsyncedSessions = await db.readingSessions.index({ synced: false })
+    if (unsyncedSessions.length === 0) return ok(null)
+
+    const newSessions = unsyncedSessions.filter((s) => s.status === "active")
+    const deletedSessions = unsyncedSessions.filter((s) => s.status === "removed")
+
+    if (deletedSessions.length > 0) {
+        const deletedRes = await Promise.all(deletedSessions.map((s) => readingSessionsApi.destroy(s.snowflake)))
+        const deletedResError = deletedRes.find((s) => s.error !== null)
+        if (deletedResError) return deletedResError
+        const success = deletedRes.filter((res) => res.error === null).map((res) => res.ok.data)
+        await db.readingSessions.updateSyncedBatch(success, true)
+    }
+
+    const apiSessions = newSessions.map((s) => ({
+        ...s,
+        userId: user.id,
+        updatedAt: s.updatedAt.toISOString(),
+        createdAt: s.createdAt.toISOString(),
+    }))
+
+    const response = await readingSessionsApi.create(apiSessions)
+    if (response.error) return response
+
+    const result = response.ok.data
+    const syncedSessions = result.filter((s) => s.status === "created").map((s) => s.snowflake)
+    await db.readingSessions.updateSyncedBatch(syncedSessions, true)
+    return ok(null)
 }
