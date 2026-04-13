@@ -1,5 +1,6 @@
 import { createEffect, createMemo, For, on, onCleanup, onMount, Show } from "solid-js"
 import { useReaderDispatch, useReaderState } from "@/context/reader"
+import { useReadingSessionDispatch } from "@/context/readingSession"
 import { createReaderSettings } from "@/hooks"
 import { SelectionToolbar } from "./SelectionToolbar"
 
@@ -34,6 +35,11 @@ function patchImageUrls(html: string, imageMap: Map<string, string>): string {
 export function ReaderContent(props: { imageMap: Map<string, string> }) {
     const state = useReaderState()
     const readerDispatch = useReaderDispatch()
+    const sessionDispatch = useReadingSessionDispatch()
+
+    createEffect(on(() => state.currChars, (chars) => {
+        sessionDispatch.updateProgress(chars)
+    }))
 
     // -- hooks
     const [settings] = createReaderSettings(false, true)
