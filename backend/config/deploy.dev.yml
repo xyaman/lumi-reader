@@ -1,0 +1,41 @@
+service: lumi-backend-dev
+image: lostcoords/lumi-backend-dev
+
+servers:
+  web:
+    hosts:
+      - inari
+
+proxy:
+  ssl: true
+  host: api-dev.lumireader.app
+  app_port: 80
+
+# Override the prod registry (Docker Hub `bolti`) and ssh user (`xyaman`) defined
+# in deploy.yml. Dev deploys go to ghcr.io/lostcoords as davafons, and inari
+# accepts root via SSH.
+registry:
+  server: ghcr.io
+  username: davafons
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+ssh:
+  user: docker
+
+env:
+  secret:
+    - RAILS_MASTER_KEY
+    # Mailgun + Patreon secrets intentionally omitted in dev. Mailers will
+    # fail when triggered; Patreon endpoints will 500 on use. Add them back
+    # once real values are available.
+  clear:
+    SOLID_QUEUE_IN_PUMA: true
+    PORT: 80
+
+    FRONTEND_URL: https://dev.lumireader.app
+    ACTION_CABLE_ALLOWED_ORIGINS: https://dev.lumireader.app
+    SESSION_COOKIE_KEY: _lumi_session_dev
+
+volumes:
+  - "lumi-backend-dev-storage:/rails/storage"

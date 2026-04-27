@@ -16,13 +16,16 @@ module Backend
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
 
-    if Rails.env.production?
-      config.session_store :cookie_store, key: "_lumi_session", domain: "lumireader.app"
+    session_cookie_key = ENV["SESSION_COOKIE_KEY"].presence || "_lumi_session"
 
-      # Action Cable (Websockets)
-      config.action_cable.allowed_request_origins = [ "https://lumireader.app" ]
+    if Rails.env.production?
+      config.session_store :cookie_store, key: session_cookie_key, domain: "lumireader.app"
+
+      # Action Cable (Websockets) — comma-separated list in ACTION_CABLE_ALLOWED_ORIGINS.
+      config.action_cable.allowed_request_origins =
+        ENV.fetch("ACTION_CABLE_ALLOWED_ORIGINS", "https://lumireader.app").split(",").map(&:strip)
     else
-      config.session_store :cookie_store, key: "_lumi_session"
+      config.session_store :cookie_store, key: session_cookie_key
 
       # Action Cable (Websockets)
       config.action_cable.allowed_request_origins = [ "http://localhost:5173" ]
