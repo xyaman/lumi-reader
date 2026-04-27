@@ -33,3 +33,9 @@
 
 # kamal
 .kamal/secrets
+.kamal/secrets.*
+!.kamal/secrets.example
+
+# Ignore key files for decrypting credentials and more.
+/config/*.key
+

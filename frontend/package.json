@@ -7,10 +7,13 @@
     "scripts": {
         "dev": "vite",
         "build": "tsc -b && vite build",
+        "build:dev": "tsc -b && vite build --mode dev",
         "preview": "vite preview",
         "test": "vitest",
         "lint": "bunx eslint . --ext .ts,.tsx",
-        "format": "bunx prettier . --write"
+        "format": "bunx prettier . --write",
+        "deploy:dev": "bun run build:dev && wrangler deploy",
+        "deploy:prod": "bun run build && wrangler deploy --env prod"
     },
     "dependencies": {
         "@corvu/calendar": "^0.1.2",
@@ -45,6 +48,7 @@
         "vite": "^6.3.1",
         "vite-plugin-pwa": "^1.0.1",
         "vite-plugin-solid": "^2.11.6",
-        "vitest": "^3.1.2"
+        "vitest": "^3.1.2",
+        "wrangler": "^4.85.0"
     }
 }

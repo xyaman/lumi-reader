@@ -2,7 +2,9 @@ import { ApiResponse } from "@/types/api"
 import { AsyncResult, err, ok, Result } from "@/lib/result"
 import { snakeToCamel } from "@/lib/utils"
 
-const API_URL = import.meta.env.PROD ? "https://api.lumireader.app" : "http://localhost:3000"
+const API_URL =
+    import.meta.env.VITE_API_URL ??
+    (import.meta.env.PROD ? "https://api.lumireader.app" : "http://localhost:3000")
 const API_VERSION = "v1"
 
 export class ApiError extends Error {

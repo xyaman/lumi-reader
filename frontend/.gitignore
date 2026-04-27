@@ -7,6 +7,11 @@ logs/
 node_modules
 dist
 
+# --- Wrangler / Cloudflare ---
+.wrangler/
+.dev.vars
+.dev.vars.*
+
 # --- OS / Editor / Misc ---
 .DS_Store
 *.sw?
